@@ -8,3 +8,5 @@ database:
 
 image:
   tag: develop-latest
+  pullSecrets:
+    - ilmcred

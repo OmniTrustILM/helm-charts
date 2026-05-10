@@ -30,6 +30,9 @@ helm dependency update charts/ejbca-ng-connector --skip-refresh
 echo "Updating dependencies for email-notification-provider..."
 helm dependency update charts/email-notification-provider --skip-refresh
 
+echo "Updating dependencies for external-authority-provider..."
+helm dependency update charts/external-authority-provider --skip-refresh
+
 echo "Updating dependencies for fe-administrator..."
 helm dependency update charts/fe-administrator --skip-refresh
 

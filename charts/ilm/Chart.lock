@@ -8,6 +8,9 @@ dependencies:
 - name: ejbca-ng-connector
   repository: file://../ejbca-ng-connector
   version: 1.11.1-3-develop
+- name: external-authority-provider
+  repository: file://../external-authority-provider
+  version: 1.0.0-develop
 - name: pyadcs-connector
   repository: file://../pyadcs-connector
   version: 1.1.6-1-develop
@@ -68,5 +71,5 @@ dependencies:
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-2-develop
-digest: sha256:413f4d0a9a19c3d44d9c439dabd592c2ff88c112cae2bfbae909e121276dabbe
-generated: "2026-04-25T10:39:25.145926+02:00"
+digest: sha256:6dc75d8686ac53db3a0e3160506146ccc31720c17993381212387c4c49fced21
+generated: "2026-05-10T10:31:06.223705+02:00"

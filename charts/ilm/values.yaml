@@ -563,6 +563,10 @@ ejbcaNgConnector:
   nameOverride: ejbca-ng-connector
   enabled: false
 
+externalAuthorityProvider:
+  nameOverride: external-authority-provider
+  enabled: false
+
 pyAdcsConnector:
   nameOverride: pyadcs-connector
   enabled: false

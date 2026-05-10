@@ -49,6 +49,11 @@ spec:
             -d '{"name": "EJBCA-NG-Connector","url": "http://ejbca-ng-connector-service:{{ .Values.ejbcaNgConnector.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
+            {{- if .Values.externalAuthorityProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "External-Authority-Provider","url": "http://external-authority-provider-service:{{ .Values.externalAuthorityProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
             {{- if .Values.cryptosenseDiscoveryProvider.enabled }}
             curl -X POST -k -H 'content-type: application/json' \
             -d '{"name": "Cryptosense-Discovery-Provider","url": "http://cryptosense-discovery-provider-service:{{ .Values.cryptosenseDiscoveryProvider.service.port }}","authType": "none"}' \

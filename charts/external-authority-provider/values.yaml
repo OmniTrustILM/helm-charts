@@ -103,7 +103,7 @@ service:
 image:
   # default registry name
   registry: hub.omnitrustregistry.com
-  repository: ilm
+  repository: ilm-private
   name: external-authority-provider
   tag: 1.0.0
   # the digest to be used instead of the tag

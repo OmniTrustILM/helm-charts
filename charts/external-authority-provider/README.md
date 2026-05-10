@@ -29,7 +29,7 @@ Copy the default `values.yaml` from the Helm chart and modify the values accordi
 ```bash
 helm show values oci://hub.omnitrustregistry.com/ilm-helm/external-authority-provider > values.yaml
 ```
-Now edit the `values.yaml` according to your desired stated, see [Configurable parameters](#configurable-parameters) for more information.
+Now edit the `values.yaml` according to your desired state, see [Configurable parameters](#configurable-parameters) for more information.
 
 **Install**
 
@@ -109,7 +109,7 @@ The following values may be configured:
 | nameOverride                                 | `external-authority-provider`      | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. |
 | fullnameOverride                             | `""`                               | Override for the fully qualified app name.                                                                                  |
 | image.registry                               | `hub.omnitrustregistry.com`        | Docker registry name for the image                                                                                          |
-| image.repository                             | `ilm`                              | Docker image repository name                                                                                                |
+| image.repository                             | `ilm-private`                      | Docker image repository name                                                                                                |
 | image.name                                   | `external-authority-provider`      | Docker image name                                                                                                           |
 | image.tag                                    | `1.0.0`                            | Docker image tag                                                                                                            |
 | image.digest                                 | `""`                               | Docker image digest, will override tag if specified                                                                         |
@@ -144,6 +144,19 @@ The following values may be configured:
 | serviceAccount.create                        | `true`                             | Specifies whether a service account should be created                                                                       |
 | serviceAccount.annotations                   | `{}`                               | Annotations to add to the service account                                                                                   |
 | serviceAccount.name                          | `"external-authority-provider-sa"` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template      |
+
+#### Identify validation parameters
+
+The connector exposes a set of boolean knobs that control how `identifyCertificate` validates a certificate against the configured CA chain. Per-property semantics live in the connector's `IdentifyValidationProperties` (`com.otilm.ca.connector.external.config`); defaults match the connector's shipping behaviour (signature-only validation).
+
+| Parameter                                   | Default value | Description                                                                                       |
+|---------------------------------------------|---------------|---------------------------------------------------------------------------------------------------|
+| identify.verifySignature                    | `true`        | Verify the input certificate's signature under the configured CA's key                            |
+| identify.requireAuthorityKeyIdentifierMatch | `false`       | Require the input cert's AKI to match a configured CA's SKI                                       |
+| identify.checkValidity                      | `false`       | Require both the input cert and the matching CA cert to be currently valid                        |
+| identify.requireCaBasicConstraint           | `false`       | Require the matching CA cert's BasicConstraints `cA = true`                                       |
+| identify.requireKeyCertSignKeyUsage         | `false`       | Require the matching CA cert's KeyUsage to include `keyCertSign`                                  |
+| identify.pkix                               | `false`       | Run the JDK's full PKIX path validation (RFC 5280); takes precedence over individual flags above  |
 
 #### Customization parameters
 

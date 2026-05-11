@@ -101,19 +101,6 @@ spec:
                   {{- end }}
                   key: ca.crt
             {{- end }}
-            # Identify validation knobs (Spring Boot relaxed-binding to external-authority.identify.*)
-            - name: EXTERNAL_AUTHORITY_IDENTIFY_VERIFY_SIGNATURE
-              value: {{ .Values.identify.verifySignature | quote }}
-            - name: EXTERNAL_AUTHORITY_IDENTIFY_REQUIRE_AUTHORITY_KEY_IDENTIFIER_MATCH
-              value: {{ .Values.identify.requireAuthorityKeyIdentifierMatch | quote }}
-            - name: EXTERNAL_AUTHORITY_IDENTIFY_CHECK_VALIDITY
-              value: {{ .Values.identify.checkValidity | quote }}
-            - name: EXTERNAL_AUTHORITY_IDENTIFY_REQUIRE_CA_BASIC_CONSTRAINT
-              value: {{ .Values.identify.requireCaBasicConstraint | quote }}
-            - name: EXTERNAL_AUTHORITY_IDENTIFY_REQUIRE_KEY_CERT_SIGN_KEY_USAGE
-              value: {{ .Values.identify.requireKeyCertSignKeyUsage | quote }}
-            - name: EXTERNAL_AUTHORITY_IDENTIFY_PKIX
-              value: {{ .Values.identify.pkix | quote }}
             {{- if $additionalEnv }}
               {{- $additionalEnv | nindent 12 }}
             {{- end }}

@@ -216,18 +216,6 @@ volumes:
 logging:
   level: "INFO"
 
-# Identify validation knobs.
-# Per-property semantics live in the connector's IdentifyValidationProperties
-# (com.otilm.ca.connector.external.config). Defaults match the connector's
-# shipping defaults — signature-only validation.
-identify:
-  verifySignature: true
-  requireAuthorityKeyIdentifierMatch: false
-  checkValidity: false
-  requireCaBasicConstraint: false
-  requireKeyCertSignKeyUsage: false
-  pkix: false
-
 serviceAccount:
   # Specifies whether a service account should be created
   create: true

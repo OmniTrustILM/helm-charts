@@ -145,19 +145,6 @@ The following values may be configured:
 | serviceAccount.annotations                   | `{}`                               | Annotations to add to the service account                                                                                   |
 | serviceAccount.name                          | `"external-authority-provider-sa"` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template      |
 
-#### Identify validation parameters
-
-The connector exposes a set of boolean knobs that control how `identifyCertificate` validates a certificate against the configured CA chain. Per-property semantics live in the connector's `IdentifyValidationProperties` (`com.otilm.ca.connector.external.config`); defaults match the connector's shipping behaviour (signature-only validation).
-
-| Parameter                                   | Default value | Description                                                                                       |
-|---------------------------------------------|---------------|---------------------------------------------------------------------------------------------------|
-| identify.verifySignature                    | `true`        | Verify the input certificate's signature under the configured CA's key                            |
-| identify.requireAuthorityKeyIdentifierMatch | `false`       | Require the input cert's AKI to match a configured CA's SKI                                       |
-| identify.checkValidity                      | `false`       | Require both the input cert and the matching CA cert to be currently valid                        |
-| identify.requireCaBasicConstraint           | `false`       | Require the matching CA cert's BasicConstraints `cA = true`                                       |
-| identify.requireKeyCertSignKeyUsage         | `false`       | Require the matching CA cert's KeyUsage to include `keyCertSign`                                  |
-| identify.pkix                               | `false`       | Run the JDK's full PKIX path validation (RFC 5280); takes precedence over individual flags above  |
-
 #### Customization parameters
 
 | Parameter                | Default value | Description                        |

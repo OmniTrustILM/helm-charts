@@ -170,7 +170,7 @@ dependencies:
     repository: file://../messaging-rabbitmq
     tags:
       - messaging
-    version: 4.2.0-3-develop
+    version: 4.2.0-2-develop
     alias: messagingService
   - name: scheduler-service
     # repository: oci://hub.omnitrustregistry.com/ilm-helm

@@ -45,6 +45,8 @@ Global values are used to define common parameters for the chart and all its sub
 | global.messaging.provisionerPassword      | `""`                   | Password for Provisioner service RabbitMQ user                        |
 | global.messaging.proxyUsername            | `""`                   | Username for Proxy service RabbitMQ user                              |
 | global.messaging.proxyPassword            | `""`                   | Password for Proxy service RabbitMQ user                              |
+| global.messaging.timeQualityMonitorUsername | `""`                 | Username for Time Quality Monitor RabbitMQ user                       |
+| global.messaging.timeQualityMonitorPassword | `""`                 | Password for Time Quality Monitor RabbitMQ user                       |
 | global.messaging.virtualHost              | `""`                   | RabbitMQ virtual host used by ILM services                            |
 | global.proxy.enabled                      | `false`                | Enable proxy-specific support in Core and FE Administrator            |
 | global.utils.enabled                      | `false`                | Enables external access to Utils Service                              |

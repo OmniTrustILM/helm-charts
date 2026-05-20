@@ -72,4 +72,4 @@ dependencies:
   repository: file://../pg-bouncer
   version: 1.24.1-p1-2-develop
 digest: sha256:6dc75d8686ac53db3a0e3160506146ccc31720c17993381212387c4c49fced21
-generated: "2026-05-20T19:16:03.806091+02:00"
+generated: "2026-05-10T10:31:06.223705+02:00"

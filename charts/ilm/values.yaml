@@ -55,6 +55,8 @@ global:
     proxyPassword: ""
     coreUsername: ""
     corePassword: ""
+    timeQualityMonitorUsername: ""
+    timeQualityMonitorPassword: ""
     virtualHost: ""
   provisioning:
     apiUrl: ""

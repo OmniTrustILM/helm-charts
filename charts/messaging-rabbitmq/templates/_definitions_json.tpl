@@ -9,15 +9,17 @@ Example:
 {{ include "messaging-rabbitmq.definitions.json" ( dict "global" .Values.global "messagingService" .Values ) }}
 */}}
 {{- define "messaging-rabbitmq.definitions.json" -}}
-{{- $username            := pluck "username"            .global.messaging .messagingService.messaging | compact | first }}
-{{- $password            := pluck "password"            .global.messaging .messagingService.messaging | compact | first }}
-{{- $provisionerUsername := pluck "provisionerUsername" .global.messaging .messagingService.messaging | compact | first }}
-{{- $provisionerPassword := pluck "provisionerPassword" .global.messaging .messagingService.messaging | compact | first }}
-{{- $proxyUsername       := pluck "proxyUsername"       .global.messaging .messagingService.messaging | compact | first }}
-{{- $proxyPassword       := pluck "proxyPassword"       .global.messaging .messagingService.messaging | compact | first }}
-{{- $coreUsername        := pluck "coreUsername"        .global.messaging .messagingService.messaging | compact | first }}
-{{- $corePassword        := pluck "corePassword"        .global.messaging .messagingService.messaging | compact | first }}
-{{- $virtualHost         := pluck "virtualHost"         .global.messaging .messagingService.messaging | compact | first | default "czertainly" }}
+{{- $username                   := pluck "username"                   .global.messaging .messagingService.messaging | compact | first }}
+{{- $password                   := pluck "password"                   .global.messaging .messagingService.messaging | compact | first }}
+{{- $provisionerUsername        := pluck "provisionerUsername"        .global.messaging .messagingService.messaging | compact | first }}
+{{- $provisionerPassword        := pluck "provisionerPassword"        .global.messaging .messagingService.messaging | compact | first }}
+{{- $proxyUsername              := pluck "proxyUsername"              .global.messaging .messagingService.messaging | compact | first }}
+{{- $proxyPassword              := pluck "proxyPassword"              .global.messaging .messagingService.messaging | compact | first }}
+{{- $coreUsername               := pluck "coreUsername"               .global.messaging .messagingService.messaging | compact | first }}
+{{- $corePassword               := pluck "corePassword"               .global.messaging .messagingService.messaging | compact | first }}
+{{- $timeQualityMonitorUsername := pluck "timeQualityMonitorUsername" .global.messaging .messagingService.messaging | compact | first }}
+{{- $timeQualityMonitorPassword := pluck "timeQualityMonitorPassword" .global.messaging .messagingService.messaging | compact | first }}
+{{- $virtualHost                := pluck "virtualHost"                .global.messaging .messagingService.messaging | compact | first | default "czertainly" }}
 {
   "users": [
     {
@@ -44,6 +46,11 @@ Example:
     {
       "name": "{{ $coreUsername }}",
       "password": "{{ $corePassword }}",
+      "tags": []
+    },
+    {
+      "name": "{{ $timeQualityMonitorUsername }}",
+      "password": "{{ $timeQualityMonitorPassword }}",
       "tags": []
     }
   ],
@@ -79,7 +86,14 @@ Example:
       "vhost": "{{ $virtualHost }}",
       "configure": "",
       "write": "^czertainly(-proxy)?$",
-      "read": "^core(\\..+|-.+)?$"
+      "read": "^core(\\..+|-.+)?$|^time-quality\\.(config-request|results)$"
+    },
+    {
+      "user": "{{ $timeQualityMonitorUsername }}",
+      "vhost": "{{ $virtualHost }}",
+      "configure": "",
+      "write": "^czertainly$",
+      "read": "^time-quality\\.config$"
     }
   ],
   "exchanges": [

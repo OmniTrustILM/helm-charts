@@ -257,6 +257,8 @@ messaging:
   proxyPassword: "proxy"
   coreUsername: "core"
   corePassword: "core"
+  timeQualityMonitorUsername: "time-quality-monitor"
+  timeQualityMonitorPassword: "time-quality-monitor"
   virtualHost: "czertainly"
   erlang:
     cookie: "c4eGHK4gM3v+5BHTFkGaRzqNQu0JcokVJkFK7CmJ"

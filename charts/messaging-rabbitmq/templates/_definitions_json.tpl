@@ -151,6 +151,33 @@ Example:
       "durable": true,
       "auto_delete": false,
       "arguments": {}
+    },
+    {
+      "name": "time-quality.config",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 1,
+        "x-overflow": "drop-head"
+      }
+    },
+    {
+      "name": "time-quality.config-request",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 1,
+        "x-overflow": "drop-head"
+      }
+    },
+    {
+      "name": "time-quality.results",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
     }
   ],
   "bindings": [
@@ -200,6 +227,30 @@ Example:
       "destination": "core.events",
       "destination_type": "queue",
       "routing_key": "event",
+      "arguments": {}
+    },
+    {
+      "source": "czertainly",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.config",
+      "destination_type": "queue",
+      "routing_key": "time-quality.config",
+      "arguments": {}
+    },
+    {
+      "source": "czertainly",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.config-request",
+      "destination_type": "queue",
+      "routing_key": "time-quality.config-request",
+      "arguments": {}
+    },
+    {
+      "source": "czertainly",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.results",
+      "destination_type": "queue",
+      "routing_key": "time-quality.results",
       "arguments": {}
     }
   ]

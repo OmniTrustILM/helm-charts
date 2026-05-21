@@ -6,7 +6,6 @@ metadata:
   name: "{{ .Release.Name }}-{{ $jobName }}"
   labels:
     {{- include "ilm.labels" . | nindent 4 }}
-    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
@@ -47,6 +46,11 @@ spec:
             {{- if .Values.ejbcaNgConnector.enabled }}
             curl -X POST -k -H 'content-type: application/json' \
             -d '{"name": "EJBCA-NG-Connector","url": "http://ejbca-ng-connector-service:{{ .Values.ejbcaNgConnector.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.externalAuthorityProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "External-Authority-Provider","url": "http://external-authority-provider-service:{{ .Values.externalAuthorityProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.cryptosenseDiscoveryProvider.enabled }}

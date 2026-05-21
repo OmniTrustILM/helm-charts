@@ -32,6 +32,14 @@ dependencies:
       - discovery-provider
     version: 1.11.1-3-develop
     alias: ejbcaNgConnector
+  - condition: externalAuthorityProvider.enabled
+    name: external-authority-provider
+    # repository: oci://hub.omnitrustregistry.com/ilm-helm
+    repository: file://../external-authority-provider
+    tags:
+      - authority-provider
+    version: 1.0.0-develop
+    alias: externalAuthorityProvider
   - condition: pyAdcsConnector.enabled
     name: pyadcs-connector
     # repository: oci://hub.omnitrustregistry.com/ilm-helm

@@ -9,15 +9,17 @@ Example:
 {{ include "messaging-rabbitmq.definitions.json" ( dict "global" .Values.global "messagingService" .Values ) }}
 */}}
 {{- define "messaging-rabbitmq.definitions.json" -}}
-{{- $username            := pluck "username"            .global.messaging .messagingService.messaging | compact | first }}
-{{- $password            := pluck "password"            .global.messaging .messagingService.messaging | compact | first }}
-{{- $provisionerUsername := pluck "provisionerUsername" .global.messaging .messagingService.messaging | compact | first }}
-{{- $provisionerPassword := pluck "provisionerPassword" .global.messaging .messagingService.messaging | compact | first }}
-{{- $proxyUsername       := pluck "proxyUsername"       .global.messaging .messagingService.messaging | compact | first }}
-{{- $proxyPassword       := pluck "proxyPassword"       .global.messaging .messagingService.messaging | compact | first }}
-{{- $coreUsername        := pluck "coreUsername"        .global.messaging .messagingService.messaging | compact | first }}
-{{- $corePassword        := pluck "corePassword"        .global.messaging .messagingService.messaging | compact | first }}
-{{- $virtualHost         := pluck "virtualHost"         .global.messaging .messagingService.messaging | compact | first | default "czertainly" }}
+{{- $username                   := pluck "username"                   .global.messaging .messagingService.messaging | compact | first }}
+{{- $password                   := pluck "password"                   .global.messaging .messagingService.messaging | compact | first }}
+{{- $provisionerUsername        := pluck "provisionerUsername"        .global.messaging .messagingService.messaging | compact | first }}
+{{- $provisionerPassword        := pluck "provisionerPassword"        .global.messaging .messagingService.messaging | compact | first }}
+{{- $proxyUsername              := pluck "proxyUsername"              .global.messaging .messagingService.messaging | compact | first }}
+{{- $proxyPassword              := pluck "proxyPassword"              .global.messaging .messagingService.messaging | compact | first }}
+{{- $coreUsername               := pluck "coreUsername"               .global.messaging .messagingService.messaging | compact | first }}
+{{- $corePassword               := pluck "corePassword"               .global.messaging .messagingService.messaging | compact | first }}
+{{- $timeQualityMonitorUsername := pluck "timeQualityMonitorUsername" .global.messaging .messagingService.messaging | compact | first }}
+{{- $timeQualityMonitorPassword := pluck "timeQualityMonitorPassword" .global.messaging .messagingService.messaging | compact | first }}
+{{- $virtualHost                := pluck "virtualHost"                .global.messaging .messagingService.messaging | compact | first | default "czertainly" }}
 {
   "users": [
     {
@@ -44,6 +46,11 @@ Example:
     {
       "name": "{{ $coreUsername }}",
       "password": "{{ $corePassword }}",
+      "tags": []
+    },
+    {
+      "name": "{{ $timeQualityMonitorUsername }}",
+      "password": "{{ $timeQualityMonitorPassword }}",
       "tags": []
     }
   ],
@@ -79,7 +86,14 @@ Example:
       "vhost": "{{ $virtualHost }}",
       "configure": "",
       "write": "^czertainly(-proxy)?$",
-      "read": "^core(\\..+|-.+)?$"
+      "read": "^core(\\..+|-.+)?$|^time-quality\\.(config-request|results)$"
+    },
+    {
+      "user": "{{ $timeQualityMonitorUsername }}",
+      "vhost": "{{ $virtualHost }}",
+      "configure": "",
+      "write": "^czertainly$",
+      "read": "^time-quality\\.config$"
     }
   ],
   "exchanges": [
@@ -151,6 +165,33 @@ Example:
       "durable": true,
       "auto_delete": false,
       "arguments": {}
+    },
+    {
+      "name": "time-quality.config",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 1,
+        "x-overflow": "drop-head"
+      }
+    },
+    {
+      "name": "time-quality.config-request",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 1,
+        "x-overflow": "drop-head"
+      }
+    },
+    {
+      "name": "time-quality.results",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
     }
   ],
   "bindings": [
@@ -200,6 +241,30 @@ Example:
       "destination": "core.events",
       "destination_type": "queue",
       "routing_key": "event",
+      "arguments": {}
+    },
+    {
+      "source": "czertainly",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.config",
+      "destination_type": "queue",
+      "routing_key": "time-quality.config",
+      "arguments": {}
+    },
+    {
+      "source": "czertainly",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.config-request",
+      "destination_type": "queue",
+      "routing_key": "time-quality.config-request",
+      "arguments": {}
+    },
+    {
+      "source": "czertainly",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.results",
+      "destination_type": "queue",
+      "routing_key": "time-quality.results",
       "arguments": {}
     }
   ]

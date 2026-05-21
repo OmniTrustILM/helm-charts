@@ -6,7 +6,6 @@ metadata:
   name: "{{ .Release.Name }}-{{ $jobName }}"
   labels:
     {{- include "ilm.labels" . | nindent 4 }}
-    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.

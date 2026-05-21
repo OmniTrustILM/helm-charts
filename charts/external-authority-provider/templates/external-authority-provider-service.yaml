@@ -1,0 +1,17 @@
+{{- $additionalPorts := (include "external-authority-provider.customization.ports" $) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-authority-provider-service
+  labels:
+    {{- include "external-authority-provider.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      protocol: "TCP"
+    {{- if $additionalPorts }}
+      {{- $additionalPorts | nindent 4 }}
+    {{- end }}
+  selector:
+    {{- include "external-authority-provider.selectorLabels" . | nindent 4 }}

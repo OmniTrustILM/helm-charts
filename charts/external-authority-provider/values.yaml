@@ -1,12 +1,13 @@
-# Default values for messaging-rabbitmq.
+# Default values for external-authority-provider.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+
+nameOverride: external-authority-provider
+fullnameOverride: ""
 
 # Global parameters that will overwrite local parameters
 global:
   replicaCount: 1
-  config:
-    enabled: false
   image:
     registry: ""
     repository: ""
@@ -18,10 +19,19 @@ global:
       sizeLimit: ""
       storageClassName: ""
       custom: {}
-  messaging:
-    remoteAccess: false
+  database:
+    type: ""
+    host: ""
+    port: ""
+    name: ""
     username: ""
     password: ""
+    pgBouncer:
+      enabled: true
+      host: "pg-bouncer-service"
+      port: 5432
+  trusted:
+    certificates: ""
   httpProxy: ""
   httpsProxy: ""
   noProxy: ""
@@ -63,12 +73,20 @@ global:
     # list of secrets to be added as environment variables
     secrets: []
 
+database:
+  # currently only postgresql is supported
+  type: "postgresql"
+  host: "host.docker.internal"
+  port: 5432
+  name: "ilmdb"
+  schema: "externalap"
+  username: "ilmuser"
+  password: "your-strong-password"
+trusted:
+  certificates: ""
 httpProxy: ""
 httpsProxy: ""
 noProxy: ""
-
-nameOverride: messaging-rabbitmq
-fullnameOverride: ""
 
 autoscaling:
   enabled: false
@@ -79,29 +97,15 @@ autoscaling:
 replicaCount: 1
 
 service:
-  client:
-    type: "ClusterIP"
-    http:
-      port: 15672
-    amqp:
-      port: 5672
-  headless:
-    epmd:
-      port: 4369
-    clusterRpc:
-      port: 25672
-
-clustering:
-  # ip or hostname
-  addressType: hostname
-  domain: cluster.local
+  type: "ClusterIP"
+  port: 8080
 
 image:
   # default registry name
   registry: hub.omnitrustregistry.com
-  repository: ilm
-  name: rabbitmq
-  tag: 4.2.0
+  repository: ilm-private
+  name: external-authority-provider
+  tag: 1.0.0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent
@@ -113,7 +117,7 @@ image:
   # default security context
   securityContext:
     runAsNonRoot: true
-    # runAsUser: 999
+    # runAsUser: 10001
     readOnlyRootFilesystem: true
   # probes configuration
   probes:
@@ -121,18 +125,18 @@ image:
       enabled: false
       # custom probe command, will override the default one
       custom: {}
-      initialDelaySeconds: 120
-      timeoutSeconds: 20
-      periodSeconds: 30
+      initialDelaySeconds: 60
+      timeoutSeconds: 5
+      periodSeconds: 10
       successThreshold: 1
-      failureThreshold: 6
+      failureThreshold: 3
     readiness:
       enabled: true
       # custom probe command, will override the default one
       custom: {}
-      initialDelaySeconds: 10
-      timeoutSeconds: 20
-      periodSeconds: 30
+      initialDelaySeconds: 15
+      timeoutSeconds: 5
+      periodSeconds: 10
       successThreshold: 1
       failureThreshold: 3
     startup:
@@ -151,8 +155,8 @@ image:
     # choice for the user. If you do want to specify your own resources, uncomment the following
     # lines, adjust them as necessary, and remove the curly braces after 'resources'.
     # requests:
-    #   cpu: 1000m
-    #   memory: 2Gi
+    #   cpu: 100m
+    #   memory: 400M
     # limits: {}
 
 curl:
@@ -210,7 +214,7 @@ volumes:
     #    medium: "Memory"
 
 logging:
-  level: "info"
+  level: "INFO"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -219,49 +223,11 @@ serviceAccount:
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: "messaging-rabbitmq-sa"
+  name: "external-authority-provider-sa"
 
 podLabels: {}
 
 podAnnotations: {}
 
-podSecurityContext:
-  fsGroup: 999
-  # runAsUser: 999
-  # runAsGroup: 999
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
-
-# persistence parameters
-persistence:
-  enabled: true
-  storageClassName: ""
-  selector: {}
-  accessModes:
-    - ReadWriteOnce
-  existingClaim: ""
-  size: 100Mi
-  annotations: {}
-
-messaging:
-  remoteAccess: false
-  username: "admin"
-  password: "admin"
-  provisionerUsername: "provisioner"
-  provisionerPassword: "provisioner"
-  proxyUsername: "proxy"
-  proxyPassword: "proxy"
-  coreUsername: "core"
-  corePassword: "core"
-  timeQualityMonitorUsername: "time-quality-monitor"
-  timeQualityMonitorPassword: "time-quality-monitor"
-  virtualHost: "czertainly"
-  erlang:
-    cookie: "c4eGHK4gM3v+5BHTFkGaRzqNQu0JcokVJkFK7CmJ"
-  plugins:
-    enabled: "[rabbitmq_peer_discovery_k8s, rabbitmq_management]."
-  enableFlags: true
+podSecurityContext: {}
+  # fsGroup: 2000

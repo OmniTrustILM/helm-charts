@@ -55,6 +55,8 @@ global:
     proxyPassword: ""
     coreUsername: ""
     corePassword: ""
+    timeQualityMonitorUsername: ""
+    timeQualityMonitorPassword: ""
     virtualHost: ""
   provisioning:
     apiUrl: ""
@@ -574,6 +576,10 @@ commonCredentialProvider:
 
 ejbcaNgConnector:
   nameOverride: ejbca-ng-connector
+  enabled: false
+
+externalAuthorityProvider:
+  nameOverride: external-authority-provider
   enabled: false
 
 pyAdcsConnector:

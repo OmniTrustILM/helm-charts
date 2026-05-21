@@ -414,6 +414,19 @@ additionalEnv:
 logging:
   level: "INFO"
 
+caching:
+  # Authentication cache caches resolved user identities to avoid repeated auth-service lookups
+  authentication:
+    ttlMinutes: 5   # How long a cached identity is considered valid
+    maxSize: 500    # Maximum number of cached identities
+
+# Instance ID used by the serial number generator to separate IDs across replicas (ILM_INSTANCE_ID, range 0-65535).
+# MUST be unique per instance — duplicate IDs across replicas will cause generated serial number conflicts.
+# When empty, auto-derived from the last two octets of the pod's IPv4 address.
+# Set explicitly when auto-derivation would collide: multiple processes on the same host,
+# --network host containers, network prefix length smaller than 16 (e.g. /8 or /12), or when deploying to multiple clusters.
+instanceId: ""
+
 javaOpts: ""
 
 auth:

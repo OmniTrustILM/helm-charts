@@ -204,6 +204,18 @@ spec:
                   key: jdbcPassword
             - name: LOGGING_LEVEL_COM_CZERTAINLY
               value: {{ .Values.logging.level | quote }}
+            {{- if and (hasKey .Values "instanceId") (ne (toString .Values.instanceId) "") }}
+            - name: ILM_INSTANCE_ID
+              value: {{ .Values.instanceId | quote }}
+            {{- end }}
+            {{- if .Values.caching.authentication.ttlMinutes }}
+            - name: AUTH_CACHE_TTL_MINUTES
+              value: {{ .Values.caching.authentication.ttlMinutes | quote }}
+            {{- end }}
+            {{- if .Values.caching.authentication.maxSize }}
+            - name: AUTH_CACHE_MAX_SIZE
+              value: {{ .Values.caching.authentication.maxSize | quote }}
+            {{- end }}
             {{- if .Values.registerAdmin.enabled }}
             - name: ADMIN_CERT
               valueFrom:

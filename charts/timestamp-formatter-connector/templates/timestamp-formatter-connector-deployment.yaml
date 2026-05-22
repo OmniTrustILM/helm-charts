@@ -135,8 +135,9 @@ spec:
           {{- if .Values.image.resources }}
           resources: {{- toYaml .Values.image.resources | nindent 12 }}
           {{- end }}
-          {{- if or .Values.global.trusted.certificates .Values.trusted.certificates $additionalVolumeMounts }}
           volumeMounts:
+            - mountPath: /tmp
+              name: ephemeral
             {{- if or .Values.global.trusted.certificates .Values.trusted.certificates }}
             - name: trusted-certificates-volume
               mountPath: /etc/ssl/certs/ca.crt
@@ -146,12 +147,12 @@ spec:
             {{- if $additionalVolumeMounts }}
               {{- $additionalVolumeMounts | nindent 12 }}
             {{- end }}
-          {{- end }}
         {{- if $additionalSidecarContainers }}
           {{- $additionalSidecarContainers | nindent 8 }}
         {{- end }}
-      {{- if or .Values.global.trusted.certificates .Values.trusted.certificates $additionalVolumes }}
       volumes:
+        - name: ephemeral
+          {{- include "timestamp-formatter-connector.ephemeralVolume" . | indent 10 }}
         {{- if .Values.global.trusted.certificates }}
         - name: trusted-certificates-volume
           secret:
@@ -166,4 +167,3 @@ spec:
         {{- if $additionalVolumes }}
           {{- $additionalVolumes | nindent 8 }}
         {{- end }}
-      {{- end }}

@@ -142,3 +142,10 @@ Render customized command and arguments, if any
 {{- define "timestamp-formatter-connector.image.args" -}}
 {{- include "ilm-lib.tplvalues.render" (dict "value" .Values.image.args "context" $) }}
 {{- end -}}
+
+{{/*
+Ephemeral volume for writable /tmp (required when readOnlyRootFilesystem=true)
+*/}}
+{{- define "timestamp-formatter-connector.ephemeralVolume" -}}
+{{ include "ilm-lib.volumes.ephemeral" (dict "volumes" .Values.volumes "global" .Values.global.volumes) }}
+{{- end -}}

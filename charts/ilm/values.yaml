@@ -408,7 +408,7 @@ timeQualityMonitor:
     # default registry name
     registry: hub.omnitrustregistry.com
     repository: ilm-private
-    name: timemonitor
+    name: time-quality-monitor
     tag: 0.1.0
     # the digest to be used instead of the tag
     digest: ""

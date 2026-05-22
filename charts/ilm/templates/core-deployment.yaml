@@ -369,6 +369,99 @@ spec:
                     /opt/ilm/scripts/register-internal-keycloak.sh $INTERNAL_OAUTH_SECRET;
                     {{- end }}
           {{- end }}
+        {{- if .Values.timeQualityMonitor.enabled }}
+        - name: time-quality-monitor
+          image: {{ include "ilm.timeQualityMonitor.image" . }}
+          imagePullPolicy: {{ .Values.timeQualityMonitor.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.timeQualityMonitor.port }}
+          {{- if .Values.timeQualityMonitor.image.command }}
+          command: {{- include "ilm.timeQualityMonitor.image.command" . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.args }}
+          args: {{- include "ilm.timeQualityMonitor.image.args" . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: TQC_LISTEN_PORT
+              value: {{ .Values.timeQualityMonitor.port | quote }}
+            - name: TQC_LOG_LEVEL
+              value: {{ .Values.timeQualityMonitor.logging.level | quote }}
+            - name: TQC_RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: messaging-configmap
+                  key: messaging.host
+            - name: TQC_RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: messaging-configmap
+                  key: messaging.amqp.port
+            - name: TQC_RABBITMQ_VHOST
+              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
+            - name: TQC_RABBITMQ_EXCHANGE
+              value: {{ pluck "exchange" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
+            - name: TQC_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secret
+                  key: messaging.time-quality-monitor.username
+            - name: TQC_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secret
+                  key: messaging.time-quality-monitor.password
+          {{- if .Values.timeQualityMonitor.image.securityContext }}
+          securityContext: {{- .Values.timeQualityMonitor.image.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.liveness.enabled }}
+          livenessProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.liveness.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.liveness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ .Values.timeQualityMonitor.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.liveness.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.readiness.enabled }}
+          readinessProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.readiness.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.readiness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ .Values.timeQualityMonitor.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.readiness.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.startup.enabled }}
+          startupProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.startup.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.startup.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ .Values.timeQualityMonitor.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.startup.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.startup.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.startup.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.startup.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.startup.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.resources }}
+          resources: {{- toYaml .Values.timeQualityMonitor.image.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
         {{- if $additionalSidecarContainers }}
           {{- $additionalSidecarContainers | nindent 8 }}
         {{- end }}

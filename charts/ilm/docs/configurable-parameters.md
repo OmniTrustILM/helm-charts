@@ -260,6 +260,51 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 | opa.image.probes.startup.successThreshold      | `1`           | Success threshold for startup probe                                                |
 | opa.image.probes.startup.failureThreshold      | `3`           | Failure threshold for startup probe                                                |
 
+### Parameters for time-quality-monitor sidecar
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| timeQualityMonitor.enabled                                   | `false`                          | Enable the time-quality-monitor sidecar container |
+| timeQualityMonitor.image.registry                            | `hub.omnitrustregistry.com`      | Docker registry name for the image |
+| timeQualityMonitor.image.repository                          | `ilm-private`                    | Docker image repository name |
+| timeQualityMonitor.image.name                                | `timemonitor`                    | Docker image name |
+| timeQualityMonitor.image.tag                                 | `0.1.0`                          | Docker image tag |
+| timeQualityMonitor.image.digest                              | `""`                             | Docker image digest, will override tag if specified |
+| timeQualityMonitor.image.pullPolicy                          | `IfNotPresent`                   | Image pull policy |
+| timeQualityMonitor.image.pullSecrets                         | `[]`                             | Array of secret names for image pull |
+| timeQualityMonitor.image.command                             | `[]`                             | Override the default command |
+| timeQualityMonitor.image.args                                | `[]`                             | Override the default args |
+| timeQualityMonitor.image.securityContext.runAsNonRoot        | `true`                           | Run the container as non-root user |
+| timeQualityMonitor.image.securityContext.readOnlyRootFilesystem | `true`                        | Run the container with read-only root filesystem |
+| timeQualityMonitor.image.resources                           | `{}`                             | The resources for the container |
+| timeQualityMonitor.logging.level                             | `INFO`                           | Log level for the time-quality-monitor process |
+
+#### Probe parameters for time-quality-monitor sidecar
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| timeQualityMonitor.image.probes.liveness.enabled              | `true`        | Enable/disable liveness probe |
+| timeQualityMonitor.image.probes.liveness.custom               | `{}`          | Custom liveness probe command. When defined, it will override the default command |
+| timeQualityMonitor.image.probes.liveness.initialDelaySeconds  | `5`           | Initial delay seconds for liveness probe |
+| timeQualityMonitor.image.probes.liveness.timeoutSeconds       | `5`           | Timeout seconds for liveness probe |
+| timeQualityMonitor.image.probes.liveness.periodSeconds        | `10`          | Period seconds for liveness probe |
+| timeQualityMonitor.image.probes.liveness.successThreshold     | `1`           | Success threshold for liveness probe |
+| timeQualityMonitor.image.probes.liveness.failureThreshold     | `3`           | Failure threshold for liveness probe |
+| timeQualityMonitor.image.probes.readiness.enabled             | `true`        | Enable/disable readiness probe |
+| timeQualityMonitor.image.probes.readiness.custom              | `{}`          | Custom readiness probe command. When defined, it will override the default command |
+| timeQualityMonitor.image.probes.readiness.initialDelaySeconds | `5`           | Initial delay seconds for readiness probe |
+| timeQualityMonitor.image.probes.readiness.timeoutSeconds      | `5`           | Timeout seconds for readiness probe |
+| timeQualityMonitor.image.probes.readiness.periodSeconds       | `10`          | Period seconds for readiness probe |
+| timeQualityMonitor.image.probes.readiness.successThreshold    | `1`           | Success threshold for readiness probe |
+| timeQualityMonitor.image.probes.readiness.failureThreshold    | `3`           | Failure threshold for readiness probe |
+| timeQualityMonitor.image.probes.startup.enabled               | `false`       | Enable/disable startup probe |
+| timeQualityMonitor.image.probes.startup.custom                | `{}`          | Custom startup probe command. When defined, it will override the default command |
+| timeQualityMonitor.image.probes.startup.initialDelaySeconds   | `5`           | Initial delay seconds for startup probe |
+| timeQualityMonitor.image.probes.startup.timeoutSeconds        | `5`           | Timeout seconds for startup probe |
+| timeQualityMonitor.image.probes.startup.periodSeconds         | `10`          | Period seconds for startup probe |
+| timeQualityMonitor.image.probes.startup.successThreshold      | `1`           | Success threshold for startup probe |
+| timeQualityMonitor.image.probes.startup.failureThreshold      | `3`           | Failure threshold for startup probe |
+
 ## Additional parameters
 
 Additional parameters may be found in the respective `values.yaml` and dependencies.

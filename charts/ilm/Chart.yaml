@@ -122,6 +122,14 @@ dependencies:
       - discovery-provider
     version: 1.2.0-1-develop
     alias: hashicorpVaultConnector
+  - condition: timestampFormatterConnector.enabled
+    name: timestamp-formatter-connector
+    # repository: oci://hub.omnitrustregistry.com/ilm-helm
+    repository: file://../timestamp-formatter-connector
+    tags:
+      - timestamp-connector
+    version: 0.1.0-1-develop
+    alias: timestampFormatterConnector
   - condition: global.utils.enabled
     name: utils-service
     # repository: oci://hub.omnitrustregistry.com/ilm-helm

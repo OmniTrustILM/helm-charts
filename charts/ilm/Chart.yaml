@@ -128,7 +128,7 @@ dependencies:
     repository: file://../timestamp-formatter-connector
     tags:
       - timestamp-connector
-    version: 0.1.0-1-develop
+    version: 1.0.0-1-develop
     alias: timestampFormatterConnector
   - condition: global.utils.enabled
     name: utils-service

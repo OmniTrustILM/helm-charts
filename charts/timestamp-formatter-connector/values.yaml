@@ -80,7 +80,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm-private
   name: timestamp-formatter-connector
-  tag: 0.1.0
+  tag: 1.0.0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

@@ -48,6 +48,7 @@ Global values are used to define common parameters for the chart and all its sub
 | global.messaging.timeQualityMonitorUsername | `""`                   | Username for Time Quality Monitor RabbitMQ user                       |
 | global.messaging.timeQualityMonitorPassword | `""`                   | Password for Time Quality Monitor RabbitMQ user                       |
 | global.messaging.virtualHost                | `""`                   | RabbitMQ virtual host used by ILM services                            |
+| global.messaging.exchange                   | `""`                   | RabbitMQ exchange used by ILM services                                |
 | global.proxy.enabled                        | `false`                | Enable proxy-specific support in Core and FE Administrator            |
 | global.utils.enabled                        | `false`                | Enables external access to Utils Service                              |
 | global.admin.username                       | `""`                   | Initial administrator username                                        |
@@ -260,15 +261,15 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 | opa.image.probes.startup.successThreshold      | `1`           | Success threshold for startup probe                                                |
 | opa.image.probes.startup.failureThreshold      | `3`           | Failure threshold for startup probe                                                |
 
-### Parameters for time-quality-monitor sidecar
+### time-quality-monitor
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | timeQualityMonitor.enabled                                   | `false`                          | Enable the time-quality-monitor sidecar container |
 | timeQualityMonitor.image.registry                            | `hub.omnitrustregistry.com`      | Docker registry name for the image |
 | timeQualityMonitor.image.repository                          | `ilm-private`                    | Docker image repository name |
-| timeQualityMonitor.image.name                                | `timemonitor`                    | Docker image name |
-| timeQualityMonitor.image.tag                                 | `0.1.0`                          | Docker image tag |
+| timeQualityMonitor.image.name                                | `time-quality-monitor`           | Docker image name |
+| timeQualityMonitor.image.tag                                 | `1.0.0`                          | Docker image tag |
 | timeQualityMonitor.image.digest                              | `""`                             | Docker image digest, will override tag if specified |
 | timeQualityMonitor.image.pullPolicy                          | `IfNotPresent`                   | Image pull policy |
 | timeQualityMonitor.image.pullSecrets                         | `[]`                             | Array of secret names for image pull |
@@ -279,7 +280,7 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 | timeQualityMonitor.image.resources                           | `{}`                             | The resources for the container |
 | timeQualityMonitor.logging.level                             | `INFO`                           | Log level for the time-quality-monitor process |
 
-#### Probe parameters for time-quality-monitor sidecar
+#### time-quality-monitor
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|

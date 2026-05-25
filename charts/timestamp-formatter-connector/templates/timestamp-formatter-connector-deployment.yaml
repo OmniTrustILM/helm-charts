@@ -11,7 +11,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "timestamp-formatter-connector.fullname" . }}-deployment
+  name: timestamp-formatter-connector-deployment
   labels:
     {{- include "timestamp-formatter-connector.labels" . | nindent 4 }}
 spec:

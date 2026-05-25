@@ -421,6 +421,8 @@ timeQualityMonitor:
     # default security context
     securityContext:
       runAsNonRoot: true
+      runAsUser: 10001
+      runAsGroup: 10001
       readOnlyRootFilesystem: true
     # probes configuration
     probes:

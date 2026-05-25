@@ -43,7 +43,7 @@ dependencies:
   version: 1.2.0-1-develop
 - name: timestamp-formatter-connector
   repository: file://../timestamp-formatter-connector
-  version: 0.1.0-1-develop
+  version: 1.0.0-1-develop
 - name: utils-service
   repository: file://../utils-service
   version: 1.0.2-2-develop
@@ -74,5 +74,5 @@ dependencies:
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-2-develop
-digest: sha256:67d1557f9e10e834343c2e71deb175bca87dd1419eb8470cf8882c21ee341d09
-generated: "2026-05-22T11:21:13.852521+02:00"
+digest: sha256:4abf61575908ac429530f4ab834a533fb957ae0dc780e65cae0b559a8f9a6c29
+generated: "2026-05-25T16:05:54.048237+02:00"

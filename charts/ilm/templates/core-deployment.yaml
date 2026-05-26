@@ -369,7 +369,7 @@ spec:
                     /opt/ilm/scripts/register-internal-keycloak.sh $INTERNAL_OAUTH_SECRET;
                     {{- end }}
           {{- end }}
-        {{- if .Values.timeQualityMonitor.enabled }}
+        {{- if and .Values.timeQualityMonitor .Values.timeQualityMonitor.enabled }}
         - name: time-quality-monitor
           image: {{ include "ilm.timeQualityMonitor.image" . }}
           imagePullPolicy: {{ .Values.timeQualityMonitor.image.pullPolicy }}

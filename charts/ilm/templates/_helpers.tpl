@@ -99,7 +99,11 @@ Return the image name of the kubectl
 Return the image pull secret names
 */}}
 {{- define "ilm.imagePullSecrets" -}}
-{{ include "ilm-lib.images.pullSecrets" (dict "images" (list .Values.image .Values.opa.image .Values.curl.image .Values.kubectl.image .Values.timeQualityMonitor.image) "global" .Values.global) }}
+{{- $images := list .Values.image .Values.opa.image .Values.curl.image .Values.kubectl.image }}
+{{- if .Values.timeQualityMonitor }}
+{{- $images = append $images .Values.timeQualityMonitor.image }}
+{{- end }}
+{{ include "ilm-lib.images.pullSecrets" (dict "images" $images "global" .Values.global) }}
 {{- end -}}
 
 {{/*

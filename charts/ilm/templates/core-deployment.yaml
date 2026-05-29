@@ -382,30 +382,32 @@ spec:
           args: {{- include "ilm.timeQualityMonitor.image.args" . | nindent 12 }}
           {{- end }}
           env:
-            - name: TQC_LISTEN_PORT
+            - name: LISTEN_PORT
               value: {{ .Values.timeQualityMonitor.port | quote }}
-            - name: TQC_LOG_LEVEL
+            - name: LOG_LEVEL
               value: {{ .Values.timeQualityMonitor.logging.level | quote }}
-            - name: TQC_RABBITMQ_HOST
+            - name: MESSAGING_BROKER_TYPE
+              value: "RABBITMQ"
+            - name: MESSAGING_RABBITMQ_HOST
               valueFrom:
                 configMapKeyRef:
                   name: messaging-configmap
                   key: messaging.host
-            - name: TQC_RABBITMQ_PORT
+            - name: MESSAGING_RABBITMQ_PORT
               valueFrom:
                 configMapKeyRef:
                   name: messaging-configmap
                   key: messaging.amqp.port
-            - name: TQC_RABBITMQ_VHOST
+            - name: MESSAGING_RABBITMQ_VHOST
               value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
-            - name: TQC_RABBITMQ_EXCHANGE
+            - name: MESSAGING_EXCHANGE
               value: {{ pluck "exchange" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
-            - name: TQC_RABBITMQ_USERNAME
+            - name: MESSAGING_RABBITMQ_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: messaging-secret
                   key: messaging.time-quality-monitor.username
-            - name: TQC_RABBITMQ_PASSWORD
+            - name: MESSAGING_RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: messaging-secret

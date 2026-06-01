@@ -398,8 +398,6 @@ spec:
                   key: messaging.amqp.port
             - name: BROKER_VIRTUAL_HOST
               value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
-            - name: BROKER_EXCHANGE
-              value: {{ pluck "exchange" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
             - name: BROKER_USERNAME
               valueFrom:
                 secretKeyRef:

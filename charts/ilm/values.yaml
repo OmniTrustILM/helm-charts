@@ -58,7 +58,6 @@ global:
     timeQualityMonitorUsername: ""
     timeQualityMonitorPassword: ""
     virtualHost: ""
-    exchange: ""
   provisioning:
     apiUrl: ""
     apiKey: ""
@@ -499,7 +498,6 @@ messaging:
   amqp:
     port: 5672
   virtualHost: "czertainly"
-  exchange: "czertainly"
 
 serviceAccount:
   # Specifies whether a service account should be created

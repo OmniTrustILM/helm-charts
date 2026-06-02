@@ -17,9 +17,8 @@ keywords:
   - management
   - lifecycle
   - platform
-  - timestamp
+  - signature
   - formatter
-  - connector
 maintainers:
   - name: OmniTrustILM
     email: ilm@omnitrust.com

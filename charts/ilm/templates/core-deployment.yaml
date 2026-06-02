@@ -396,8 +396,6 @@ spec:
                 configMapKeyRef:
                   name: messaging-configmap
                   key: messaging.amqp.port
-            - name: BROKER_VIRTUAL_HOST
-              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
             - name: BROKER_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -408,6 +406,8 @@ spec:
                 secretKeyRef:
                   name: messaging-secret
                   key: messaging.time-quality-monitor.password
+            - name: BROKER_VIRTUAL_HOST
+              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
           {{- if .Values.timeQualityMonitor.image.securityContext }}
           securityContext: {{- .Values.timeQualityMonitor.image.securityContext | toYaml | nindent 12 }}
           {{- end }}

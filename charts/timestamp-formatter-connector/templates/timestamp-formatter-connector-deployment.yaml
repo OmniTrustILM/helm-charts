@@ -93,7 +93,7 @@ spec:
             {{- toYaml .Values.image.probes.liveness.custom | nindent 12 }}
             {{- else }}
             httpGet:
-              path: {{ .Values.image.probes.liveness.path }}
+              path: /v2/health/liveness
               port: {{ .Values.service.port }}
             {{- end }}
             initialDelaySeconds: {{ .Values.image.probes.liveness.initialDelaySeconds }}
@@ -108,7 +108,7 @@ spec:
             {{- toYaml .Values.image.probes.readiness.custom | nindent 12 }}
             {{- else }}
             httpGet:
-              path: {{ .Values.image.probes.readiness.path }}
+              path: /v2/health/readiness
               port: {{ .Values.service.port }}
             {{- end }}
             initialDelaySeconds: {{ .Values.image.probes.readiness.initialDelaySeconds }}
@@ -123,7 +123,7 @@ spec:
             {{- toYaml .Values.image.probes.startup.custom | nindent 12 }}
             {{- else }}
             httpGet:
-              path: {{ .Values.image.probes.startup.path }}
+              path: /v2/health
               port: {{ .Values.service.port }}
             {{- end }}
             initialDelaySeconds: {{ .Values.image.probes.startup.initialDelaySeconds }}

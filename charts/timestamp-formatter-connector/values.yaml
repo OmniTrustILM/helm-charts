@@ -100,7 +100,6 @@ image:
       enabled: false
       # custom probe command, will override the default one
       custom: {}
-      path: /v2/health/liveness
       initialDelaySeconds: 20
       timeoutSeconds: 5
       periodSeconds: 10
@@ -110,7 +109,6 @@ image:
       enabled: true
       # custom probe command, will override the default one
       custom: {}
-      path: /v2/health/readiness
       initialDelaySeconds: 20
       timeoutSeconds: 5
       periodSeconds: 10
@@ -120,7 +118,6 @@ image:
       enabled: true
       # custom probe command, will override the default one
       custom: {}
-      path: /v2/health
       initialDelaySeconds: 15
       timeoutSeconds: 5
       periodSeconds: 10

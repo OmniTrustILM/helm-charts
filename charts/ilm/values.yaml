@@ -400,6 +400,71 @@ opa:
       #   memory: 150M
       # limits: {}
 
+timeQualityMonitor:
+  enabled: false
+  port: 8082
+  image:
+    # default registry name
+    registry: hub.omnitrustregistry.com
+    repository: ilm-private
+    name: time-quality-monitor
+    tag: 1.0.0
+    # the digest to be used instead of the tag
+    digest: ""
+    pullPolicy: IfNotPresent
+    # array of secret names
+    pullSecrets: []
+    # custom command and args
+    command: []
+    args: []
+    # default security context
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      runAsGroup: 10001
+      readOnlyRootFilesystem: true
+    # probes configuration
+    probes:
+      liveness:
+        enabled: true
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      readiness:
+        enabled: true
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      startup:
+        enabled: false
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+    resources: {}
+      # We follow recommendations and general guidelines to manage resources from:
+      # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/
+      # We recommend default requests for CPU and Memory, leaving the limits as a conscious
+      # choice for the user. If you do want to specify your own resources, uncomment the following
+      # lines, adjust them as necessary, and remove the curly braces after 'resources'.
+      # requests:
+      #   cpu: 50m
+      #   memory: 150M
+      # limits: {}
+  logging:
+    level: INFO
+
 # customization of the chart
 initContainers: []
 sidecarContainers: []
@@ -575,6 +640,10 @@ pyAdcsConnector:
 
 hashicorpVaultConnector:
   nameOverride: hashicorp-vault-connector
+  enabled: false
+
+timestampFormatterConnector:
+  nameOverride: timestamp-formatter-connector
   enabled: false
 
 x509ComplianceProvider:

@@ -1,5 +1,5 @@
 {{- if .Values.registerConnectors }}
-{{- $jobName := "register-admin-job" }}
+{{- $jobName := "register-connectors-job" }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -105,6 +105,11 @@ spec:
             curl -X POST -k -H 'content-type: application/json' \
             -d '{"name": "Webhook-Notification-Provider","url": "http://webhook-notification-provider-service:{{ .Values.webhookNotificationProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.timestampFormatterConnector.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Timestamp-Formatter-Connector", "version": "v2", "url": "http://timestamp-formatter-connector-service:{{ .Values.timestampFormatterConnector.service.port }}","authType": "none", "customAttributes": []}' \
+            http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
             {{- end }}
             echo "all done"
           {{- end }}

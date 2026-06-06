@@ -47,13 +47,14 @@ If you are upgrading from a chart version older than 2.17.0, also run the realm-
 3. [`update_realm_from_2.17.0_to_2.18.0.py`](https://github.com/OmniTrustILM/helm-charts/tree/main/charts/keycloak-internal/scripts/update_realm_from_2.17.0_to_2.18.0.py) — always, this is the rebrand-rename script
 :::
 
-#### 2. Delete the old core deployment
+#### 2. Delete the old core and pg-bouncer deployment
 
 ```bash
 kubectl delete deployment core-deployment --namespace <your-ilm-namespace>
+kubectl delete deployment pg-bouncer-deployment --namespace <your-ilm-namespace>
 ```
 
-This removes only the Deployment object; existing data is unaffected (ILM is stateless at this layer). There will be brief downtime while the new core pods become ready after the upgrade.
+This removes only the Deployment objects; existing data is unaffected (ILM is stateless at this layer). There will be brief downtime while the new core and pg-bouncer pods become ready after the upgrade.
 
 #### 3. Delete the old ingress (only if `ingress.enabled: true`)
 

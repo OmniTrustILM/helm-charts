@@ -10,7 +10,7 @@ dependencies:
   - name: ilm-lib
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../ilm-lib
-    version: 1.4.2-1-develop
+    version: 1.4.2-1
 keywords:
   - ilm
   - certificate
@@ -29,4 +29,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 26.4.2-0-3-develop
+version: 26.4.2-0-3

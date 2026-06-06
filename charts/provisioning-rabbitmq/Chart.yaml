@@ -10,13 +10,13 @@ dependencies:
   - name: ilm-lib
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../ilm-lib
-    version: 1.4.2-1-develop
+    version: 1.4.2-1
   - name: messaging-rabbitmq
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../messaging-rabbitmq
     tags:
       - messaging
-    version: 4.2.0-2-develop
+    version: 4.2.0-2
     condition: messaging.local
 keywords:
   - ilm
@@ -35,4 +35,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.0.0-develop
+version: 1.0.0

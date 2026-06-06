@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 1.3.1
+appVersion: 1.3.2
 name: software-cryptography-provider
 description: A Helm chart for Software Cryptography Provider for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
@@ -10,7 +10,7 @@ dependencies:
   - name: ilm-lib
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../ilm-lib
-    version: 1.4.2-1-develop
+    version: 1.4.2-1
 keywords:
   - ilm
   - trust
@@ -29,4 +29,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.3.1-1-develop
+version: 1.3.2

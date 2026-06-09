@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 2.17.0
+appVersion: 2.18.0
 name: fe-administrator
 description: A Helm chart for Administrator Web for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
@@ -10,7 +10,7 @@ dependencies:
   - name: ilm-lib
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../ilm-lib
-    version: 1.4.2-1-develop
+    version: 1.4.2-1
 keywords:
   - ilm
   - trust
@@ -28,4 +28,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 2.17.0-1-develop
+version: 2.18.0

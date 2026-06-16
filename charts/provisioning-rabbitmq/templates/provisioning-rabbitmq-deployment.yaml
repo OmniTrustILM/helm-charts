@@ -105,7 +105,7 @@ spec:
                   {{- end }}
                   key: messaging.amqp.port
             - name: RABBITMQ_VIRTUAL_HOST
-              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
+              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}
             - name: RABBITMQ_USERNAME
               valueFrom:
                 secretKeyRef:

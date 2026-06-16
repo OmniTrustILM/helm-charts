@@ -148,7 +148,7 @@ messaging:
   proxyUsername: "proxy"
   proxyPassword: "proxy"
   host: "messaging-service"
-  virtualHost: "czertainly"
+  virtualHost: "/"
   amqp:
     port: 5672
 
@@ -160,7 +160,7 @@ bootstrap:
     # Set explicitly when proxies connect from outside the cluster via NodePort, LoadBalancer,
     # or a dedicated TCP ingress that differs from the internal messaging address.
     amqpUrl: ""
-    exchange: "czertainly-proxy"
+    exchange: "ilm-proxy"
     responseQueue: "core"
   security:
     # When true, the X-API-Key filter is enabled and apiKey must be set.

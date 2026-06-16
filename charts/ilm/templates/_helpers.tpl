@@ -252,7 +252,7 @@ Calls POST /api/v1/queues on the provisioning API with retry loop.
             -H "X-API-Key: ${PROVISIONING_API_KEY}" \
             -d "{
               \"name\": \"${HOSTNAME}\",
-              \"exchange\": \"czertainly-proxy\",
+              \"exchange\": \"ilm-proxy\",
               \"routingKey\": \"proxymessage.*.${HOSTNAME}\",
               \"properties\": { \"x-expires\": 1800000 }
             }"
@@ -261,7 +261,7 @@ Calls POST /api/v1/queues on the provisioning API with retry loop.
             -H "Content-Type: application/json" \
             -d "{
               \"name\": \"${HOSTNAME}\",
-              \"exchange\": \"czertainly-proxy\",
+              \"exchange\": \"ilm-proxy\",
               \"routingKey\": \"proxymessage.*.${HOSTNAME}\",
               \"properties\": { \"x-expires\": 1800000 }
             }"

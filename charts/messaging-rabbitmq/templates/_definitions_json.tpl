@@ -19,7 +19,7 @@ Example:
 {{- $corePassword               := pluck "corePassword"               .global.messaging .messagingService.messaging | compact | first }}
 {{- $timeQualityMonitorUsername := pluck "timeQualityMonitorUsername" .global.messaging .messagingService.messaging | compact | first }}
 {{- $timeQualityMonitorPassword := pluck "timeQualityMonitorPassword" .global.messaging .messagingService.messaging | compact | first }}
-{{- $virtualHost                := pluck "virtualHost"                .global.messaging .messagingService.messaging | compact | first | default "czertainly" }}
+{{- $virtualHost                := pluck "virtualHost"                .global.messaging .messagingService.messaging | compact | first | default "/" }}
 {
   "users": [
     {
@@ -78,27 +78,27 @@ Example:
       "user": "{{ $proxyUsername }}",
       "vhost": "{{ $virtualHost }}",
       "configure": "",
-      "write": "^czertainly-proxy$",
+      "write": "^ilm-proxy$",
       "read": "^proxy\\..*$"
     },
     {
       "user": "{{ $coreUsername }}",
       "vhost": "{{ $virtualHost }}",
       "configure": "",
-      "write": "^czertainly(-proxy)?$",
+      "write": "^ilm(-proxy)?$",
       "read": "^core(\\..+|-.+)?$|^time-quality\\.(config-request|results)$"
     },
     {
       "user": "{{ $timeQualityMonitorUsername }}",
       "vhost": "{{ $virtualHost }}",
       "configure": "",
-      "write": "^czertainly$",
+      "write": "^ilm$",
       "read": "^time-quality\\.config$"
     }
   ],
   "exchanges": [
     {
-      "name": "czertainly",
+      "name": "ilm",
       "vhost": "{{ $virtualHost }}",
       "type": "direct",
       "durable": true,
@@ -107,7 +107,7 @@ Example:
       "arguments": {}
     },
     {
-      "name": "czertainly-proxy",
+      "name": "ilm-proxy",
       "vhost": "{{ $virtualHost }}",
       "type": "topic",
       "durable": true,
@@ -196,7 +196,7 @@ Example:
   ],
   "bindings": [
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "core.audit-logs",
       "destination_type": "queue",
@@ -204,7 +204,7 @@ Example:
       "arguments": {}
     },
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "core.notifications",
       "destination_type": "queue",
@@ -212,7 +212,7 @@ Example:
       "arguments": {}
     },
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "core.actions",
       "destination_type": "queue",
@@ -220,7 +220,7 @@ Example:
       "arguments": {}
     },
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "core.scheduler",
       "destination_type": "queue",
@@ -228,7 +228,7 @@ Example:
       "arguments": {}
     },
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "core.validation",
       "destination_type": "queue",
@@ -236,7 +236,7 @@ Example:
       "arguments": {}
     },
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "core.events",
       "destination_type": "queue",
@@ -244,7 +244,7 @@ Example:
       "arguments": {}
     },
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "time-quality.config",
       "destination_type": "queue",
@@ -252,7 +252,7 @@ Example:
       "arguments": {}
     },
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "time-quality.config-request",
       "destination_type": "queue",
@@ -260,7 +260,7 @@ Example:
       "arguments": {}
     },
     {
-      "source": "czertainly",
+      "source": "ilm",
       "vhost": "{{ $virtualHost }}",
       "destination": "time-quality.results",
       "destination_type": "queue",

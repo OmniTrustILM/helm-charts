@@ -432,7 +432,7 @@ messaging:
   host: "messaging-service"
   amqp:
     port: 5672
-  virtualHost: "czertainly"
+  virtualHost: "/"
 
 serviceAccount:
   # Specifies whether a service account should be created

@@ -14,6 +14,35 @@ The following contains important information and instructions about upgrading He
 
 Upgrading Helm chart is done by running the `helm upgrade` command. The command upgrades the platform to the specified version. The command can be used to upgrade the platform to the same version with changed parameters.
 
+## To 2.19.0
+
+### RabbitMQ virtual host and exchange rename
+
+The default RabbitMQ virtual host has changed from `czertainly` to `/` (the RabbitMQ default), and the exchange names have changed from `czertainly`/`czertainly-proxy` to `ilm`/`ilm-proxy`.
+
+| Parameter                  | Old default        | New default |
+|----------------------------|--------------------|-------------|
+| `messaging.virtualHost`    | `czertainly`       | `/`         |
+| `bootstrap.exchange`       | `czertainly`       | `ilm`       |
+| `bootstrap.proxy.exchange` | `czertainly-proxy` | `ilm-proxy` |
+
+#### Fresh installation
+
+No manual steps are required. The new virtual host and exchanges are created automatically by `provisioning-rabbitmq` on first startup.
+
+#### Upgrade from a previous version
+
+After `helm upgrade`, `provisioning-rabbitmq` will create the new exchanges and queues on the `/` vhost automatically. The old `czertainly` vhost and its queues remain in RabbitMQ untouched — they are orphaned but not deleted.
+
+**What to do with the old `czertainly` vhost:**
+
+| Situation                                    | Action                                                                                                                                                                                         |
+|----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| No messages in queues / messages can be lost | Delete the `czertainly` vhost from the RabbitMQ management UI after confirming the upgrade is stable.                                                                                          |
+| Messages must be preserved                   | Before upgrading, drain all queues on the `czertainly` vhost (wait for consumers to process all messages). Then upgrade.                                                                       |
+| You cannot migrate yet                       | Override `messaging.virtualHost` back to `czertainly` and exchange names back to `czertainly`/`czertainly-proxy` in your values to keep using the old topology until you are ready to migrate. |
+
+
 ## To 2.18.0
 
 This release rebrands the Helm charts from CZERTAINLY to ILM (OmniTrust ILM). The umbrella chart was renamed from `czertainly` to `ilm`, and the library chart from `czertainly-lib` to `ilm-lib`. Container images, registry, database defaults, Keycloak realm, and project URLs were all updated.

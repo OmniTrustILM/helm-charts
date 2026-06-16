@@ -170,14 +170,14 @@ dependencies:
     repository: file://../messaging-rabbitmq
     tags:
       - messaging
-    version: 4.2.0-2
+    version: 4.2.0-2-develop
     alias: messagingService
   - name: scheduler-service
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../scheduler-service
     tags:
       - scheduler
-    version: 1.1.0
+    version: 1.1.1-develop
     alias: schedulerService
   - condition: provisioningRabbitMq.enabled
     name: provisioning-rabbitmq
@@ -185,7 +185,7 @@ dependencies:
     repository: file://../provisioning-rabbitmq
     tags:
       - provisioning-rabbitmq
-    version: 1.0.0
+    version: 1.0.0-develop
     alias: provisioningRabbitMq
   - condition: global.database.pgBouncer.enabled
     name: pg-bouncer

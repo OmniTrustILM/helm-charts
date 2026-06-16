@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 1.1.0
+appVersion: 1.1.1-develop
 name: scheduler-service
 description: A Helm chart for ILM platform Scheduler service.
 home: https://github.com/OmniTrustILM/ilm
@@ -16,7 +16,7 @@ dependencies:
     repository: file://../messaging-rabbitmq
     tags:
       - messaging
-    version: 4.2.0-2
+    version: 4.2.0-2-develop
     condition: messaging.local
 keywords:
   - ilm
@@ -35,4 +35,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.1.0
+version: 1.1.1-develop

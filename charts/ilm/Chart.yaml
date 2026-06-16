@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 2.18.0
+appVersion: 2.18.1-develop
 name: ilm
 description: A Helm chart for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
@@ -212,4 +212,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 2.18.0
+version: 2.18.1-develop

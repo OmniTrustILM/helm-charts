@@ -39,8 +39,52 @@ After `helm upgrade`, `provisioning-rabbitmq` will create the new exchanges and 
 | Situation                                    | Action                                                                                                                                                                                         |
 |----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | No messages in queues / messages can be lost | Delete the `czertainly` vhost from the RabbitMQ management UI after confirming the upgrade is stable.                                                                                          |
-| Messages must be preserved                   | Before upgrading, drain all queues on the `czertainly` vhost (wait for consumers to process all messages). Then upgrade.                                                                       |
+| Messages must be preserved                   | Follow the drain procedure below before upgrading.                                                                                                                                             |
 | You cannot migrate yet                       | Override `messaging.virtualHost` back to `czertainly` and exchange names back to `czertainly`/`czertainly-proxy` in your values to keep using the old topology until you are ready to migrate. |
+
+##### Drain procedure
+
+Stop new messages from entering the system by scaling down the API gateway:
+
+```bash
+kubectl scale deployment api-gateway-deployment --replicas=0 --namespace <your-namespace>
+```
+
+Then wait for critical queues to drain using the following script (adjust `RABBIT_HOST`, `AUTH`, and `QUEUES` to match your environment):
+
+```bash
+#!/bin/bash
+RABBIT_HOST="localhost"
+RABBIT_PORT="15672"
+AUTH="admin:admin"
+VHOST="czertainly"
+QUEUES=("core.audit-logs")
+
+echo "Waiting for queues to drain on vhost '$VHOST'..."
+
+while true; do
+  TOTAL=0
+  for QUEUE in "${QUEUES[@]}"; do
+    COUNT=$(curl -s -u "$AUTH" \
+      "http://$RABBIT_HOST:$RABBIT_PORT/api/queues/$(printf '%s' "$VHOST" | sed 's|/|%2F|g')/$QUEUE" \
+      | grep -o '"messages":[0-9]*' | head -1 | cut -d: -f2)
+    COUNT=${COUNT:-0}
+    echo "  $QUEUE: $COUNT messages"
+    TOTAL=$((TOTAL + COUNT))
+  done
+
+  echo "Total remaining: $TOTAL"
+
+  if [ "$TOTAL" -eq 0 ]; then
+    echo "All queues drained. Safe to upgrade."
+    exit 0
+  fi
+
+  sleep 5
+done
+```
+
+Once the script exits, run `helm upgrade` as usual. The API gateway will be restored automatically as part of the upgrade.
 
 
 ## To 2.18.0

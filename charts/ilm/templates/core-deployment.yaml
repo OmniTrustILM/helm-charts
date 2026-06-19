@@ -224,8 +224,8 @@ spec:
             {{- else if eq $workloadType "StatefulSet" }}
             {{- /* StatefulSet pods carry a stable 0-based ordinal exposed as the apps.kubernetes.io/pod-index */}}
             {{- /* downward-API label: a small integer in 0-65535, stable across restarts. */}}
-            {{- if not (semverCompare ">=1.28.0-0" .Capabilities.KubeVersion.Version) }}
-            {{- fail (printf "workloadType \"StatefulSet\" derives PLATFORM_INSTANCE_ID from the apps.kubernetes.io/pod-index label, which Kubernetes auto-stamps only on v1.28+ (got %s). On older clusters the id would silently resolve to \"\" and Core would fall back to IP-derivation, risking duplicate certificate serial numbers. Upgrade the cluster to v1.28+, or set an explicit platformInstanceId on a single-replica workload." .Capabilities.KubeVersion.Version) }}
+            {{- if not (semverCompare ">=1.28.0-0" .Capabilities.KubeVersion.GitVersion) }}
+            {{- fail (printf "workloadType \"StatefulSet\" derives PLATFORM_INSTANCE_ID from the apps.kubernetes.io/pod-index label, which Kubernetes auto-stamps only on v1.28+ (got %s). On older clusters the id would silently resolve to \"\" and Core would fall back to IP-derivation, risking duplicate certificate serial numbers. Upgrade the cluster to v1.28+, or set an explicit platformInstanceId on a single-replica workload." .Capabilities.KubeVersion.GitVersion) }}
             {{- end }}
             - name: PLATFORM_INSTANCE_ID
               valueFrom:

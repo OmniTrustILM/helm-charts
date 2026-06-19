@@ -160,6 +160,13 @@ Example:
       "arguments": {}
     },
     {
+      "name": "provider.status-poll",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
       "name": "core",
       "vhost": "{{ $virtualHost }}",
       "durable": true,
@@ -241,6 +248,14 @@ Example:
       "destination": "core.events",
       "destination_type": "queue",
       "routing_key": "event",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "provider.status-poll",
+      "destination_type": "queue",
+      "routing_key": "provider.status-poll",
       "arguments": {}
     },
     {

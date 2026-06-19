@@ -86,7 +86,7 @@ Example:
       "vhost": "{{ $virtualHost }}",
       "configure": "",
       "write": "^ilm(-proxy)?$",
-      "read": "^core(\\..+|-.+)?$|^time-quality\\.(config-request|results)$"
+      "read": "^core(\\..+|-.+)?$|^provider\\.status-poll$|^time-quality\\.(config-request|results)$"
     },
     {
       "user": "{{ $timeQualityMonitorUsername }}",

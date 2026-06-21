@@ -101,52 +101,52 @@ Global values are used to define common parameters for the chart and all its sub
 
 The following values may be configured:
 
-| Parameter                                    | Default value                        | Description                                                                                                              |
-|----------------------------------------------|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| nameOverride                                 | `provisioning-rabbitmq`              | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
-| fullnameOverride                             | `""`                                 | Override for the fully qualified app name.                                                                               |
-| image.registry                               | `hub.omnitrustregistry.com`          | Docker registry name for the image                                                                                       |
-| image.repository                             | `ilm`                                | Docker image repository name                                                                                             |
-| image.name                                   | `provisioning-rabbitmq`              | Docker image name                                                                                                        |
-| image.tag                                    | `1.0.0`                              | Docker image tag                                                                                                         |
-| image.digest                                 | `""`                                 | Docker image digest, will override tag if specified                                                                      |
-| image.pullPolicy                             | `IfNotPresent`                       | Image pull policy                                                                                                        |
-| image.pullSecrets                            | `[]`                                 | Array of secret names for image pull                                                                                     |
-| image.command                                | `[]`                                 | Override the default command                                                                                             |
-| image.args                                   | `[]`                                 | Override the default args                                                                                                |
-| image.securityContext.runAsNonRoot           | `true`                               | Run the container as non-root user                                                                                       |
-| image.securityContext.readOnlyRootFilesystem | `true`                               | Run the container with read-only root filesystem                                                                         |
-| image.resources                              | `{}`                                 | The resources for the container                                                                                          |
-| podLabels                                    | `{}`                                 | Labels to be added to the pod                                                                                            |
-| podAnnotations                               | `{}`                                 | Annotations to be added to the pod                                                                                       |
-| podSecurityContext                           | `{}`                                 | Pod security context                                                                                                     |
-| volumes.ephemeral.type                       | `memory`                             | Ephemeral volume type to be used                                                                                         |
-| volumes.ephemeral.sizeLimit                  | `"1Mi"`                              | Ephemeral volume size limit                                                                                              |
-| volumes.ephemeral.storageClassName           | `""`                                 | Ephemeral volume storage class name for `storage` type                                                                   |
-| volumes.ephemeral.custom                     | `{}`                                 | Custom definition of the ephemeral volume for `custom` type                                                              |
-| logging.level                                | `"INFO"`                             | Allowed values are `"INFO"`, `"DEBUG"`, `"WARN"`, `"TRACE"`                                                             |
-| service.type                                 | `"ClusterIP"`                        | Type of the service that is exposed                                                                                      |
-| service.port                                 | `8077`                               | Port number of the exposed service                                                                                       |
-| javaOpts                                     | `""`                                 | Customize Java system properties                                                                                         |
-| messaging.external.enabled                   | `false`                              | Enable external messaging                                                                                                |
-| messaging.external.host                      | `""`                                 | Host where the external messaging is located                                                                             |
-| messaging.external.amqp.port                 | `""`                                 | Port on which the external messaging is listening                                                                        |
-| messaging.provisionerUsername                | `"provisioner"`                      | Admin/provisioner username for managing RabbitMQ queues and exchanges                                                    |
-| messaging.provisionerPassword                | `"provisioner"`                      | Admin/provisioner password for managing RabbitMQ queues and exchanges                                                    |
-| messaging.proxyUsername                      | `"proxy"`                            | Proxy user credentials included in generated JWT tokens for proxy services                                               |
-| messaging.proxyPassword                      | `"proxy"`                            | Proxy user password included in generated JWT tokens for proxy services                                                  |
-| messaging.host                               | `"messaging-service"`                | Host where the messaging service is located. **Change only if you know what you are doing!**                             |
-| messaging.virtualHost                        | `"czertainly"`                       | RabbitMQ virtual host                                                                                                    |
-| messaging.amqp.port                          | `5672`                               | AMQP port of the messaging service. **Change only if you know what you are doing!**                                      |
-| bootstrap.proxy.amqpUrl                      | `"amqp://messaging-service:5672"`    | External AMQP URL that proxy services use to connect to RabbitMQ (may differ from internal host when using NodePort/LB) |
-| bootstrap.proxy.exchange                     | `"czertainly-proxy"`                 | RabbitMQ exchange name for proxy communication                                                                           |
-| bootstrap.proxy.responseQueue                | `"core"`                             | RabbitMQ queue name for proxy responses                                                                                  |
-| bootstrap.security.enabled                   | `false`                              | Enable the X-API-Key filter on bootstrap endpoints. When `false`, endpoints are unauthenticated.                         |
-| bootstrap.security.apiKey                    | `""`                                 | API key used to secure the bootstrap service endpoints. Required when `bootstrap.security.enabled` is `true`.            |
-| bootstrap.token.signingKey                   | `""`                                 | JWT signing key used to sign tokens for proxy services. Optional; must be at least 32 characters if set.                |
-| serviceAccount.create                        | `true`                               | Specifies whether a service account should be created                                                                    |
-| serviceAccount.annotations                   | `{}`                                 | Annotations to add to the service account                                                                                |
-| serviceAccount.name                          | `"provisioning-rabbitmq-sa"`         | The name of the service account to use                                                                                   |
+| Parameter                                    | Default value                     | Description                                                                                                              |
+|----------------------------------------------|-----------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| nameOverride                                 | `provisioning-rabbitmq`           | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
+| fullnameOverride                             | `""`                              | Override for the fully qualified app name.                                                                               |
+| image.registry                               | `hub.omnitrustregistry.com`       | Docker registry name for the image                                                                                       |
+| image.repository                             | `ilm`                             | Docker image repository name                                                                                             |
+| image.name                                   | `provisioning-rabbitmq`           | Docker image name                                                                                                        |
+| image.tag                                    | `1.0.0`                           | Docker image tag                                                                                                         |
+| image.digest                                 | `""`                              | Docker image digest, will override tag if specified                                                                      |
+| image.pullPolicy                             | `IfNotPresent`                    | Image pull policy                                                                                                        |
+| image.pullSecrets                            | `[]`                              | Array of secret names for image pull                                                                                     |
+| image.command                                | `[]`                              | Override the default command                                                                                             |
+| image.args                                   | `[]`                              | Override the default args                                                                                                |
+| image.securityContext.runAsNonRoot           | `true`                            | Run the container as non-root user                                                                                       |
+| image.securityContext.readOnlyRootFilesystem | `true`                            | Run the container with read-only root filesystem                                                                         |
+| image.resources                              | `{}`                              | The resources for the container                                                                                          |
+| podLabels                                    | `{}`                              | Labels to be added to the pod                                                                                            |
+| podAnnotations                               | `{}`                              | Annotations to be added to the pod                                                                                       |
+| podSecurityContext                           | `{}`                              | Pod security context                                                                                                     |
+| volumes.ephemeral.type                       | `memory`                          | Ephemeral volume type to be used                                                                                         |
+| volumes.ephemeral.sizeLimit                  | `"1Mi"`                           | Ephemeral volume size limit                                                                                              |
+| volumes.ephemeral.storageClassName           | `""`                              | Ephemeral volume storage class name for `storage` type                                                                   |
+| volumes.ephemeral.custom                     | `{}`                              | Custom definition of the ephemeral volume for `custom` type                                                              |
+| logging.level                                | `"INFO"`                          | Allowed values are `"INFO"`, `"DEBUG"`, `"WARN"`, `"TRACE"`                                                             |
+| service.type                                 | `"ClusterIP"`                     | Type of the service that is exposed                                                                                      |
+| service.port                                 | `8077`                            | Port number of the exposed service                                                                                       |
+| javaOpts                                     | `""`                              | Customize Java system properties                                                                                         |
+| messaging.external.enabled                   | `false`                           | Enable external messaging                                                                                                |
+| messaging.external.host                      | `""`                              | Host where the external messaging is located                                                                             |
+| messaging.external.amqp.port                 | `""`                              | Port on which the external messaging is listening                                                                        |
+| messaging.provisionerUsername                | `"provisioner"`                   | Admin/provisioner username for managing RabbitMQ queues and exchanges                                                    |
+| messaging.provisionerPassword                | `"provisioner"`                   | Admin/provisioner password for managing RabbitMQ queues and exchanges                                                    |
+| messaging.proxyUsername                      | `"proxy"`                         | Proxy user credentials included in generated JWT tokens for proxy services                                               |
+| messaging.proxyPassword                      | `"proxy"`                         | Proxy user password included in generated JWT tokens for proxy services                                                  |
+| messaging.host                               | `"messaging-service"`             | Host where the messaging service is located. **Change only if you know what you are doing!**                             |
+| messaging.virtualHost                        | `"/"`                             | RabbitMQ virtual host                                                                                                    |
+| messaging.amqp.port                          | `5672`                            | AMQP port of the messaging service. **Change only if you know what you are doing!**                                      |
+| bootstrap.proxy.amqpUrl                      | `"amqp://messaging-service:5672"` | External AMQP URL that proxy services use to connect to RabbitMQ (may differ from internal host when using NodePort/LB) |
+| bootstrap.proxy.exchange                     | `"ilm-proxy"`                     | RabbitMQ exchange name for proxy communication                                                                           |
+| bootstrap.proxy.responseQueue                | `"core"`                          | RabbitMQ queue name for proxy responses                                                                                  |
+| bootstrap.security.enabled                   | `false`                           | Enable the X-API-Key filter on bootstrap endpoints. When `false`, endpoints are unauthenticated.                         |
+| bootstrap.security.apiKey                    | `""`                              | API key used to secure the bootstrap service endpoints. Required when `bootstrap.security.enabled` is `true`.            |
+| bootstrap.token.signingKey                   | `""`                              | JWT signing key used to sign tokens for proxy services. Optional; must be at least 32 characters if set.                |
+| serviceAccount.create                        | `true`                            | Specifies whether a service account should be created                                                                    |
+| serviceAccount.annotations                   | `{}`                              | Annotations to add to the service account                                                                                |
+| serviceAccount.name                          | `"provisioning-rabbitmq-sa"`      | The name of the service account to use                                                                                   |
 
 #### Customization parameters
 

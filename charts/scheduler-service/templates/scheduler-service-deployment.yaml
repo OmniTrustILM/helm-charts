@@ -83,7 +83,7 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.service.port | quote }}
-            - name: LOGGING_LEVEL_COM_CZERTAINLY
+            - name: LOGGING_LEVEL_COM_OTILM
               value: {{ .Values.logging.level | quote }}
             - name: JDBC_URL
               value: {{ include "ilm-lib.util.format.jdbcUrl" (list . "?characterEncoding=UTF-8") | quote }}
@@ -136,7 +136,7 @@ spec:
                   {{- end }}
                   key: messaging.password
             - name: BROKER_VIRTUAL_HOST
-              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "czertainly" | quote }}
+              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}
             {{- if $additionalEnv }}
               {{- $additionalEnv | nindent 12 }}
             {{- end }}

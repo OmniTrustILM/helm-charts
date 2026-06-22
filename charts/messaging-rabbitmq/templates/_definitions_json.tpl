@@ -86,7 +86,7 @@ Example:
       "vhost": "{{ $virtualHost }}",
       "configure": "",
       "write": "^ilm(-proxy)?$",
-      "read": "^core(\\..+|-.+)?$|^time-quality\\.(config-request|results)$"
+      "read": "^core(\\..+|-.+)?$|^provider\\.status-poll$|^time-quality\\.(config-request|results)$"
     },
     {
       "user": "{{ $timeQualityMonitorUsername }}",
@@ -154,6 +154,13 @@ Example:
     },
     {
       "name": "core.events",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "provider.status-poll",
       "vhost": "{{ $virtualHost }}",
       "durable": true,
       "auto_delete": false,
@@ -241,6 +248,14 @@ Example:
       "destination": "core.events",
       "destination_type": "queue",
       "routing_key": "event",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "provider.status-poll",
+      "destination_type": "queue",
+      "routing_key": "provider.status-poll",
       "arguments": {}
     },
     {

@@ -10,6 +10,7 @@
 {{- $additionalEnv := (include "ilm.customization.env" $) }}
 {{- $additionalEnvFrom := (include "ilm.customization.envFrom" $) }}
 {{- $scripts := or .Values.global.keycloak.enabled .Values.registerAdmin.enabled }}
+{{- $timeQualityEnabled := or (dig "timeQuality" "enabled" false .Values.global.messaging) (dig "timeQuality" "enabled" false .Values.messaging) }}
 {{- $messagingHost := .Values.messaging.host }}
 {{- $messagingAmqpPort := .Values.messaging.amqp.port }}
 {{- $externalMessaging := pluck "enabled" .Values.global.messaging.external .Values.messaging.external | compact | first }}
@@ -246,6 +247,8 @@ spec:
                   key: messaging.core.password
             - name: BROKER_VIRTUAL_HOST
               value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}
+            - name: MESSAGING_TIME_QUALITY_ENABLED
+              value: {{ $timeQualityEnabled | ternary "true" "false" | quote }}
             - name: SCHEDULER_BASE_URL
               value: "http://scheduler-service-service:{{ .Values.schedulerService.service.port }}"
             {{- if .Values.global.keycloak.enabled }}

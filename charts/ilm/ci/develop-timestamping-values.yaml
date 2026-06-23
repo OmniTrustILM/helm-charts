@@ -10,6 +10,8 @@ global:
     remoteAccess: false
     timeQualityMonitorUsername: "tqm"
     timeQualityMonitorPassword: "tqm-ci-placeholder"
+    timeQuality:
+      enabled: true
   trusted:
     certificates: |
       -----BEGIN CERTIFICATE-----

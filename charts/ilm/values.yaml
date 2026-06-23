@@ -58,6 +58,9 @@ global:
     timeQualityMonitorUsername: ""
     timeQualityMonitorPassword: ""
     virtualHost: ""
+    # Enables Core's time-quality messaging integration. See messaging.timeQuality.enabled.
+    timeQuality:
+      enabled: false
   provisioning:
     apiUrl: ""
     apiKey: ""
@@ -401,6 +404,8 @@ opa:
       # limits: {}
 
 timeQualityMonitor:
+  # Enables the time-quality-monitor sidecar container.
+  # Core's time-quality messaging integration is enabled separately via messaging.timeQuality.enabled.
   enabled: false
   port: 8082
   image:
@@ -498,6 +503,9 @@ messaging:
   amqp:
     port: 5672
   virtualHost: "/"
+  # Enables Core's time-quality messaging integration; settable also via global.messaging.timeQuality.enabled.
+  timeQuality:
+    enabled: false
 
 serviceAccount:
   # Specifies whether a service account should be created

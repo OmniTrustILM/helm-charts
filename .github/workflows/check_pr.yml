@@ -104,7 +104,7 @@ jobs:
       - name: Lint ilm umbrella (subchart change)
         if: env.changed == 'true' && env.umbrella_in_set != 'true'
         run: |
-          helm dependency update charts/ilm --skip-refresh
+          helm dependency update charts/ilm
           ct lint --target-branch "$BASE_BRANCH" --charts charts/ilm --check-version-increment=false
 
       # Package up PR context for downstream workflow_run

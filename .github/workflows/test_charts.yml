@@ -211,12 +211,12 @@ jobs:
       - name: Lint ilm umbrella (subchart change)
         if: env.changed == 'true' && env.umbrella_in_set != 'true'
         run: |
-          helm dependency update charts/ilm --skip-refresh
+          helm dependency update charts/ilm
           ct lint --remote upstream --target-branch "$BASE_BRANCH" --charts charts/ilm --check-version-increment=false
 
       - name: Install ilm umbrella (subchart change)
         if: env.changed == 'true' && env.umbrella_in_set != 'true'
-        run: ct install --remote upstream --namespace chart-testing --charts charts/ilm --helm-extra-args "--timeout 600s"
+        run: ct install --remote upstream --namespace chart-testing --charts charts/ilm
 
       - name: Finalize GitHub Check
         if: always()

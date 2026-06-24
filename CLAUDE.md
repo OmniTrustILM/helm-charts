@@ -99,4 +99,5 @@ charts/<name>/
 - Test values for various deployment scenarios are in `for-testing/` and `charts/ilm/ci/`
 - Dummy certificates in `dummy-certificates/` are included by default for dev/testing
 - When adding a new chart, add it to `update-all-dependencies.sh` and if it's a subchart of the umbrella, add a dependency entry in `charts/ilm/Chart.yaml`
+- When bumping a subchart's `version`, also bump its matching dependency `version:` in `charts/ilm/Chart.yaml` (the umbrella pins each subchart to an exact version) and run `helm dependency update charts/ilm`. CI now runs `helm dependency update charts/ilm` on any chart change, so a mismatch fails the workflow with a cryptic `can't get a valid version for dependency` error. A version bump also puts `charts/ilm` directly in the changed set.
 - Java packages still use `com.czertainly` namespace — the `LOGGING_LEVEL_COM_CZERTAINLY` env var in deployment templates is intentional and will be updated when Java code is refactored

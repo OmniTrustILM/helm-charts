@@ -55,6 +55,19 @@ jobs:
             echo "✅ Charts changed"
             echo "changed=true" >> $GITHUB_ENV
 
+            # The ilm umbrella packages a frozen copy of every subchart, so any
+            # chart change must also republish the umbrella — otherwise the
+            # deployed umbrella artifact keeps the old subchart copy. If it is
+            # not already in the changed set, add it so the version check
+            # validates it and it is released last.
+            if echo "$changed" | grep -qx "charts/ilm"; then
+              echo "umbrella_in_set=true" >> $GITHUB_ENV
+            else
+              echo "umbrella_in_set=false" >> $GITHUB_ENV
+              echo "ℹ️ Adding charts/ilm so the umbrella is republished"
+              changed=$(printf '%s\ncharts/ilm' "$changed")
+            fi
+
             echo "changed_charts<<EOF" >> $GITHUB_ENV
             echo "$changed" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
@@ -105,6 +118,15 @@ jobs:
           else
             ct lint --target-branch "$BRANCH" --since HEAD^1 --check-version-increment=false
           fi
+
+      # When only a subchart changed, the umbrella is force-added to the publish
+      # set above but not linted by the --since lint (which uses git diff). Lint
+      # it explicitly so a broken umbrella render is caught before publishing.
+      - name: Lint ilm umbrella (subchart change)
+        if: env.changed == 'true' && env.umbrella_in_set != 'true'
+        run: |
+          helm dependency update charts/ilm --skip-refresh
+          ct lint --target-branch "$BRANCH" --charts charts/ilm --check-version-increment=false
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@main

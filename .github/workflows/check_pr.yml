@@ -45,6 +45,15 @@ jobs:
             echo "✅ Charts changed"
             echo "changed=true" >> $GITHUB_ENV
 
+            # The ilm umbrella packages a copy of every subchart, so a
+            # subchart-only change still needs the umbrella linted. Record
+            # whether the umbrella itself is already in the changed set.
+            if echo "$changed" | grep -qx "charts/ilm"; then
+              echo "umbrella_in_set=true" >> $GITHUB_ENV
+            else
+              echo "umbrella_in_set=false" >> $GITHUB_ENV
+            fi
+
             echo "changed_charts<<EOF" >> $GITHUB_ENV
             echo "$changed" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
@@ -88,6 +97,15 @@ jobs:
       - name: Run chart-testing (lint)
         if: env.changed == 'true'
         run: ct lint --target-branch "$BASE_BRANCH" --check-version-increment=false
+
+      # ct only lints charts whose own files changed, so a subchart-only change
+      # skips the umbrella. Lint it explicitly to catch a broken umbrella render
+      # before the heavier install tests run.
+      - name: Lint ilm umbrella (subchart change)
+        if: env.changed == 'true' && env.umbrella_in_set != 'true'
+        run: |
+          helm dependency update charts/ilm --skip-refresh
+          ct lint --target-branch "$BASE_BRANCH" --charts charts/ilm --check-version-increment=false
 
       # Package up PR context for downstream workflow_run
       - name: Prepare PR context artifact

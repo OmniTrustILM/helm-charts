@@ -91,6 +91,7 @@ charts/<name>/
 - **Testing** (`test_charts.yml`) — Dispatched after PR check; runs lint + install tests on KinD cluster with PostgreSQL 18 and mailserver services
 - **Publishing** (`publish_charts.yml`) — On push to main or tag; packages, pushes to `oci://hub.omnitrustregistry.com/ilm-helm`, signs with Cosign
 - Charts are published in dependency order; `ilm-lib` excluded from install tests (library chart)
+- The `ilm` umbrella packages a frozen copy of every subchart, so a change to *any* chart also triggers the umbrella — even when `charts/ilm`'s own files are untouched. All three workflows detect this case (`umbrella_in_set`) and additionally lint the umbrella (`check_pr.yml`, `publish_charts.yml`), install-test it on KinD (`test_charts.yml`), and repackage + republish it (`publish_charts.yml`). This keeps the deployed umbrella artifact in sync with its subcharts (it would otherwise embed the pre-change copy)
 
 ## Development Notes
 

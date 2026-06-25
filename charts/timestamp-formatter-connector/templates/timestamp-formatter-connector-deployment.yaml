@@ -59,8 +59,6 @@ spec:
           env:
             - name: SERVER_PORT
               value: {{ .Values.service.port | quote }}
-            - name: LOGGING_LEVEL_COM_CZERTAINLY
-              value: {{ .Values.logging.level | quote }}
             - name: LOGGING_LEVEL_COM_OTILM
               value: {{ .Values.logging.level | quote }}
             {{- if $httpProxy }}
@@ -74,6 +72,17 @@ spec:
             {{- if $noProxy }}
             - name: NO_PROXY
               value: {{ $noProxy }}
+            {{- end }}
+            {{- if or .Values.global.trusted.certificates .Values.trusted.certificates }}
+            - name: TRUSTED_CERTIFICATES
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.global.trusted.certificates }}
+                  name: trusted-certificates
+                  {{- else if .Values.trusted.certificates }}
+                  name: trusted-certificates-{{ .Chart.Name | lower }}
+                  {{- end }}
+                  key: ca.crt
             {{- end }}
             {{- if $additionalEnv }}
               {{- $additionalEnv | nindent 12 }}
@@ -138,12 +147,6 @@ spec:
           volumeMounts:
             - mountPath: /tmp
               name: ephemeral
-            {{- if or .Values.global.trusted.certificates .Values.trusted.certificates }}
-            - name: trusted-certificates-volume
-              mountPath: /etc/ssl/certs/ca.crt
-              subPath: ca.crt
-              readOnly: true
-            {{- end }}
             {{- if $additionalVolumeMounts }}
               {{- $additionalVolumeMounts | nindent 12 }}
             {{- end }}
@@ -153,17 +156,6 @@ spec:
       volumes:
         - name: ephemeral
           {{- include "timestamp-formatter-connector.ephemeralVolume" . | indent 10 }}
-        {{- if .Values.global.trusted.certificates }}
-        - name: trusted-certificates-volume
-          secret:
-            defaultMode: 420
-            secretName: trusted-certificates
-        {{- else if .Values.trusted.certificates }}
-        - name: trusted-certificates-volume
-          secret:
-            defaultMode: 420
-            secretName: trusted-certificates-{{ .Chart.Name | lower }}
-        {{- end }}
         {{- if $additionalVolumes }}
           {{- $additionalVolumes | nindent 8 }}
         {{- end }}

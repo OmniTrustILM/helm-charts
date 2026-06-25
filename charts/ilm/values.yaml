@@ -484,6 +484,21 @@ additionalEnv:
 logging:
   level: "INFO"
 
+# Explicit instance ID (0-65535), exported as PLATFORM_INSTANCE_ID for Core's serial number
+# generator. Set this only on a single-replica workload, when you want the ID under your own
+# control instead of having it generated from the pod's IP address. Setting it on any
+# multi-replica workload is rejected at template time: one explicit value is shared by every
+# replica, which would guarantee duplicate certificate serial numbers.
+#
+# Behavior when left empty:
+#   * workloadType "StatefulSet": each replica derives a unique ID from its pod ordinal
+#     (apps.kubernetes.io/pod-index) — recommended for multi-replica signing.
+#   * workloadType "Deployment": Core derives the ID from the last two octets of the pod's
+#     IPv4. Two pods that share those octets get the same ID, so their serial numbers may
+#     collide. This can happen across separate clusters, or within a pod network whose prefix
+#     is smaller than /16 (e.g. /8 or /12).
+platformInstanceId: ""
+
 javaOpts: ""
 
 auth:

@@ -61,6 +61,43 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
+{{/*
+Resolve the effective Core workload type, applying the default once.
+Consumed by core-deployment.yaml and NOTES.txt so the default lives in a single place.
+*/}}
+{{- define "ilm.workloadType" -}}
+{{- .Values.workloadType | default "Deployment" -}}
+{{- end -}}
+
+{{/*
+Resolve the effective replica count (global overrides local). Single source of truth consumed
+by core-deployment.yaml and ilm.core.multiReplica so the pluck order lives in one place.
+*/}}
+{{- define "ilm.core.effectiveReplicaCount" -}}
+{{- pluck "replicaCount" .Values.global .Values | compact | first -}}
+{{- end -}}
+
+{{/*
+Whether Core is configured for multiple replicas (effective replicaCount > 1, or autoscaling
+enabled with maxReplicas > 1). Returns "true" or "". Consumed by core-deployment.yaml and
+NOTES.txt so the rule lives in one place.
+*/}}
+{{- define "ilm.core.multiReplica" -}}
+{{- $replicaCount := include "ilm.core.effectiveReplicaCount" . -}}
+{{- $autoscalingEnabled := .Values.autoscaling.enabled -}}
+{{- $maxReplicas := .Values.autoscaling.maxReplicas -}}
+{{- if or (gt (int $replicaCount) 1) (and $autoscalingEnabled (gt (int $maxReplicas) 1)) -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+Validate autoscaling configuration. Call once from any template that processes autoscaling.
+*/}}
+{{- define "ilm.core.validateAutoscaling" -}}
+{{- if and .Values.autoscaling.enabled (lt (int .Values.autoscaling.maxReplicas) 1) -}}
+{{- fail (printf "autoscaling.maxReplicas must be a positive integer, got: %v" .Values.autoscaling.maxReplicas) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "ilm.registerConnectors" -}}
 {{- if .Values.commonCredentialProvider.enabled }}
 registerConnectors: true

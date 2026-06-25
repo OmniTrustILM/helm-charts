@@ -1,4 +1,4 @@
-{{- $replicaCount := pluck "replicaCount" .Values.global .Values | compact | first }}
+{{- $replicaCount := include "ilm.core.effectiveReplicaCount" . }}
 {{- $username := pluck "username" .Values.global.admin .Values.registerAdmin.admin | compact | first | quote }}
 {{- $name := pluck "name" .Values.global.admin .Values.registerAdmin.admin | compact | first | quote }}
 {{- $surname := pluck "surname" .Values.global.admin .Values.registerAdmin.admin | compact | first | quote }}
@@ -19,9 +19,23 @@
 {{- $messagingHost = pluck "host" .Values.global.messaging.external .Values.messaging.external | compact | first }}
 {{- $messagingAmqpPort = pluck "port" .Values.global.messaging.external.amqp .Values.messaging.external.amqp | compact | first }}
 {{- end }}
-{{- $workloadType := .Values.workloadType | default "Deployment" }}
+{{- include "ilm.core.validateAutoscaling" . }}
+{{- $workloadType := include "ilm.workloadType" . }}
 {{- if not (or (eq $workloadType "Deployment") (eq $workloadType "StatefulSet")) }}
 {{- fail (printf "workloadType must be either \"Deployment\" or \"StatefulSet\", got: %s" $workloadType) }}
+{{- end }}
+{{- /* Explicit platform instance id (operator-assigned). */}}
+{{- $platformInstanceId := .Values.platformInstanceId }}
+{{- $platformInstanceIdSet := and (hasKey .Values "platformInstanceId") (ne (toString $platformInstanceId) "") }}
+{{- if $platformInstanceIdSet }}
+{{- $pid := toString $platformInstanceId }}
+{{- if or (not (regexMatch "^[0-9]+$" $pid)) (gt (int $platformInstanceId) 65535) }}
+{{- fail (printf "platformInstanceId must be an integer in 0-65535, got: %s" $pid) }}
+{{- end }}
+{{- end }}
+{{- $multiReplica := eq (include "ilm.core.multiReplica" .) "true" }}
+{{- if and $platformInstanceIdSet $multiReplica }}
+{{- fail "platformInstanceId is set together with multiple replicas (replicaCount > 1 or autoscaling.enabled with maxReplicas > 1). An explicit id is a single value shared by every replica, so all Core replicas would emit IDENTICAL certificate serial numbers. For multi-replica signing use workloadType: \"StatefulSet\" and LEAVE platformInstanceId UNSET so each replica derives a unique id from its pod ordinal; set platformInstanceId only for a single-replica workload." }}
 {{- end }}
 apiVersion: apps/v1
 kind: {{ $workloadType }}
@@ -205,6 +219,22 @@ spec:
                   key: jdbcPassword
             - name: LOGGING_LEVEL_COM_OTILM
               value: {{ .Values.logging.level | quote }}
+            {{- /* PLATFORM_INSTANCE_ID: stable, unique 0-65535 integer per Core replica for the serial number generator. */}}
+            {{- if $platformInstanceIdSet }}
+            - name: PLATFORM_INSTANCE_ID
+              value: {{ $platformInstanceId | quote }}
+            {{- else if eq $workloadType "StatefulSet" }}
+            {{- /* StatefulSet pods carry a stable 0-based ordinal exposed as the apps.kubernetes.io/pod-index */}}
+            {{- /* downward-API label: a small integer in 0-65535, stable across restarts. */}}
+            {{- if not (semverCompare ">=1.28.0-0" .Capabilities.KubeVersion.GitVersion) }}
+            {{- fail (printf "workloadType \"StatefulSet\" derives PLATFORM_INSTANCE_ID from the apps.kubernetes.io/pod-index label, which Kubernetes auto-stamps only on v1.28+ (got %s). On older clusters the id would silently resolve to \"\" and Core would fall back to IP-derivation, risking duplicate certificate serial numbers. Upgrade the cluster to v1.28+, or set an explicit platformInstanceId on a single-replica workload." .Capabilities.KubeVersion.GitVersion) }}
+            {{- end }}
+            - name: PLATFORM_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+            {{- end }}
+            {{- /* Otherwise (Deployment, no explicit id) PLATFORM_INSTANCE_ID is unset and Core falls back to IP-derivation. */}}
             {{- if .Values.registerAdmin.enabled }}
             - name: ADMIN_CERT
               valueFrom:

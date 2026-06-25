@@ -36,4 +36,36 @@
   Import the certificate to your browser!
 {{- end }}
 
+{{- $workloadType := include "ilm.workloadType" . }}
+{{- include "ilm.core.validateAutoscaling" . }}
+{{- $multiReplica := eq (include "ilm.core.multiReplica" .) "true" }}
+{{- if and (eq $workloadType "Deployment") $multiReplica }}
+
+!! WARNING: Core is configured to potentially run more than one replica, but not safely
+
+   You have set replicaCount > 1 (or autoscaling with maxReplicas > 1), and Core is
+   configured as a Deployment (workloadType: "Deployment"). This combination is unsafe.
+
+   A Deployment gives its replicas no stable identity, so there is no safe automatic
+   way to assign each replica a unique instance id. Instead, each replica derives its
+   id from its pod IP, and two replicas can end up with the SAME id. When that happens,
+   they produce duplicate certificate serial numbers, which is not allowed and can break
+   trust in the serialnumbers Core issues to timestamps.
+
+   !! ACTION REQUIRED: switch to StatefulSet
+
+      Set workloadType: "StatefulSet" in your values. A StatefulSet assigns each replica
+      a stable ordinal (0, 1, 2, …) and Core uses that ordinal as its unique instance id —
+      no collisions are possible, and the id survives pod restarts and rescheduling.
+
+      Example:
+        workloadType: "StatefulSet"
+
+   Alternatively, reduce to a single replica (replicaCount: 1) and optionally pin its
+   id with `platformInstanceId` if you need a specific value.
+
+   Until you act, any replica beyond the first will start with a warning in its log and
+   use a pod-IP-derived id that may collide.
+{{- end }}
+
 DO NOT FORGET TO SAVE YOUR CONFIGURATION, YOU WILL NEED IT!

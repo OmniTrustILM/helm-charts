@@ -127,6 +127,15 @@ jobs:
             echo "✅ Charts changed"
             echo "changed=true" >> $GITHUB_ENV
 
+            # The ilm umbrella packages a frozen copy of every subchart, so a
+            # subchart-only change still needs the umbrella linted and installed.
+            # Record whether the umbrella itself is already in the changed set.
+            if echo "$changed" | grep -qx "charts/ilm"; then
+              echo "umbrella_in_set=true" >> $GITHUB_ENV
+            else
+              echo "umbrella_in_set=false" >> $GITHUB_ENV
+            fi
+
             echo "changed_charts<<EOF" >> $GITHUB_ENV
             echo "$changed" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
@@ -195,6 +204,19 @@ jobs:
       - name: Run chart-testing (install)
         if: env.changed == 'true'
         run: ct install --remote upstream --namespace chart-testing --target-branch "$BASE_BRANCH" --excluded-charts ilm-lib
+
+      # ct only tests charts whose own files changed, so a subchart-only change
+      # skips the umbrella — yet the umbrella is what gets deployed. Lint and
+      # fully install it so the change is validated end-to-end before publish.
+      - name: Lint ilm umbrella (subchart change)
+        if: env.changed == 'true' && env.umbrella_in_set != 'true'
+        run: |
+          helm dependency update charts/ilm
+          ct lint --remote upstream --target-branch "$BASE_BRANCH" --charts charts/ilm --check-version-increment=false
+
+      - name: Install ilm umbrella (subchart change)
+        if: env.changed == 'true' && env.umbrella_in_set != 'true'
+        run: ct install --remote upstream --namespace chart-testing --charts charts/ilm
 
       - name: Finalize GitHub Check
         if: always()

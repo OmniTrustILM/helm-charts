@@ -407,7 +407,6 @@ timeQualityMonitor:
   # Enables the time-quality-monitor sidecar container.
   # Core's time-quality messaging integration is enabled separately via messaging.timeQuality.enabled.
   enabled: false
-  port: 8082
   image:
     # default registry name
     registry: hub.omnitrustregistry.com

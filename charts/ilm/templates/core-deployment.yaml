@@ -404,10 +404,11 @@ spec:
           {{- end }}
         {{- if and .Values.timeQualityMonitor .Values.timeQualityMonitor.enabled }}
         - name: time-quality-monitor
+          {{- $tqmPort := 8082 }}
           image: {{ include "ilm.timeQualityMonitor.image" . }}
           imagePullPolicy: {{ .Values.timeQualityMonitor.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.timeQualityMonitor.port }}
+            - containerPort: {{ $tqmPort }}
           {{- if .Values.timeQualityMonitor.image.command }}
           command: {{- include "ilm.timeQualityMonitor.image.command" . | nindent 12 }}
           {{- end }}
@@ -416,7 +417,7 @@ spec:
           {{- end }}
           env:
             - name: LISTEN_PORT
-              value: {{ .Values.timeQualityMonitor.port | quote }}
+              value: {{ $tqmPort | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.timeQualityMonitor.logging.level | quote }}
             - name: BROKER_HOST
@@ -451,7 +452,7 @@ spec:
             {{- else }}
             httpGet:
               path: /health
-              port: {{ .Values.timeQualityMonitor.port }}
+              port: {{ $tqmPort }}
             {{- end }}
             initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.timeoutSeconds }}
@@ -466,7 +467,7 @@ spec:
             {{- else }}
             httpGet:
               path: /health
-              port: {{ .Values.timeQualityMonitor.port }}
+              port: {{ $tqmPort }}
             {{- end }}
             initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.timeoutSeconds }}
@@ -481,7 +482,7 @@ spec:
             {{- else }}
             httpGet:
               path: /health
-              port: {{ .Values.timeQualityMonitor.port }}
+              port: {{ $tqmPort }}
             {{- end }}
             initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.startup.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.startup.timeoutSeconds }}

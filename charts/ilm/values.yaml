@@ -665,8 +665,8 @@ hashicorpVaultConnector:
   nameOverride: hashicorp-vault-connector
   enabled: false
 
-timestampFormatterConnector:
-  nameOverride: timestamp-formatter-connector
+timestampFormattingConnector:
+  nameOverride: timestamp-formatting-connector
   enabled: false
 
 x509ComplianceProvider:

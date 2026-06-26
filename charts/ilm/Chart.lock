@@ -41,8 +41,8 @@ dependencies:
 - name: hashicorp-vault-connector
   repository: file://../hashicorp-vault-connector
   version: 1.2.0-1
-- name: timestamp-formatter-connector
-  repository: file://../timestamp-formatter-connector
+- name: timestamp-formatting-connector
+  repository: file://../timestamp-formatting-connector
   version: 1.0.0-develop
 - name: utils-service
   repository: file://../utils-service
@@ -74,5 +74,5 @@ dependencies:
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-2
-digest: sha256:25b9bc185aa1e6a96cce88f2d813c7e5d6545dd7ee781bde733838017266620c
-generated: "2026-06-21T23:32:28.099202+02:00"
+digest: sha256:92e54ab6be8166226bbf3ade669ecb37e1b90f1526b55467206ed07e9f00d82c
+generated: "2026-06-26T15:07:05.808455+02:00"

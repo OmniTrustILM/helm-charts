@@ -2,29 +2,29 @@
 {{- $httpProxy := pluck "httpProxy" .Values.global .Values | compact | first }}
 {{- $httpsProxy := pluck "httpsProxy" .Values.global .Values | compact | first }}
 {{- $noProxy := pluck "noProxy" .Values.global .Values | compact | first }}
-{{- $additionalInitContainers := (include "timestamp-formatter-connector.customization.initContainers" $) }}
-{{- $additionalSidecarContainers := (include "timestamp-formatter-connector.customization.sidecarContainers" $) }}
-{{- $additionalVolumes := (include "timestamp-formatter-connector.customization.volumes" $) }}
-{{- $additionalVolumeMounts := (include "timestamp-formatter-connector.customization.volumeMounts" $) }}
-{{- $additionalEnv := (include "timestamp-formatter-connector.customization.env" $) }}
-{{- $additionalEnvFrom := (include "timestamp-formatter-connector.customization.envFrom" $) }}
+{{- $additionalInitContainers := (include "timestamp-formatting-connector.customization.initContainers" $) }}
+{{- $additionalSidecarContainers := (include "timestamp-formatting-connector.customization.sidecarContainers" $) }}
+{{- $additionalVolumes := (include "timestamp-formatting-connector.customization.volumes" $) }}
+{{- $additionalVolumeMounts := (include "timestamp-formatting-connector.customization.volumeMounts" $) }}
+{{- $additionalEnv := (include "timestamp-formatting-connector.customization.env" $) }}
+{{- $additionalEnvFrom := (include "timestamp-formatting-connector.customization.envFrom" $) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: timestamp-formatter-connector-deployment
+  name: timestamp-formatting-connector-deployment
   labels:
-    {{- include "timestamp-formatter-connector.labels" . | nindent 4 }}
+    {{- include "timestamp-formatting-connector.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ $replicaCount | default 1 }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "timestamp-formatter-connector.selectorLabels" . | nindent 6 }}
+      {{- include "timestamp-formatting-connector.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "timestamp-formatter-connector.selectorLabels" . | nindent 8 }}
+        {{- include "timestamp-formatting-connector.selectorLabels" . | nindent 8 }}
       {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -37,24 +37,24 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- include "timestamp-formatter-connector.imagePullSecrets" . | indent 6 }}
+      {{- include "timestamp-formatting-connector.imagePullSecrets" . | indent 6 }}
       {{- if .Values.podSecurityContext }}
       securityContext: {{- .Values.podSecurityContext | toYaml | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ template "timestamp-formatter-connector.serviceAccountName" . }}
+      serviceAccountName: {{ template "timestamp-formatting-connector.serviceAccountName" . }}
       {{- if $additionalInitContainers }}
       initContainers:
         {{- $additionalInitContainers | nindent 8 }}
       {{- end }}
       containers:
-        - name: timestamp-formatter-connector
-          image: {{ include "timestamp-formatter-connector.image" . }}
+        - name: timestamp-formatting-connector
+          image: {{ include "timestamp-formatting-connector.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- if .Values.image.command }}
-          command: {{- include "timestamp-formatter-connector.image.command" . | nindent 12 }}
+          command: {{- include "timestamp-formatting-connector.image.command" . | nindent 12 }}
           {{- end }}
           {{- if .Values.image.args }}
-          args: {{- include "timestamp-formatter-connector.image.args" . | nindent 12 }}
+          args: {{- include "timestamp-formatting-connector.image.args" . | nindent 12 }}
           {{- end }}
           env:
             - name: SERVER_PORT
@@ -155,7 +155,7 @@ spec:
         {{- end }}
       volumes:
         - name: ephemeral
-          {{- include "timestamp-formatter-connector.ephemeralVolume" . | indent 10 }}
+          {{- include "timestamp-formatting-connector.ephemeralVolume" . | indent 10 }}
         {{- if $additionalVolumes }}
           {{- $additionalVolumes | nindent 8 }}
         {{- end }}

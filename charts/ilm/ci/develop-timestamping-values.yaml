@@ -97,7 +97,7 @@ timeQualityMonitor:
     tag: develop-latest
     pullPolicy: Always
 
-timestampFormatterConnector:
+timestampFormattingConnector:
   enabled: true
   image:
     tag: develop-latest

@@ -2,8 +2,8 @@ annotations:
   category: trustLifecycleManagement
 apiVersion: v2
 appVersion: 1.0.0
-name: timestamp-formatter-connector
-description: A Helm chart for Timestamp Formatter Connector for ILM platform.
+name: timestamp-formatting-connector
+description: A Helm chart for Timestamp Formatting Connector for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
 icon: https://raw.githubusercontent.com/OmniTrustILM/ilm/main/icon/ot-icon-color.svg
 dependencies:
@@ -19,7 +19,8 @@ keywords:
   - platform
   - timestamp
   - signature
-  - formatter
+  - formatting
+  - provider
 maintainers:
   - name: OmniTrustILM
     email: ilm@omnitrust.com

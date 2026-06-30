@@ -27,7 +27,7 @@ kubectl create namespace ilm
 > **Note**
 > You can also use `--set` options for the helm to apply configuration for the chart.
 
-Now edit the `values.yaml` according to your desired stated, see [Configurable parameters](#configurable-parameters) for more information.
+Now edit the `values.yaml` according to your desired state, see [Configurable parameters](#configurable-parameters) for more information.
 
 **Install**
 
@@ -60,7 +60,7 @@ helm uninstall --namespace ilm ilm-otpki-connector
 ## Configurable parameters
 
 You can find current values in the [values.yaml](values.yaml).
-You can also Specify each parameter using the `--set` or `--set-file` argument to `helm install`.
+You can also specify each parameter using the `--set` or `--set-file` argument to `helm install`.
 
 ### Global parameters
 

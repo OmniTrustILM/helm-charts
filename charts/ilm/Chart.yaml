@@ -49,6 +49,14 @@ dependencies:
       - discovery-provider
     version: 1.1.6-1
     alias: pyAdcsConnector
+  - condition: otpkiConnector.enabled
+    name: otpki-connector
+    # repository: oci://hub.omnitrustregistry.com/ilm-helm
+    repository: file://../otpki-connector
+    tags:
+      - authority-provider
+    version: 1.0.0-1-develop
+    alias: otpkiConnector
   - condition: x509ComplianceProvider.enabled
     name: x509-compliance-provider
     # repository: oci://hub.omnitrustregistry.com/ilm-helm

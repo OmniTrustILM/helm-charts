@@ -83,6 +83,11 @@ spec:
             -d '{"name": "PyADCS-Connector","url": "http://pyadcs-connector-service:{{ .Values.pyAdcsConnector.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
+            {{- if .Values.otpkiConnector.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "OTPKI-Connector", "version": "v2", "url": "http://otpki-connector-service:{{ .Values.otpkiConnector.service.port }}","authType": "none", "customAttributes": []}' \
+            http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
+            {{- end }}
             {{- if .Values.hashicorpVaultConnector.enabled }}
             curl -X POST -k -H 'content-type: application/json' \
             -d '{"name": "HashiCorp-Vault-Connector","url": "http://hashicorp-vault-connector-service:{{ .Values.hashicorpVaultConnector.service.port }}","authType": "none"}' \

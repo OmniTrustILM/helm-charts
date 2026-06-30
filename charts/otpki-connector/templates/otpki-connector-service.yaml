@@ -1,0 +1,17 @@
+{{- $additionalPorts := (include "otpki-connector.customization.ports" $) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: otpki-connector-service
+  labels:
+    {{- include "otpki-connector.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      protocol: "TCP"
+    {{- if $additionalPorts }}
+      {{- $additionalPorts | nindent 4 }}
+    {{- end }}
+  selector:
+    {{- include "otpki-connector.selectorLabels" . | nindent 4 }}

@@ -660,6 +660,10 @@ pyAdcsConnector:
   nameOverride: pyadcs-connector
   enabled: false
 
+otpkiConnector:
+  nameOverride: otpki-connector
+  enabled: false
+
 hashicorpVaultConnector:
   nameOverride: hashicorp-vault-connector
   enabled: false

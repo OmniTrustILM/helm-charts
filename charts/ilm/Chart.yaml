@@ -55,7 +55,7 @@ dependencies:
     repository: file://../otpki-connector
     tags:
       - authority-provider
-    version: 1.0.0-develop
+    version: 1.0.0-1-develop
     alias: otpkiConnector
   - condition: x509ComplianceProvider.enabled
     name: x509-compliance-provider

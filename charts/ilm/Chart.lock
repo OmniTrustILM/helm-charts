@@ -14,6 +14,9 @@ dependencies:
 - name: pyadcs-connector
   repository: file://../pyadcs-connector
   version: 1.1.6-1
+- name: otpki-connector
+  repository: file://../otpki-connector
+  version: 1.0.0-develop
 - name: x509-compliance-provider
   repository: file://../x509-compliance-provider
   version: 1.3.1-3
@@ -71,5 +74,5 @@ dependencies:
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-2
-digest: sha256:fb9a26001a458be007c8dbe75e5a7817ce1cf8a76f6b12b807680abf65cf8250
-generated: "2026-06-16T11:40:55.605634+02:00"
+digest: sha256:336ba3fc2d1a676b53a2cbbd034d0d9b02348be35589a19f9d67855dbc562b55
+generated: "2026-06-30T11:51:07.4492907+02:00"

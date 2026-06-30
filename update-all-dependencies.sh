@@ -51,6 +51,9 @@ helm dependency update charts/messaging-rabbitmq --skip-refresh
 echo "Updating dependencies for network-discovery-provider..."
 helm dependency update charts/network-discovery-provider --skip-refresh
 
+echo "Updating dependencies for otpki-connector..."
+helm dependency update charts/otpki-connector --skip-refresh
+
 echo "Updating dependencies for pyadcs-connector..."
 helm dependency update charts/pyadcs-connector --skip-refresh
 

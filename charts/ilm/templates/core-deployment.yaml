@@ -10,6 +10,7 @@
 {{- $additionalEnv := (include "ilm.customization.env" $) }}
 {{- $additionalEnvFrom := (include "ilm.customization.envFrom" $) }}
 {{- $scripts := or .Values.global.keycloak.enabled .Values.registerAdmin.enabled }}
+{{- $timeQualityEnabled := or (dig "timeQuality" "enabled" false .Values.global.messaging) (dig "timeQuality" "enabled" false .Values.messaging) }}
 {{- $messagingHost := .Values.messaging.host }}
 {{- $messagingAmqpPort := .Values.messaging.amqp.port }}
 {{- $externalMessaging := pluck "enabled" .Values.global.messaging.external .Values.messaging.external | compact | first }}
@@ -276,6 +277,8 @@ spec:
                   key: messaging.core.password
             - name: BROKER_VIRTUAL_HOST
               value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}
+            - name: MESSAGING_TIME_QUALITY_ENABLED
+              value: {{ $timeQualityEnabled | ternary "true" "false" | quote }}
             - name: SCHEDULER_BASE_URL
               value: "http://scheduler-service-service:{{ .Values.schedulerService.service.port }}"
             {{- if .Values.global.keycloak.enabled }}
@@ -399,6 +402,98 @@ spec:
                     /opt/ilm/scripts/register-internal-keycloak.sh $INTERNAL_OAUTH_SECRET;
                     {{- end }}
           {{- end }}
+        {{- if and .Values.timeQualityMonitor .Values.timeQualityMonitor.enabled }}
+        - name: time-quality-monitor
+          {{- $tqmPort := 8082 }}
+          image: {{ include "ilm.timeQualityMonitor.image" . }}
+          imagePullPolicy: {{ .Values.timeQualityMonitor.image.pullPolicy }}
+          ports:
+            - containerPort: {{ $tqmPort }}
+          {{- if .Values.timeQualityMonitor.image.command }}
+          command: {{- include "ilm.timeQualityMonitor.image.command" . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.args }}
+          args: {{- include "ilm.timeQualityMonitor.image.args" . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: LISTEN_PORT
+              value: {{ $tqmPort | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.timeQualityMonitor.logging.level | quote }}
+            - name: BROKER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: messaging-configmap
+                  key: messaging.host
+            - name: BROKER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: messaging-configmap
+                  key: messaging.amqp.port
+            - name: BROKER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secret
+                  key: messaging.time-quality-monitor.username
+            - name: BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secret
+                  key: messaging.time-quality-monitor.password
+            - name: BROKER_VIRTUAL_HOST
+              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}
+          {{- if .Values.timeQualityMonitor.image.securityContext }}
+          securityContext: {{- .Values.timeQualityMonitor.image.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.liveness.enabled }}
+          livenessProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.liveness.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.liveness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ $tqmPort }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.liveness.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.readiness.enabled }}
+          readinessProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.readiness.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.readiness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ $tqmPort }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.readiness.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.startup.enabled }}
+          startupProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.startup.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.startup.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ $tqmPort }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.startup.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.startup.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.startup.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.startup.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.startup.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.resources }}
+          resources: {{- toYaml .Values.timeQualityMonitor.image.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
         {{- if $additionalSidecarContainers }}
           {{- $additionalSidecarContainers | nindent 8 }}
         {{- end }}

@@ -1,0 +1,17 @@
+{{- $additionalPorts := (include "timestamp-formatting-connector.customization.ports" $) }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    {{- include "timestamp-formatting-connector.labels" . | nindent 4 }}
+  name: timestamp-formatting-connector-service
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      protocol: "TCP"
+    {{- if $additionalPorts }}
+      {{- $additionalPorts | nindent 4 }}
+    {{- end }}
+  selector:
+    {{- include "timestamp-formatting-connector.selectorLabels" . | nindent 4 }}

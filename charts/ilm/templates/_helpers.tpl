@@ -136,7 +136,11 @@ Return the image name of the kubectl
 Return the image pull secret names
 */}}
 {{- define "ilm.imagePullSecrets" -}}
-{{ include "ilm-lib.images.pullSecrets" (dict "images" (list .Values.image .Values.opa.image .Values.curl.image .Values.kubectl.image) "global" .Values.global) }}
+{{- $images := list .Values.image .Values.opa.image .Values.curl.image .Values.kubectl.image }}
+{{- if .Values.timeQualityMonitor }}
+{{- $images = append $images .Values.timeQualityMonitor.image }}
+{{- end }}
+{{ include "ilm-lib.images.pullSecrets" (dict "images" $images "global" .Values.global) }}
 {{- end -}}
 
 {{/*
@@ -229,6 +233,21 @@ Render customized command and arguments, if any
 
 {{- define "ilm.opa.image.args" -}}
 {{- include "ilm-lib.tplvalues.render" (dict "value" .Values.opa.image.args "context" $) }}
+{{- end -}}
+
+{{/*
+Return the image name of the time-quality-monitor
+*/}}
+{{- define "ilm.timeQualityMonitor.image" -}}
+{{ include "ilm-lib.images.image" (dict "image" .Values.timeQualityMonitor.image "global" .Values.global) }}
+{{- end -}}
+
+{{- define "ilm.timeQualityMonitor.image.command" -}}
+{{- include "ilm-lib.tplvalues.render" (dict "value" .Values.timeQualityMonitor.image.command "context" $) }}
+{{- end -}}
+
+{{- define "ilm.timeQualityMonitor.image.args" -}}
+{{- include "ilm-lib.tplvalues.render" (dict "value" .Values.timeQualityMonitor.image.args "context" $) }}
 {{- end -}}
 
 {{/*

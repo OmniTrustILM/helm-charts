@@ -132,7 +132,7 @@ spec:
             {{- toYaml .Values.image.probes.startup.custom | nindent 12 }}
             {{- else }}
             httpGet:
-              path: /v2/health
+              path: /v2/health/liveness
               port: {{ .Values.service.port }}
             {{- end }}
             initialDelaySeconds: {{ .Values.image.probes.startup.initialDelaySeconds }}

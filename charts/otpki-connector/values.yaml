@@ -84,7 +84,7 @@ service:
 image:
   # default registry name
   registry: hub.omnitrustregistry.com
-  repository: ilm
+  repository: ilm-private
   name: otpki-connector
   tag: 1.0.0
   # the digest to be used instead of the tag

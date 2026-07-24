@@ -501,7 +501,7 @@ platformInstanceId: ""
 javaOpts: ""
 
 # Outbound connector API-client tuning (shared WebClient for all connector calls). Empty inherits
-# Core's default (in brackets); override via the CONNECTOR_API_CLIENT_* env var. Keep timeouts below
+# Core's default (in brackets); override via the CONNECTOR_API_CLIENT_* env vars. Keep timeouts below
 # Core's 120s transaction timeout.
 connectorApiClient:
   responseTimeout: ""  # [35s] time-to-response-headers guard

@@ -317,6 +317,23 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             {{- end }}
+            {{- /* Connector API-client tuning; unset values inherit Core's defaults. */}}
+            {{- with .Values.connectorApiClient.responseTimeout }}
+            - name: CONNECTOR_API_CLIENT_RESPONSE_TIMEOUT
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.connectorApiClient.connectTimeout }}
+            - name: CONNECTOR_API_CLIENT_CONNECT_TIMEOUT
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.connectorApiClient.maxConnections }}
+            - name: CONNECTOR_API_CLIENT_MAX_CONNECTIONS
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.connectorApiClient.pendingAcquireTimeout }}
+            - name: CONNECTOR_API_CLIENT_PENDING_ACQUIRE_TIMEOUT
+              value: {{ . | quote }}
+            {{- end }}
             {{- if $additionalEnv }}
               {{- $additionalEnv | nindent 12 }}
             {{- end }}

@@ -500,6 +500,15 @@ platformInstanceId: ""
 
 javaOpts: ""
 
+# Outbound connector API-client tuning (shared WebClient for all connector calls). Empty inherits
+# Core's default (in brackets); override via the CONNECTOR_API_CLIENT_* env var. Keep timeouts below
+# Core's 120s transaction timeout.
+connectorApiClient:
+  responseTimeout: ""       # [35s] time-to-response-headers guard
+  connectTimeout: ""        # [3s]  TCP connect guard
+  maxConnections: ""        # [20]  pool size per remote connector host
+  pendingAcquireTimeout: "" # [10s] wait for a pooled connection before load is shed
+
 auth:
   header:
     certificate: "ssl-client-cert"

@@ -98,6 +98,12 @@ jobs:
         if: env.changed == 'true'
         run: ct lint --target-branch "$BASE_BRANCH" --check-version-increment=false
 
+      # The provision-queue init container embeds a shell script whose safety
+      # depends on exact quoting; lint cannot catch regressions there.
+      - name: Test provision-queue init container
+        if: env.changed == 'true'
+        run: ./tests/provision-queue-test.sh
+
       # ct only lints charts whose own files changed, so a subchart-only change
       # skips the umbrella. Lint it explicitly to catch a broken umbrella render
       # before the heavier install tests run.

@@ -176,10 +176,25 @@ chmod +x "$WORK/stub/curl" "$WORK/stub/sleep"
 run_loop() {  # $1: canned file, $2: api key ("" = none); sets LOOP_EXIT, writes $WORK/loop-out.txt + $WORK/loop-args
   : > "$WORK/loop-args"; rm -f "$WORK/loop-state"
   LOOP_EXIT=0
+  # Run in the background under a bounded poll instead of blocking forever: if a
+  # regression turns the permanent-4xx branch back into a retry, the synthetic
+  # "stub exhausted" 499 would otherwise spin against the no-op sleep stub forever.
   env PATH="$WORK/stub:$PATH" \
       CURL_SCRIPT="$1" CURL_STATE="$WORK/loop-state" CURL_ARGS="$WORK/loop-args" \
       PROVISIONING_API_URL="http://stub" PROVISIONING_API_KEY="$2" \
-      sh "$WORK/default.sh" > "$WORK/loop-out.txt" 2>&1 || LOOP_EXIT=$?
+      sh "$WORK/default.sh" > "$WORK/loop-out.txt" 2>&1 &
+  pid=$!
+  tries=0
+  while kill -0 "$pid" 2>/dev/null; do
+    tries=$((tries + 1))
+    if [ "$tries" -gt 50 ]; then
+      kill -9 "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+      fail "run_loop scenario $1 did not terminate within the 5s budget — possible retry-loop regression"
+    fi
+    sleep 0.1
+  done
+  wait "$pid" || LOOP_EXIT=$?
 }
 requests() { wc -l < "$WORK/loop-args" | tr -d ' '; }
 

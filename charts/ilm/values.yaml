@@ -64,6 +64,17 @@ global:
   provisioning:
     apiUrl: ""
     apiKey: ""
+    queue:
+      # exchange (RabbitMQ) or customer topic (Service Bus) to bind the per-instance queue under;
+      # when the in-cluster provisioning-rabbitmq subchart is used it must match
+      # provisioningRabbitMq.bootstrap.proxy.exchange (enforced at render time)
+      exchange: "ilm-proxy"
+      # binding routing key; the literal ${HOSTNAME} token is replaced with the pod name at runtime
+      routingKey: "proxymessage.*.${HOSTNAME}"
+      # broker-specific queue arguments applied only when the queue is first created
+      # RabbitMQ: x-expires, x-message-ttl, ... Service Bus: autoDeleteOnIdle, defaultMessageTimeToLive, ...
+      properties:
+        x-expires: 1800000
   proxy:
     enabled: false
   utils:

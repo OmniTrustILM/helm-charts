@@ -262,11 +262,29 @@ RabbitMQ subchart instead of an externally configured provisioning API.
 Init container for provisioning per-instance AMQP queue.
 Rendered when proxy support is enabled and either the in-cluster bootstrap
 service or an external provisioning API is configured.
-Calls POST /api/v1/queues on the provisioning API with retry loop.
+Calls POST /api/v1/queues on the provisioning API. The JSON body is built
+from global.provisioning.queue.* values inside a quoted heredoc, so the
+shell never expands characters coming from values; only the literal
+${HOSTNAME} token is substituted with the pod name. Transport failures and
+transient statuses (408, 429, 5xx) are retried; other 4xx responses print
+the response body and fail the init container.
 */}}
 {{- define "ilm.initContainer.provisionQueue" -}}
 {{- $localProvisioningApi := eq (include "ilm.provisioning.useLocalSubchart" .) "true" }}
 {{- if and .Values.global.proxy.enabled (or .Values.provisioningRabbitMq.enabled .Values.global.provisioning.apiUrl) }}
+{{- $q := .Values.global.provisioning.queue | default dict }}
+{{- if not (and (kindIs "string" $q.exchange) $q.exchange) }}
+{{- fail "global.provisioning.queue.exchange must be a non-empty string" }}
+{{- end }}
+{{- if not (and (kindIs "string" $q.routingKey) $q.routingKey) }}
+{{- fail "global.provisioning.queue.routingKey must be a non-empty string" }}
+{{- end }}
+{{- if and $q.properties (not (kindIs "map" $q.properties)) }}
+{{- fail "global.provisioning.queue.properties must be a map" }}
+{{- end }}
+{{- if and $localProvisioningApi (ne $q.exchange .Values.provisioningRabbitMq.bootstrap.proxy.exchange) }}
+{{- fail (printf "global.provisioning.queue.exchange (%q) must match provisioningRabbitMq.bootstrap.proxy.exchange (%q) when the in-cluster provisioning service is used" $q.exchange .Values.provisioningRabbitMq.bootstrap.proxy.exchange) }}
+{{- end }}
 - name: provision-instance-queue
   image: {{ include "ilm.curl.image" . }}
   imagePullPolicy: {{ .Values.curl.image.pullPolicy }}
@@ -301,31 +319,50 @@ Calls POST /api/v1/queues on the provisioning API with retry loop.
     - -c
     - |
       HOSTNAME=$(hostname)
-      until
+      BODY=$(cat <<'EOF'
+      {
+        "name": "${HOSTNAME}",
+        "exchange": {{ $q.exchange | toJson }},
+        "routingKey": {{ $q.routingKey | toJson }},
+        "properties": {{ $q.properties | default dict | toJson }}
+      }
+      EOF
+      )
+      BODY=$(printf '%s' "$BODY" | sed "s/\${HOSTNAME}/${HOSTNAME}/g")
+      while true; do
         if [ -n "${PROVISIONING_API_KEY:-}" ]; then
-          curl -sf -X POST "${PROVISIONING_API_URL}/api/v1/queues" \
+          OUT=$(curl -s --connect-timeout 5 --max-time 30 -w '\n%{http_code}' -X POST "${PROVISIONING_API_URL}/api/v1/queues" \
             -H "Content-Type: application/json" \
             -H "X-API-Key: ${PROVISIONING_API_KEY}" \
-            -d "{
-              \"name\": \"${HOSTNAME}\",
-              \"exchange\": \"ilm-proxy\",
-              \"routingKey\": \"proxymessage.*.${HOSTNAME}\",
-              \"properties\": { \"x-expires\": 1800000 }
-            }"
+            -d "${BODY}")
+          RC=$?
         else
-          curl -sf -X POST "${PROVISIONING_API_URL}/api/v1/queues" \
+          OUT=$(curl -s --connect-timeout 5 --max-time 30 -w '\n%{http_code}' -X POST "${PROVISIONING_API_URL}/api/v1/queues" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"name\": \"${HOSTNAME}\",
-              \"exchange\": \"ilm-proxy\",
-              \"routingKey\": \"proxymessage.*.${HOSTNAME}\",
-              \"properties\": { \"x-expires\": 1800000 }
-            }"
+            -d "${BODY}")
+          RC=$?
         fi
-      do
-        echo "Waiting for provisioning API at ${PROVISIONING_API_URL}..."
-        sleep 5
+        if [ "$RC" -ne 0 ]; then
+          echo "Provisioning request to ${PROVISIONING_API_URL} failed (curl exit ${RC}), retrying in 5s..."
+          sleep 5
+          continue
+        fi
+        CODE=$(printf '%s' "$OUT" | tail -n 1)
+        RESPONSE=$(printf '%s' "$OUT" | sed '$d')
+        case "$CODE" in
+          2??)
+            echo "Instance queue provisioned for ${HOSTNAME}"
+            exit 0
+            ;;
+          408|429|5??)
+            echo "Provisioning API at ${PROVISIONING_API_URL} not ready (HTTP ${CODE}), retrying in 5s..."
+            sleep 5
+            ;;
+          *)
+            echo "Queue provisioning failed (HTTP ${CODE}): ${RESPONSE}"
+            exit 1
+            ;;
+        esac
       done
-      echo "Instance queue provisioned for ${HOSTNAME}"
 {{- end }}
 {{- end -}}

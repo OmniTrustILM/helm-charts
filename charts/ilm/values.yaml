@@ -70,12 +70,14 @@ global:
       # provisioningRabbitMq.bootstrap.proxy.exchange (enforced at render time)
       exchange: "ilm-proxy"
       # binding routing key; the literal ${HOSTNAME} token is replaced with the pod name at runtime
+      # (this substitution applies anywhere the token appears in the request body, not just here)
       routingKey: "proxymessage.*.${HOSTNAME}"
       # broker-specific queue arguments applied only when the queue is first created.
       # Left unset here on purpose: when the key is absent the chart sends the RabbitMQ
       # default {"x-expires": 1800000}. Setting it REPLACES that default entirely
       # (Helm deep-merges maps and cannot delete a default key, so the default lives
-      # in the template rather than here).
+      # in the template rather than here). The literal ${HOSTNAME} token, if present in a
+      # property value, is replaced with the pod name the same as elsewhere in the body.
       # RabbitMQ: x-expires, x-message-ttl, ... Service Bus: autoDeleteOnIdle, defaultMessageTimeToLive, ...
       # properties:
       #   autoDeleteOnIdle: "PT30M"

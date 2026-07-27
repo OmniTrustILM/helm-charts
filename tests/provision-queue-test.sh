@@ -104,6 +104,8 @@ jq -e . "$WORK/hostile.json" > /dev/null || fail "hostile body is not valid JSON
 [ "$(jq -r .exchange "$WORK/hostile.json")" = 'evil-$(touch pwned)-\back\slash-"quote-`tick`' ] \
   || fail "exchange not byte-exact: $(jq -r .exchange "$WORK/hostile.json")"
 [ "$(jq -r .name "$WORK/hostile.json")" = "core-test-0" ] || fail "hostname not substituted"
+[ "$(jq -r .properties.note "$WORK/hostile.json")" = 'has $dollar and $(sub) and `tick` and \slash' ] \
+  || fail "properties.note not byte-exact: $(jq -r .properties.note "$WORK/hostile.json")"
 pass "hostile characters safe and byte-exact"
 
 # --- 4. render-time validation ---
@@ -122,6 +124,23 @@ if helm template "$CHART" --set global.proxy.enabled=true --set provisioningRabb
   fail "scalar properties was not rejected"
 fi
 pass "scalar properties rejected"
+if helm template "$CHART" --set global.proxy.enabled=true --set provisioningRabbitMq.enabled=true \
+     --set 'global.provisioning.queue.properties=false' > /dev/null 2>&1; then
+  fail "boolean false properties was not rejected"
+fi
+pass "boolean false properties rejected"
+if helm template "$CHART" --set global.proxy.enabled=true --set provisioningRabbitMq.enabled=true \
+     --set-json 'global.provisioning.queue.properties=[]' > /dev/null 2>&1; then
+  fail "empty-array properties was not rejected"
+fi
+pass "empty-array properties rejected"
+# absent properties still yields the built-in default
+render_script --set global.proxy.enabled=true --set provisioningRabbitMq.enabled=true > "$WORK/absentprops.sh"
+mkdir "$WORK/run-absentprops"
+body_of "$WORK/absentprops.sh" "$WORK/run-absentprops" > "$WORK/absentprops.json"
+jq -e '.properties == {"x-expires":1800000}' "$WORK/absentprops.json" > /dev/null \
+  || fail "absent properties did not yield built-in default: $(jq -c .properties "$WORK/absentprops.json")"
+pass "absent properties yields built-in default"
 cat > "$WORK/badtype.yaml" <<'YAML'
 global:
   proxy:
@@ -205,6 +224,7 @@ run_loop "$WORK/case-a.txt" ""
 [ "$(requests)" -eq 2 ] || fail "case A: expected 2 requests, got $(requests)"
 [ "$(grep -c 'retrying' "$WORK/loop-out.txt")" -eq 1 ] || fail "case A: expected 1 retry line"
 grep -qF '"exchange": "ilm-proxy"' "$WORK/loop-args" || fail "case A: body not sent"
+grep -qF -e '-d {' "$WORK/loop-args" || fail "case A: -d flag not associated with the body value"
 pass "case A: 5xx retried then success"
 
 # B: permanent 403 -> fail fast, response body printed
@@ -229,6 +249,7 @@ printf '201|0|{}\n' > "$WORK/case-d.txt"
 run_loop "$WORK/case-d.txt" "secret-key"
 [ "$LOOP_EXIT" -eq 0 ] || fail "case D: expected exit 0, got $LOOP_EXIT"
 grep -qF 'X-API-Key: secret-key' "$WORK/loop-args" || fail "case D: X-API-Key header not sent"
+grep -qF -e '-H X-API-Key: secret-key' "$WORK/loop-args" || fail "case D: -H flag not associated with the X-API-Key value"
 pass "case D: API key header sent"
 
 # E: truncated transfer (HTTP 200 but curl exit 18) is a failure -> retried
@@ -238,5 +259,14 @@ run_loop "$WORK/case-e.txt" ""
 [ "$(requests)" -eq 2 ] || fail "case E: expected 2 requests, got $(requests)"
 grep -qF 'curl exit 18' "$WORK/loop-out.txt" || fail "case E: transport failure not detected despite HTTP 200"
 pass "case E: transport failure with HTTP status retried"
+
+# F: permanent transport failure (curl exit 3, malformed URL) -> fail fast, no retry
+printf '000|3|\n201|0|{}\n' > "$WORK/case-f.txt"
+run_loop "$WORK/case-f.txt" ""
+[ "$LOOP_EXIT" -eq 1 ] || fail "case F: expected exit 1, got $LOOP_EXIT: $(cat "$WORK/loop-out.txt")"
+[ "$(requests)" -eq 1 ] || fail "case F: expected 1 request, got $(requests)"
+grep -qF 'curl exit 3' "$WORK/loop-out.txt" || fail "case F: exit code not named in diagnostic"
+grep -qF 'http://stub' "$WORK/loop-out.txt" || fail "case F: URL not named in diagnostic"
+pass "case F: permanent curl exit code fails fast without retry"
 
 echo "ALL PROVISION-QUEUE TESTS PASSED"

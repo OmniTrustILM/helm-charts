@@ -99,9 +99,11 @@ jobs:
         run: ct lint --target-branch "$BASE_BRANCH" --check-version-increment=false
 
       # The provision-queue init container embeds a shell script whose safety
-      # depends on exact quoting; lint cannot catch regressions there.
+      # depends on exact quoting; lint cannot catch regressions there. Always run
+      # this (no `changed` gate): it must also run for PRs that only touch the
+      # test script itself, and the script is self-sufficient (it runs its own
+      # `helm dependency build`).
       - name: Test provision-queue init container
-        if: env.changed == 'true'
         run: ./tests/provision-queue-test.sh
 
       # ct only lints charts whose own files changed, so a subchart-only change

@@ -265,9 +265,11 @@ service or an external provisioning API is configured.
 Calls POST /api/v1/queues on the provisioning API. The JSON body is built
 from global.provisioning.queue.* values inside a quoted heredoc, so the
 shell never expands characters coming from values; only the literal
-${HOSTNAME} token is substituted with the pod name. Transport failures and
-transient statuses (408, 429, 5xx) are retried; other 4xx responses print
-the response body and fail the init container.
+${HOSTNAME} token is substituted with the pod name. Transient transport
+failures and transient statuses (408, 429, 5xx) are retried; permanent
+transport failures (curl exit 1 unsupported protocol, 3 malformed URL, 60
+TLS verification failure) and other 4xx responses print a diagnostic and
+fail the init container immediately.
 */}}
 {{- define "ilm.initContainer.provisionQueue" -}}
 {{- $localProvisioningApi := eq (include "ilm.provisioning.useLocalSubchart" .) "true" }}
@@ -279,7 +281,7 @@ the response body and fail the init container.
 {{- if not (and (kindIs "string" $q.routingKey) $q.routingKey) }}
 {{- fail "global.provisioning.queue.routingKey must be a non-empty string" }}
 {{- end }}
-{{- if and $q.properties (not (kindIs "map" $q.properties)) }}
+{{- if and (hasKey $q "properties") (not (kindIs "map" $q.properties)) }}
 {{- fail "global.provisioning.queue.properties must be a map" }}
 {{- end }}
 {{- $props := dict "x-expires" 1800000 }}
@@ -347,9 +349,17 @@ the response body and fail the init container.
           RC=$?
         fi
         if [ "$RC" -ne 0 ]; then
-          echo "Provisioning request to ${PROVISIONING_API_URL} failed (curl exit ${RC}), retrying in 5s..."
-          sleep 5
-          continue
+          case "$RC" in
+            1|3|60)
+              echo "Provisioning request to ${PROVISIONING_API_URL} failed permanently (curl exit ${RC}), not retrying"
+              exit 1
+              ;;
+            *)
+              echo "Provisioning request to ${PROVISIONING_API_URL} failed (curl exit ${RC}), retrying in 5s..."
+              sleep 5
+              continue
+              ;;
+          esac
         fi
         CODE=$(printf '%s' "$OUT" | tail -n 1)
         RESPONSE=$(printf '%s' "$OUT" | sed '$d')

@@ -71,10 +71,14 @@ global:
       exchange: "ilm-proxy"
       # binding routing key; the literal ${HOSTNAME} token is replaced with the pod name at runtime
       routingKey: "proxymessage.*.${HOSTNAME}"
-      # broker-specific queue arguments applied only when the queue is first created
+      # broker-specific queue arguments applied only when the queue is first created.
+      # Left unset here on purpose: when the key is absent the chart sends the RabbitMQ
+      # default {"x-expires": 1800000}. Setting it REPLACES that default entirely
+      # (Helm deep-merges maps and cannot delete a default key, so the default lives
+      # in the template rather than here).
       # RabbitMQ: x-expires, x-message-ttl, ... Service Bus: autoDeleteOnIdle, defaultMessageTimeToLive, ...
-      properties:
-        x-expires: 1800000
+      # properties:
+      #   autoDeleteOnIdle: "PT30M"
   proxy:
     enabled: false
   utils:

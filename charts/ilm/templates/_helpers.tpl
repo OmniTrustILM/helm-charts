@@ -282,6 +282,10 @@ the response body and fail the init container.
 {{- if and $q.properties (not (kindIs "map" $q.properties)) }}
 {{- fail "global.provisioning.queue.properties must be a map" }}
 {{- end }}
+{{- $props := dict "x-expires" 1800000 }}
+{{- if hasKey $q "properties" }}
+{{- $props = $q.properties | default dict }}
+{{- end }}
 {{- if and $localProvisioningApi (ne $q.exchange .Values.provisioningRabbitMq.bootstrap.proxy.exchange) }}
 {{- fail (printf "global.provisioning.queue.exchange (%q) must match provisioningRabbitMq.bootstrap.proxy.exchange (%q) when the in-cluster provisioning service is used" $q.exchange .Values.provisioningRabbitMq.bootstrap.proxy.exchange) }}
 {{- end }}
@@ -324,7 +328,7 @@ the response body and fail the init container.
         "name": "${HOSTNAME}",
         "exchange": {{ $q.exchange | toJson }},
         "routingKey": {{ $q.routingKey | toJson }},
-        "properties": {{ $q.properties | default dict | toJson }}
+        "properties": {{ $props | toJson }}
       }
       EOF
       )

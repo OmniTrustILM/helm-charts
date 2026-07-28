@@ -65,22 +65,29 @@ global:
     apiUrl: ""
     apiKey: ""
     queue:
-      # exchange (RabbitMQ) or customer topic (Service Bus) to bind the per-instance queue under;
-      # when the in-cluster provisioning-rabbitmq subchart is used it must match
-      # provisioningRabbitMq.bootstrap.proxy.exchange (enforced at render time)
+      # destination the per-instance queue is bound under, as understood by the
+      # provisioning service in use; when the in-cluster provisioning-rabbitmq subchart
+      # is used it must match provisioningRabbitMq.bootstrap.proxy.exchange (enforced at
+      # render time)
       exchange: "ilm-proxy"
       # binding routing key; the literal ${HOSTNAME} token is replaced with the pod name at runtime
-      # (this substitution applies anywhere the token appears in the request body, not just here)
+      # (this substitution applies anywhere the token appears in the request body, not just here).
+      # Each pod provisions its own queue under its own name, so a restarted or rescheduled
+      # pod provisions a fresh one; the queue belonging to the replaced pod is left to expire
+      # on its own according to the arguments below. Re-provisioning an existing queue is a
+      # no-op, so a stable pod name (workloadType: StatefulSet) simply reuses its queue.
       routingKey: "proxymessage.*.${HOSTNAME}"
-      # broker-specific queue arguments applied only when the queue is first created.
-      # Left unset here on purpose: when the key is absent the chart sends the RabbitMQ
-      # default {"x-expires": 1800000}. Setting it REPLACES that default entirely
-      # (Helm deep-merges maps and cannot delete a default key, so the default lives
-      # in the template rather than here). The literal ${HOSTNAME} token, if present in a
-      # property value, is replaced with the pod name the same as elsewhere in the body.
-      # RabbitMQ: x-expires, x-message-ttl, ... Service Bus: autoDeleteOnIdle, defaultMessageTimeToLive, ...
+      # queue arguments forwarded verbatim to the provisioning API when the queue is
+      # created. The chart does not interpret them; the set of valid keys is defined by
+      # the provisioning service implementation in use — see its documentation.
+      # Left unset here on purpose: when the key is absent the chart sends its default
+      # of {"x-expires": 1800000}, which preserves the behaviour of earlier chart
+      # versions. Setting it REPLACES that default entirely (Helm deep-merges maps and
+      # cannot delete a default key, so the default lives in the template rather than
+      # here). The literal ${HOSTNAME} token, if present in a property value, is
+      # replaced with the pod name the same as elsewhere in the body.
       # properties:
-      #   autoDeleteOnIdle: "PT30M"
+      #   someArgument: "value"
   proxy:
     enabled: false
   utils:

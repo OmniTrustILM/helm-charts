@@ -275,6 +275,9 @@ fail the init container immediately.
 {{- $localProvisioningApi := eq (include "ilm.provisioning.useLocalSubchart" .) "true" }}
 {{- if and .Values.global.proxy.enabled (or .Values.provisioningRabbitMq.enabled .Values.global.provisioning.apiUrl) }}
 {{- $q := .Values.global.provisioning.queue | default dict }}
+{{- if not (kindIs "map" $q) }}
+{{- fail "global.provisioning.queue must be a map" }}
+{{- end }}
 {{- if not (and (kindIs "string" $q.exchange) $q.exchange) }}
 {{- fail "global.provisioning.queue.exchange must be a non-empty string" }}
 {{- end }}
@@ -337,13 +340,13 @@ fail the init container immediately.
       BODY=$(printf '%s' "$BODY" | sed "s/\${HOSTNAME}/${HOSTNAME}/g")
       while true; do
         if [ -n "${PROVISIONING_API_KEY:-}" ]; then
-          OUT=$(curl -s --connect-timeout 5 --max-time 30 -w '\n%{http_code}' -X POST "${PROVISIONING_API_URL}/api/v1/queues" \
+          OUT=$(curl -sS --connect-timeout 5 --max-time 30 -w '\n%{http_code}' -X POST "${PROVISIONING_API_URL}/api/v1/queues" \
             -H "Content-Type: application/json" \
             -H "X-API-Key: ${PROVISIONING_API_KEY}" \
             -d "${BODY}")
           RC=$?
         else
-          OUT=$(curl -s --connect-timeout 5 --max-time 30 -w '\n%{http_code}' -X POST "${PROVISIONING_API_URL}/api/v1/queues" \
+          OUT=$(curl -sS --connect-timeout 5 --max-time 30 -w '\n%{http_code}' -X POST "${PROVISIONING_API_URL}/api/v1/queues" \
             -H "Content-Type: application/json" \
             -d "${BODY}")
           RC=$?

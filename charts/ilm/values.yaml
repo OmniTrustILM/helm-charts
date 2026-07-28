@@ -84,8 +84,10 @@ global:
       # its own defaults, so a deployment using a different service should set its own
       # entries here rather than rely on the default below.
       # This is a list, not a map, so setting it REPLACES the default outright; use an
-      # empty list to send no arguments at all. The literal ${HOSTNAME} token, if present
-      # in a value, is replaced with the pod name the same as elsewhere in the body.
+      # empty list to send no arguments at all. Setting it to null does not work: Helm
+      # discards null values while merging, so the default below is restored. Each name
+      # may appear only once. The literal ${HOSTNAME} token, if present in a value, is
+      # replaced with the pod name the same as elsewhere in the body.
       properties:
         - name: x-expires
           value: 1800000

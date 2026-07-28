@@ -298,6 +298,9 @@ fail the init container immediately.
 {{- if not (hasKey $p "value") }}
 {{- fail (printf "global.provisioning.queue.properties[%d] (%s) must have a value key" $i $p.name) }}
 {{- end }}
+{{- if hasKey $props $p.name }}
+{{- fail (printf "global.provisioning.queue.properties[%d] repeats name %q; each argument may be given once" $i $p.name) }}
+{{- end }}
 {{- $_ := set $props $p.name $p.value }}
 {{- end }}
 {{- if and $localProvisioningApi (ne $q.exchange .Values.provisioningRabbitMq.bootstrap.proxy.exchange) }}

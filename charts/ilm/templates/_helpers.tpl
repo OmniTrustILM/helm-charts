@@ -284,12 +284,21 @@ fail the init container immediately.
 {{- if not (and (kindIs "string" $q.routingKey) $q.routingKey) }}
 {{- fail "global.provisioning.queue.routingKey must be a non-empty string" }}
 {{- end }}
-{{- if and (hasKey $q "properties") (not (kindIs "map" $q.properties)) }}
-{{- fail "global.provisioning.queue.properties must be a map" }}
+{{- if and (hasKey $q "properties") (not (kindIs "slice" $q.properties)) (not (kindIs "invalid" $q.properties)) }}
+{{- fail "global.provisioning.queue.properties must be a list of name/value entries" }}
 {{- end }}
-{{- $props := dict "x-expires" 1800000 }}
-{{- if hasKey $q "properties" }}
-{{- $props = $q.properties | default dict }}
+{{- $props := dict }}
+{{- range $i, $p := $q.properties }}
+{{- if not (kindIs "map" $p) }}
+{{- fail (printf "global.provisioning.queue.properties[%d] must be a map with name and value keys" $i) }}
+{{- end }}
+{{- if not (and (kindIs "string" $p.name) $p.name) }}
+{{- fail (printf "global.provisioning.queue.properties[%d].name must be a non-empty string" $i) }}
+{{- end }}
+{{- if not (hasKey $p "value") }}
+{{- fail (printf "global.provisioning.queue.properties[%d] (%s) must have a value key" $i $p.name) }}
+{{- end }}
+{{- $_ := set $props $p.name $p.value }}
 {{- end }}
 {{- if and $localProvisioningApi (ne $q.exchange .Values.provisioningRabbitMq.bootstrap.proxy.exchange) }}
 {{- fail (printf "global.provisioning.queue.exchange (%q) must match provisioningRabbitMq.bootstrap.proxy.exchange (%q) when the in-cluster provisioning service is used" $q.exchange .Values.provisioningRabbitMq.bootstrap.proxy.exchange) }}

@@ -78,16 +78,17 @@ global:
       # no-op, so a stable pod name (workloadType: StatefulSet) simply reuses its queue.
       routingKey: "proxymessage.*.${HOSTNAME}"
       # queue arguments forwarded verbatim to the provisioning API when the queue is
-      # created. The chart does not interpret them; the set of valid keys is defined by
-      # the provisioning service implementation in use — see its documentation.
-      # Left unset here on purpose: when the key is absent the chart sends its default
-      # of {"x-expires": 1800000}, which preserves the behaviour of earlier chart
-      # versions. Setting it REPLACES that default entirely (Helm deep-merges maps and
-      # cannot delete a default key, so the default lives in the template rather than
-      # here). The literal ${HOSTNAME} token, if present in a property value, is
-      # replaced with the pod name the same as elsewhere in the body.
-      # properties:
-      #   someArgument: "value"
+      # created. The chart does not interpret them; the set of valid arguments is defined
+      # by the provisioning service implementation in use — see its documentation.
+      # A provisioning service ignores arguments it does not recognise and falls back to
+      # its own defaults, so a deployment using a different service should set its own
+      # entries here rather than rely on the default below.
+      # This is a list, not a map, so setting it REPLACES the default outright; use an
+      # empty list to send no arguments at all. The literal ${HOSTNAME} token, if present
+      # in a value, is replaced with the pod name the same as elsewhere in the body.
+      properties:
+        - name: x-expires
+          value: 1800000
   proxy:
     enabled: false
   utils:

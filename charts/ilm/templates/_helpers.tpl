@@ -259,7 +259,7 @@ RabbitMQ subchart instead of an externally configured provisioning API.
 {{- end -}}
 
 {{/*
-Init container for provisioning per-instance AMQP queue.
+Init container for provisioning the per-instance queue.
 Rendered when proxy support is enabled and either the in-cluster bootstrap
 service or an external provisioning API is configured.
 Calls POST /api/v1/queues on the provisioning API. The JSON body is built

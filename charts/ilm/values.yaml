@@ -66,9 +66,7 @@ global:
     apiKey: ""
     queue:
       # destination the per-instance queue is bound under, as understood by the
-      # provisioning service in use; when the in-cluster provisioning-rabbitmq subchart
-      # is used it must match provisioningRabbitMq.bootstrap.proxy.exchange (enforced at
-      # render time)
+      # provisioning service in use
       exchange: "ilm-proxy"
       # binding routing key; the literal ${HOSTNAME} token is replaced with the pod name at runtime
       # (this substitution applies anywhere the token appears in the request body, not just here).
@@ -85,9 +83,9 @@ global:
       # entries here rather than rely on the default below.
       # This is a list, not a map, so setting it REPLACES the default outright; use an
       # empty list to send no arguments at all. Setting it to null does not work: Helm
-      # discards null values while merging, so the default below is restored. Each name
-      # may appear only once. The literal ${HOSTNAME} token, if present in a value, is
-      # replaced with the pod name the same as elsewhere in the body.
+      # discards null values while merging, so the default below is restored. The literal
+      # ${HOSTNAME} token, if present in a value, is replaced with the pod name the same
+      # as elsewhere in the body.
       properties:
         - name: x-expires
           value: 1800000

@@ -3,28 +3,28 @@ annotations:
 apiVersion: v2
 appVersion: 1.6.3
 name: auth-service
-description: A Helm chart for CZERTAINLY Auth service.
-home: https://github.com/CZERTAINLY/CZERTAINLY-Auth
-icon: https://github.com/CZERTAINLY/CZERTAINLY/blob/master/czertainly-logo/czertainly_sign_color.svg
+description: A Helm chart for ILM Auth service.
+home: https://github.com/OmniTrustILM/ilm
+icon: https://raw.githubusercontent.com/OmniTrustILM/ilm/main/icon/ot-icon-color.svg
 dependencies:
-  - name: czertainly-lib
-    # repository: oci://harbor.3key.company/czertainly-helm
-    repository: file://../czertainly-lib
-    version: 1.4.2
+  - name: ilm-lib
+    # repository: oci://hub.omnitrustregistry.com/ilm-helm
+    repository: file://../ilm-lib
+    version: 1.4.2-1
 keywords:
-  - czertainly
+  - ilm
   - trust
   - management
   - lifecycle
   - platform
   - auth
 maintainers:
-  - name: CZERTAINLY
-    email: info@czertainly.com
-    url: https://github.com/CZERTAINLY/CZERTAINLY-Helm-Charts
+  - name: OmniTrustILM
+    email: ilm@omnitrust.com
+    url: https://github.com/OmniTrustILM/helm-charts
 type: application
 sources:
-  - https://github.com/CZERTAINLY/CZERTAINLY
-  - https://www.czertainly.com
-  - https://docs.czertainly.com
-version: 1.6.3-2-develop
+  - https://github.com/OmniTrustILM/ilm
+  - https://omnitrust.com
+  - https://docs.otilm.com
+version: 1.6.3-2

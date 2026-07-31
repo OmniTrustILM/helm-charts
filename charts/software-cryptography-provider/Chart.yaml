@@ -1,18 +1,18 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 1.3.0
+appVersion: 1.3.2
 name: software-cryptography-provider
-description: A Helm chart for Software Cryptography Provider for CZERTAINLY platform.
-home: https://github.com/3KeyCompany/CZERTAINLY-Keystore-Entity-Provider
-icon: https://github.com/3KeyCompany/CZERTAINLY/blob/master/czertainly-logo/czertainly_sign_color.svg
+description: A Helm chart for Software Cryptography Provider for ILM platform.
+home: https://github.com/OmniTrustILM/ilm
+icon: https://raw.githubusercontent.com/OmniTrustILM/ilm/main/icon/ot-icon-color.svg
 dependencies:
-  - name: czertainly-lib
-    # repository: oci://harbor.3key.company/czertainly-helm
-    repository: file://../czertainly-lib
-    version: 1.4.2
+  - name: ilm-lib
+    # repository: oci://hub.omnitrustregistry.com/ilm-helm
+    repository: file://../ilm-lib
+    version: 1.4.2-1
 keywords:
-  - czertainly
+  - ilm
   - trust
   - management
   - lifecycle
@@ -21,12 +21,12 @@ keywords:
   - cryptography
   - provider
 maintainers:
-  - name: CZERTAINLY
-    email: info@czertainly.com
-    url: https://github.com/3KeyCompany/CZERTAINLY-Helm-Charts
+  - name: OmniTrustILM
+    email: ilm@omnitrust.com
+    url: https://github.com/OmniTrustILM/helm-charts
 type: application
 sources:
-  - https://github.com/3KeyCompany/CZERTAINLY
-  - https://www.czertainly.com
-  - https://docs.czertainly.com
-version: 1.3.0-2
+  - https://github.com/OmniTrustILM/ilm
+  - https://omnitrust.com
+  - https://docs.otilm.com
+version: 1.3.2

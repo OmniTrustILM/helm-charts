@@ -9,7 +9,7 @@ database:
 image:
   tag: develop-latest
   pullSecrets:
-    - czertainlycred
+    - ilmcred
 
 smtp:
   host: "172.17.0.1"

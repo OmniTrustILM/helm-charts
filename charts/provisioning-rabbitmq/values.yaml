@@ -1,0 +1,171 @@
+nameOverride: provisioning-rabbitmq
+fullnameOverride: ""
+global:
+  replicaCount: 1
+  config:
+    enabled: false
+  image:
+    registry: ""
+    repository: ""
+    pullSecrets: []
+  volumes:
+    ephemeral:
+      type: ""
+      sizeLimit: ""
+      storageClassName: ""
+      custom: {}
+  messaging:
+    external:
+      enabled: false
+      host: ""
+      amqp:
+        port: ""
+    username: ""
+    password: ""
+    provisionerUsername: ""
+    provisionerPassword: ""
+    proxyUsername: ""
+    proxyPassword: ""
+  initContainers: []
+  sidecarContainers: []
+  additionalVolumes: []
+  additionalVolumeMounts: []
+  additionalPorts: []
+  additionalEnv:
+    variables: []
+    configMaps: []
+    secrets: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+replicaCount: 1
+
+service:
+  type: "ClusterIP"
+  port: 8077
+
+image:
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: provisioning-rabbitmq
+  tag: 1.0.0
+  digest: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  command: []
+  args: []
+  securityContext:
+    runAsNonRoot: true
+    readOnlyRootFilesystem: true
+  probes:
+    liveness:
+      enabled: false
+      custom: {}
+      initialDelaySeconds: 60
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    readiness:
+      enabled: true
+      custom: {}
+      initialDelaySeconds: 15
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    startup:
+      enabled: true
+      custom: {}
+      initialDelaySeconds: 15
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 45
+  resources: {}
+
+curl:
+  image:
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
+    tag: 8.16.0
+    digest: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+    command: []
+    args: []
+    securityContext:
+      runAsNonRoot: true
+      readOnlyRootFilesystem: true
+    resources: {}
+
+initContainers: []
+sidecarContainers: []
+additionalVolumes: []
+additionalVolumeMounts: []
+additionalPorts: []
+additionalEnv:
+  variables: []
+  configMaps: []
+  secrets: []
+
+volumes:
+  ephemeral:
+    type: memory
+    sizeLimit: "1Mi"
+    storageClassName: ""
+    custom: {}
+
+logging:
+  level: "INFO"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "provisioning-rabbitmq-sa"
+
+javaOpts: ""
+podLabels: {}
+podAnnotations: {}
+podSecurityContext: {}
+
+messaging:
+  local: false
+  external:
+    enabled: false
+    host: ""
+    amqp:
+      port: ""
+  # Admin connection credentials (provisioner user) for managing queues/exchanges
+  provisionerUsername: "provisioner"
+  provisionerPassword: "provisioner"
+  # Proxy user credentials – included in generated JWT tokens for proxy services
+  proxyUsername: "proxy"
+  proxyPassword: "proxy"
+  host: "messaging-service"
+  virtualHost: "/"
+  amqp:
+    port: 5672
+
+bootstrap:
+  proxy:
+    # AMQP URL that proxy services use to connect to RabbitMQ.
+    # When empty, auto-constructed as amqp://<messagingHost>:<messagingAmqpPort>
+    # using messaging.host/port (or messaging.external.* when external messaging is enabled).
+    # Set explicitly when proxies connect from outside the cluster via NodePort, LoadBalancer,
+    # or a dedicated TCP ingress that differs from the internal messaging address.
+    amqpUrl: ""
+    exchange: "ilm-proxy"
+    responseQueue: "core"
+  security:
+    # When true, the X-API-Key filter is enabled and apiKey must be set.
+    enabled: false
+    apiKey: ""
+  token:
+    # JWT signing key – must be at least 32 characters.
+    signingKey: ""

@@ -1,8 +1,8 @@
-# Default values for czertainly-common-credential-provider.
+# Default values for utils-service.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-nameOverride: ""
+nameOverride: utils-service
 fullnameOverride: ""
 
 global:
@@ -70,9 +70,9 @@ service:
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-utils-service
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: utils-service
   tag: 1.0.2
   # the digest to be used instead of the tag
   digest: ""
@@ -130,9 +130,9 @@ image:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""

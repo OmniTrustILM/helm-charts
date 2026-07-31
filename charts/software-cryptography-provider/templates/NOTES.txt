@@ -4,4 +4,4 @@ APP VERSION: {{ .Chart.AppVersion }}
 
 ** Please be patient while the chart is being deployed **
 
-Follow the steps described in the documentation in order to register the connector within the CZERTAINLY platform.
+Follow the steps described in the documentation in order to register the connector within the ILM platform.

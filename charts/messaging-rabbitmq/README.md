@@ -1,8 +1,8 @@
-# Messaging - RabbitMQ - CZERTAINLY
+# Messaging - RabbitMQ - ILM
 
-> This repository is part of the commercial open-source project CZERTAINLY. You can find more information about the project at [CZERTAINLY](https://github.com/3KeyCompany/CZERTAINLY) repository, including the contribution guide.
+> This repository is part of the commercial open-source project ILM. You can find more information about the project at [ILM](https://github.com/OmniTrustILM/ilm) repository, including the contribution guide.
 
-This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAINLY platform.
+This repository contains [Helm](https://helm.sh/) charts as part of the ILM platform.
 
 ## Prerequisites
 - Kubernetes 1.19+
@@ -17,7 +17,7 @@ This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAIN
 
 We’ll need to define a Kubernetes namespace where the resources created by the Chart should be installed:
 ```bash
-kubectl create namespace czertainly
+kubectl create namespace ilm
 ```
 
 **Create `values.yaml`**
@@ -27,7 +27,7 @@ kubectl create namespace czertainly
 
 Copy the default `values.yaml` from the Helm chart and modify the values accordingly:
 ```bash
-helm show values oci://harbor.3key.company/czertainly-helm/messaging-rabbitmq > values.yaml
+helm show values oci://hub.omnitrustregistry.com/ilm-helm/messaging-rabbitmq > values.yaml
 ```
 Now edit the `values.yaml` according to your desired stated, see [Configurable parameters](#configurable-parameters) for more information.
 
@@ -35,7 +35,7 @@ Now edit the `values.yaml` according to your desired stated, see [Configurable p
 
 For the basic installation, run:
 ```bash
-helm install --namespace czertainly -f values.yaml czertainly-messaging-rabbitmq oci://harbor.3key.company/czertainly-helm/messaging-rabbitmq
+helm install --namespace ilm -f values.yaml ilm-messaging-rabbitmq oci://hub.omnitrustregistry.com/ilm-helm/messaging-rabbitmq
 ```
 
 **Save your configuration**
@@ -49,14 +49,14 @@ Always make sure you save the `values.yaml` and all `--set` and `--set-file` opt
 
 For upgrading the installation, update your configuration and run:
 ```bash
-helm upgrade --namespace czertainly -f values.yaml czertainly-messaging-rabbitmq oci://harbor.3key.company/czertainly-helm/messaging-rabbitmq
+helm upgrade --namespace ilm -f values.yaml ilm-messaging-rabbitmq oci://hub.omnitrustregistry.com/ilm-helm/messaging-rabbitmq
 ```
 
 ### Uninstall
 
 You can use the `helm uninstall` command to uninstall the application:
 ```bash
-helm uninstall --namespace czertainly czertainly-messaging-rabbitmq
+helm uninstall --namespace ilm ilm-messaging-rabbitmq
 ```
 
 ## Configurable parameters
@@ -100,9 +100,11 @@ The following values may be configured:
 
 | Parameter                                    | Default value             | Description                                                                                                            |
 |----------------------------------------------|---------------------------|------------------------------------------------------------------------------------------------------------------------|
-| image.registry                               | `docker.io`               | Docker registry name for the image                                                                                     |
-| image.repository                             | `czertainly`              | Docker image repository name                                                                                           |
-| image.name                                   | `czertainly-rabbitmq`     | Docker image name                                                                                                      |
+| nameOverride                                 | `messaging-rabbitmq`                      | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
+| fullnameOverride                             | `""`                                      | Override for the fully qualified app name.                                                                             |
+| image.registry                               | `hub.omnitrustregistry.com`               | Docker registry name for the image                                                                                     |
+| image.repository                             | `ilm`              | Docker image repository name                                                                                           |
+| image.name                                   | `rabbitmq`     | Docker image name                                                                                                      |
 | image.tag                                    | `4.2.0`                   | Docker image tag                                                                                                       |
 | image.digest                                 | `""`                      | Docker image digest, will override tag if specified                                                                    |
 | image.pullPolicy                             | `IfNotPresent`            | Image pull policy                                                                                                      |
@@ -208,4 +210,4 @@ Persistence can be disabled by setting the `persistence.enabled` parameter to `f
 
 ### Global persistence configuration
 
-When the global configuration is enabled, meaning that this chart is used with the complete CZERTAINLY deployment, the persistence is managed globally by the umbrella chart. In this case, the local persistence configuration is ignored.
+When the global configuration is enabled, meaning that this chart is used with the complete ILM deployment, the persistence is managed globally by the umbrella chart. In this case, the local persistence configuration is ignored.

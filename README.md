@@ -1,25 +1,25 @@
-# CZERTAINLY-Helm-Charts
+# ILM-Helm-Charts
 
-> This repository is part of the commercial open-source project CZERTAINLY. You can find more information about the project at [CZERTAINLY](https://github.com/CZERTAINLY/CZERTAINLY) repository, including the contribution guide.
+> This repository is part of the commercial open-source project ILM. You can find more information about the project at [ILM](https://github.com/OmniTrustILM/ilm) repository, including the contribution guide.
 
-This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAINLY platform.
+This repository contains [Helm](https://helm.sh/) charts as part of the ILM platform.
 
 ## Quick start
 
-Use the [CZERTAINLY Chart](charts/czertainly) to deploy the platform.
+Use the [ILM Chart](charts/ilm) to deploy the platform.
 
 ## Structure of the charts
 
 The charts are built in a way that you can install them separately, if you want.
-There is one global [CZERTAINLY Chart](charts/czertainly) that acts as umbrella chart for the platform. You can use it to install complete platform including selected sub-charts as components of the platform.
+There is one global [ILM Chart](charts/ilm) that acts as umbrella chart for the platform. You can use it to install complete platform including selected sub-charts as components of the platform.
 
 ### List of charts
 
 **Library**
-- [CZERTAINLY Library](charts/czertainly-lib)
+- [ILM Library](charts/ilm-lib)
 
 **Core**
-- [CZERTAINLY](charts/czertainly) (**umbrella chart**)
+- [ILM](charts/ilm) (**umbrella chart**)
 - [Auth Service](charts/auth-service)
 - [Auth OPA Policies](charts/auth-opa-policies)
 - [Messaging RabbitMQ](charts/messaging-rabbitmq)
@@ -48,8 +48,8 @@ There is one global [CZERTAINLY Chart](charts/czertainly) that acts as umbrella 
 
 - [Keycloak Internal](charts/keycloak-internal) (internal Keycloak instance that can be used for authentication through OIDC and connect with various identity providers)
 > :warning:
-> For internal Keycloak to process request properly, it is important to have hostname of the CZERTAINLY platform included in the DNS resolver.
-> For local testing, you can upgrade the CZERTAINLY chart with the `--set apiGateway.hostAliases.resolveInternalKeycloak=true`. This will resolve the internal Keycloak inside the cluster with proper IP address.
+> For internal Keycloak to process request properly, it is important to have hostname of the ILM platform included in the DNS resolver.
+> For local testing, you can upgrade the ILM chart with the `--set apiGateway.hostAliases.resolveInternalKeycloak=true`. This will resolve the internal Keycloak inside the cluster with proper IP address.
 
 - [Utils Service](charts/utils-service) (service that provides various utility functions for the platform)
 
@@ -65,14 +65,10 @@ kubectl create secret docker-registry regcred --docker-server=<your-registry-ser
 
 For more information, see [Create a Secret by providing credentials on the command line](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line).
 
-## CZERTAINLY Dummy Root CA and certificates
+## ILM Dummy Root CA and certificates
 
 The dummy certification authority is pre-built in this repository that can be used for development and testing purposes.
 You can find it in the [dummy-certificates](dummy-certificates).
 
 The dummy certificates are included by default in the values of the Helm charts. You can install platform with the dummy certificates and access its functions.
 Dummy CA can be replaced anytime.
-
-## Samples
-
-You can find some samples in the [samples](samples).

@@ -109,7 +109,7 @@ if __name__ == "__main__":
         verify_tls = False
 
     # Get the base URL of Keycloak
-    keycloak_url = input("Enter the URL of the Keycloak (e.g., https://my.czertainly.com/kc): ")
+    keycloak_url = input("Enter the URL of the Keycloak (e.g., https://my.czertainly.com/kc): ").rstrip("/")
 
     # Get the admin username and password securely
     username = input("Enter the admin username: ")

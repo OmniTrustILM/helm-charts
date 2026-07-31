@@ -67,7 +67,7 @@ httpProxy: ""
 httpsProxy: ""
 noProxy: ""
 
-nameOverride: ""
+nameOverride: messaging-rabbitmq
 fullnameOverride: ""
 
 autoscaling:
@@ -98,9 +98,9 @@ clustering:
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-rabbitmq
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: rabbitmq
   tag: 4.2.0
   # the digest to be used instead of the tag
   digest: ""
@@ -158,9 +158,9 @@ image:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""
@@ -251,6 +251,15 @@ messaging:
   remoteAccess: false
   username: "admin"
   password: "admin"
+  provisionerUsername: "provisioner"
+  provisionerPassword: "provisioner"
+  proxyUsername: "proxy"
+  proxyPassword: "proxy"
+  coreUsername: "core"
+  corePassword: "core"
+  timeQualityMonitorUsername: "time-quality-monitor"
+  timeQualityMonitorPassword: "time-quality-monitor"
+  virtualHost: "/"
   erlang:
     cookie: "c4eGHK4gM3v+5BHTFkGaRzqNQu0JcokVJkFK7CmJ"
   plugins:

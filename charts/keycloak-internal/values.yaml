@@ -81,8 +81,8 @@ database:
   type: "postgresql"
   host: "host.docker.internal"
   port: 5432
-  name: "czertainlydb"
-  username: "czertainlyuser"
+  name: "ilmdb"
+  username: "ilmuser"
   password: "your-strong-password"
 httpProxy: ""
 httpsProxy: ""
@@ -91,7 +91,7 @@ noProxy: ""
 trusted:
   certificates: ""
 
-nameOverride: ""
+nameOverride: keycloak-internal
 fullnameOverride: ""
 
 autoscaling:
@@ -108,9 +108,9 @@ service:
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-keycloak-optimized
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: keycloak-optimized
   tag: 26.4.2-0
   # the digest to be used instead of the tag
   digest: ""
@@ -125,6 +125,12 @@ image:
     runAsNonRoot: true
     # runAsUser: 1000
     readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
   # probes configuration
   probes:
     liveness:
@@ -168,10 +174,10 @@ image:
 theme:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-keycloak-theme
-    tag: 0.1.3
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: keycloak-theme
+    tag: 0.1.4
     # the digest to be used instead of the tag
     digest: ""
     pullPolicy: IfNotPresent
@@ -185,6 +191,12 @@ theme:
       runAsNonRoot: true
       # runAsUser: 10001
       readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
     # We follow recommendations and general guidelines to manage resources from:
     # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/
     # We recommend default requests for CPU and Memory, leaving the limits as a conscious
@@ -199,9 +211,9 @@ theme:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""
@@ -267,7 +279,9 @@ podLabels: {}
 
 podAnnotations: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
   # fsGroup: 2000
 
 nodeSelector: {}
@@ -291,19 +305,19 @@ keycloak:
   httpRelativePath: "/kc"
   httpEnabled: true
   # Use forwarded or xforwarded headers (more info: https://www.keycloak.org/server/all-config#category-proxy)
-  # we use xforwarded headers in czertainly, therefore we set it as default
+  # we use xforwarded headers in ilm, therefore we set it as default
   proxyHeaders: xforwarded
 
-# configuration of the CZERTAINLY realm
-czertainly:
+# configuration of the ILM realm
+ilm:
   admin:
-    username: "czertainly-admin"
+    username: "ilm-admin"
     password: "your-strong-password"
     name: "admin"
-    surname: "czertainly"
-    email: "admin@czertainly.local"
+    surname: "ilm"
+    email: "admin@ilm.local"
   # hostname is used as the Root URL for the OIDC configuration
-  hostName: "czertainly.local"
+  hostName: "ilm.local"
   # OIDC client secret, it should be also configured for the client
   # it is 32 bytes long value, base64 encoded, for example s0qKH5qItTWoxpBt7Zrj348ZhZ7woAbk
   clientSecret: "secret"

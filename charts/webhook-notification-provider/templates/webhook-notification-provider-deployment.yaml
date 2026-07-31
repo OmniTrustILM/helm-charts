@@ -55,7 +55,7 @@ spec:
             - name: LOGGING_LEVEL_COM_CZERTAINLY
               value: {{ .Values.logging.level | quote }}
             - name: JDBC_URL
-              value: {{ include "czertainly-lib.util.format.jdbcUrl" (list . "?characterEncoding=UTF-8") | quote }}
+              value: {{ include "ilm-lib.util.format.jdbcUrl" (list . "?characterEncoding=UTF-8") | quote }}
             - name: JDBC_USERNAME
               valueFrom:
                 secretKeyRef:

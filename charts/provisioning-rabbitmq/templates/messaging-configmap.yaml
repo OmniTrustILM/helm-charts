@@ -1,0 +1,15 @@
+{{- if not .Values.global.config.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: messaging-configmap-{{ .Chart.Name | lower }}
+data:
+  {{- $externalMessaging := pluck "enabled" .Values.global.messaging.external .Values.messaging.external | compact | first }}
+  {{- if $externalMessaging }}
+  messaging.host: {{ pluck "host" .Values.global.messaging.external .Values.messaging.external | compact | first | quote }}
+  messaging.amqp.port: {{ pluck "port" .Values.global.messaging.external.amqp .Values.messaging.external.amqp | compact | first | quote }}
+  {{- else }}
+  messaging.host: {{ .Values.messaging.host | quote }}
+  messaging.amqp.port: {{ .Values.messaging.amqp.port | quote }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,59 @@
+{{/*
+Inspired by bitnami library
+*/}}
+
+{{/*
+Return the image name based on the global values and image configuration
+{{ include "ilm-lib.images.image" ( dict "image" .Values.image "global" .Values.global) }}
+*/}}
+{{- define "ilm-lib.images.image" -}}
+{{- $registryName := .image.registry -}}
+{{- $repositoryName := .image.repository -}}
+{{- $imageName := .image.name -}}
+{{- $separator := ":" -}}
+{{- $termination := .image.tag | toString -}}
+{{- if .global }}
+  {{- if .global.image.registry }}
+    {{- $registryName = .global.image.registry -}}
+  {{- end -}}
+  {{- if .global.image.repository }}
+      {{- $repositoryName = .global.image.repository -}}
+  {{- end -}}
+{{- end -}}
+{{- if .image.digest }}
+  {{- $separator = "@" -}}
+  {{- $termination = .image.digest | toString -}}
+{{- end -}}
+{{- if $repositoryName}}
+  {{- printf "%s/%s/%s%s%s" $registryName $repositoryName $imageName $separator $termination -}}
+{{- else -}}
+  {{- printf "%s/%s%s%s" $registryName $imageName $separator $termination -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the secret names from the values
+{{ include "ilm-lib.images.pullSecrets" ( dict "images" (list .Values.image1, .Values.image2) "global" .Values.global) }}
+*/}}
+{{- define "ilm-lib.images.pullSecrets" -}}
+{{- $pullSecrets := list }}
+
+{{- if .global }}
+  {{- range .global.image.pullSecrets -}}
+    {{- $pullSecrets = append $pullSecrets . -}}
+  {{- end -}}
+{{- end -}}
+
+{{- range .images -}}
+  {{- range .pullSecrets -}}
+    {{- $pullSecrets = append $pullSecrets . -}}
+  {{- end -}}
+{{- end -}}
+
+{{- if (not (empty $pullSecrets)) }}
+imagePullSecrets:
+  {{- range $pullSecrets }}
+  - name: {{ . }}
+  {{- end }}
+{{- end }}
+{{- end -}}

@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-nameOverride: ""
+nameOverride: pg-bouncer
 fullnameOverride: ""
 
 # Global parameters that will overwrite local parameters
@@ -63,8 +63,8 @@ global:
 database:
   host: "host.docker.internal"
   port: 5432
-  name: "czertainlydb"
-  username: "czertainlyuser"
+  name: "ilmdb"
+  username: "ilmuser"
   password: "your-strong-password"
   # see https://www.pgbouncer.org/config.html#auth_type for more information
   authType: "plain"
@@ -86,9 +86,9 @@ service:
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-pgbouncer
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: pgbouncer
   tag: v1.24.1-p1
   # the digest to be used instead of the tag
   digest: ""
@@ -149,9 +149,9 @@ image:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""

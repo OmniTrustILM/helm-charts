@@ -1,0 +1,514 @@
+{{- $replicaCount := include "ilm.core.effectiveReplicaCount" . }}
+{{- $username := pluck "username" .Values.global.admin .Values.registerAdmin.admin | compact | first | quote }}
+{{- $name := pluck "name" .Values.global.admin .Values.registerAdmin.admin | compact | first | quote }}
+{{- $surname := pluck "surname" .Values.global.admin .Values.registerAdmin.admin | compact | first | quote }}
+{{- $email := pluck "email" .Values.global.admin .Values.registerAdmin.admin | compact | first | quote }}
+{{- $additionalInitContainers := (include "ilm.customization.initContainers" $) }}
+{{- $additionalSidecarContainers := (include "ilm.customization.sidecarContainers" $) }}
+{{- $additionalVolumes := (include "ilm.customization.volumes" $) }}
+{{- $additionalVolumeMounts := (include "ilm.customization.volumeMounts" $) }}
+{{- $additionalEnv := (include "ilm.customization.env" $) }}
+{{- $additionalEnvFrom := (include "ilm.customization.envFrom" $) }}
+{{- $scripts := or .Values.global.keycloak.enabled .Values.registerAdmin.enabled }}
+{{- $timeQualityEnabled := or (dig "timeQuality" "enabled" false .Values.global.messaging) (dig "timeQuality" "enabled" false .Values.messaging) }}
+{{- $messagingHost := .Values.messaging.host }}
+{{- $messagingAmqpPort := .Values.messaging.amqp.port }}
+{{- $externalMessaging := pluck "enabled" .Values.global.messaging.external .Values.messaging.external | compact | first }}
+{{- $localProvisioningApi := eq (include "ilm.provisioning.useLocalSubchart" .) "true" }}
+{{- if $externalMessaging }}
+{{- $messagingHost = pluck "host" .Values.global.messaging.external .Values.messaging.external | compact | first }}
+{{- $messagingAmqpPort = pluck "port" .Values.global.messaging.external.amqp .Values.messaging.external.amqp | compact | first }}
+{{- end }}
+{{- include "ilm.core.validateAutoscaling" . }}
+{{- $workloadType := include "ilm.workloadType" . }}
+{{- if not (or (eq $workloadType "Deployment") (eq $workloadType "StatefulSet")) }}
+{{- fail (printf "workloadType must be either \"Deployment\" or \"StatefulSet\", got: %s" $workloadType) }}
+{{- end }}
+{{- /* Explicit platform instance id (operator-assigned). */}}
+{{- $platformInstanceId := .Values.platformInstanceId }}
+{{- $platformInstanceIdSet := and (hasKey .Values "platformInstanceId") (ne (toString $platformInstanceId) "") }}
+{{- if $platformInstanceIdSet }}
+{{- $pid := toString $platformInstanceId }}
+{{- if or (not (regexMatch "^[0-9]+$" $pid)) (gt (int $platformInstanceId) 65535) }}
+{{- fail (printf "platformInstanceId must be an integer in 0-65535, got: %s" $pid) }}
+{{- end }}
+{{- end }}
+{{- $multiReplica := eq (include "ilm.core.multiReplica" .) "true" }}
+{{- if and $platformInstanceIdSet $multiReplica }}
+{{- fail "platformInstanceId is set together with multiple replicas (replicaCount > 1 or autoscaling.enabled with maxReplicas > 1). An explicit id is a single value shared by every replica, so all Core replicas would emit IDENTICAL certificate serial numbers. For multi-replica signing use workloadType: \"StatefulSet\" and LEAVE platformInstanceId UNSET so each replica derives a unique id from its pod ordinal; set platformInstanceId only for a single-replica workload." }}
+{{- end }}
+apiVersion: apps/v1
+kind: {{ $workloadType }}
+metadata:
+  name: {{ ternary "core" "core-deployment" (eq $workloadType "StatefulSet") }}
+  labels:
+    {{- include "ilm.labels" . | nindent 4 }}
+spec:
+  {{- if eq $workloadType "StatefulSet" }}
+  serviceName: core-service-headless
+  podManagementPolicy: Parallel
+  {{- end }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ $replicaCount | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ilm.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ilm.selectorLabels" . | nindent 8 }}
+      {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      annotations:
+        # annotation for vault-agent
+        # when the list of the trusted certificates is changed, restart deployment
+        checksum/trusted-certificates-local: {{ include (print $.Template.BasePath "/trusted-certificates-secret.yaml") . | sha256sum }}
+        {{- if .Values.global.trusted.certificates }}
+        checksum/trusted-certificates-global: {{ include ("ilm-lib.trusted.certificates.secret.global") . | sha256sum }}
+        {{- end }}
+        # when the messaging secrets are changed, restart deployment
+        checksum/mq-secret: {{ include (print $.Template.BasePath "/messaging-secret.yaml") . | sha256sum }}
+{{/*        checksum/mq-secret: {{ include "messaging-rabbitmq.definitions.json" (dict "global" .Values.global "messagingService" .Values.messagingService) | sha256sum }}*/}}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- include "ilm.imagePullSecrets" . | indent 6 }}
+      {{- if .Values.podSecurityContext }}
+      securityContext: {{- .Values.podSecurityContext | toYaml | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ template "ilm.serviceAccountName" . }}
+      initContainers:
+        - name: wait-for-auth-service
+          image: {{ include "ilm.curl.image" . }}
+          imagePullPolicy: {{ .Values.curl.image.pullPolicy }}
+          {{- if .Values.curl.image.resources }}
+          resources: {{- toYaml .Values.curl.image.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.curl.image.securityContext }}
+          securityContext: {{- .Values.curl.image.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while ! nc -z auth-service {{ .Values.authService.service.port }}; do sleep 1; done &&
+              while ! nc -z auth-opa-policies-service {{ .Values.authOpaPolicies.service.port }}; do sleep 1; done &&
+              echo "auth service seems to be started" &&
+              while ! nc -z {{ $messagingHost }} {{ $messagingAmqpPort }}; do sleep 1; done &&
+              while ! nc -z scheduler-service-service {{ .Values.schedulerService.service.port }}; do sleep 1; done &&
+              {{- if .Values.provisioningRabbitMq.enabled }}
+              while ! nc -z provisioning-rabbitmq-service {{ .Values.provisioningRabbitMq.service.port }}; do sleep 1; done &&
+              {{- end }}
+              echo "messaging and scheduler service seems to be started"
+        {{- with (include "ilm.initContainer.provisionQueue" .) }}
+          {{- . | nindent 8 }}
+        {{- end }}
+        {{- if $additionalInitContainers }}
+          {{- $additionalInitContainers | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: auth-opa
+          image: {{ include "ilm.opa.image" . }}
+          imagePullPolicy: {{ .Values.opa.image.pullPolicy }}
+          ports:
+            - containerPort: 8181
+          {{- if .Values.opa.image.securityContext }}
+          securityContext: {{- .Values.opa.image.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.opa.image.probes.liveness.enabled }}
+          livenessProbe:
+            {{- if .Values.opa.image.probes.liveness.custom }}
+            {{- toYaml .Values.opa.image.probes.liveness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              scheme: HTTP
+              port: 8181
+            {{- end }}
+            initialDelaySeconds: {{ .Values.opa.image.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.opa.image.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.opa.image.probes.liveness.periodSeconds }}
+            successThreshold: {{ .Values.opa.image.probes.liveness.successThreshold }}
+            failureThreshold: {{ .Values.opa.image.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.opa.image.probes.readiness.enabled }}
+          readinessProbe:
+            {{- if .Values.opa.image.probes.readiness.custom }}
+            {{- toYaml .Values.opa.image.probes.readiness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health?bundle=true
+              scheme: HTTP
+              port: 8181
+            {{- end }}
+            initialDelaySeconds: {{ .Values.opa.image.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.opa.image.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.opa.image.probes.readiness.periodSeconds }}
+            successThreshold: {{ .Values.opa.image.probes.readiness.successThreshold }}
+            failureThreshold: {{ .Values.opa.image.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.opa.image.probes.startup.enabled }}
+          startupProbe:
+            {{- if .Values.opa.image.probes.startup.custom }}
+            {{- toYaml .Values.opa.image.probes.startup.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health?bundle=true
+              scheme: HTTP
+              port: 8181
+            {{- end }}
+            initialDelaySeconds: {{ .Values.opa.image.probes.startup.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.opa.image.probes.startup.timeoutSeconds }}
+            periodSeconds: {{ .Values.opa.image.probes.startup.periodSeconds }}
+            successThreshold: {{ .Values.opa.image.probes.startup.successThreshold }}
+            failureThreshold: {{ .Values.opa.image.probes.startup.failureThreshold }}
+          {{- end }}
+          {{- if .Values.opa.image.resources }}
+          resources: {{- toYaml .Values.opa.image.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.opa.image.command }}
+          command: {{- include "ilm.opa.image.command" . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.opa.image.args }}
+          args: {{- include "ilm.opa.image.args" . | nindent 12 }}
+          {{- else }}
+          args:
+            - "run"
+            - "--server"
+            - "--addr=0.0.0.0:8181"
+            - "--set=services.nginx.url=http://auth-opa-policies-service:{{ .Values.authOpaPolicies.service.port }}"
+            - "--set=bundles.nginx.service=nginx"
+            - "--set=bundles.nginx.resource=bundles/bundle.tar.gz"
+          {{- end }}
+        - name: core
+          image: {{ include "ilm.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.image.command }}
+          command: {{- include "ilm.image.command" . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.image.args }}
+          args: {{- include "ilm.image.args" . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: HEADER_ENABLED
+              value: "true"
+            - name: HEADER_NAME
+              value: {{ .Values.auth.header.certificate | quote }}
+            {{- if .Values.global.httpProxy }}
+            - name: HTTP_PROXY
+              value: {{ .Values.global.httpProxy }}
+            {{- end }}
+            {{- if .Values.global.httpsProxy }}
+            - name: HTTPS_PROXY
+              value: {{ .Values.global.httpsProxy }}
+            {{- end }}
+            {{- if .Values.global.noProxy }}
+            - name: NO_PROXY
+              value: {{ .Values.global.noProxy }}
+            {{- end }}
+            - name: JDBC_URL
+              value: {{ include "ilm-lib.util.format.jdbcUrl" (list . "?characterEncoding=UTF-8") | quote }}
+            - name: JDBC_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: core-secret
+                  key: jdbcUsername
+            - name: JDBC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: core-secret
+                  key: jdbcPassword
+            - name: LOGGING_LEVEL_COM_OTILM
+              value: {{ .Values.logging.level | quote }}
+            {{- /* PLATFORM_INSTANCE_ID: stable, unique 0-65535 integer per Core replica for the serial number generator. */}}
+            {{- if $platformInstanceIdSet }}
+            - name: PLATFORM_INSTANCE_ID
+              value: {{ $platformInstanceId | quote }}
+            {{- else if eq $workloadType "StatefulSet" }}
+            {{- /* StatefulSet pods carry a stable 0-based ordinal exposed as the apps.kubernetes.io/pod-index */}}
+            {{- /* downward-API label: a small integer in 0-65535, stable across restarts. */}}
+            {{- if not (semverCompare ">=1.28.0-0" .Capabilities.KubeVersion.GitVersion) }}
+            {{- fail (printf "workloadType \"StatefulSet\" derives PLATFORM_INSTANCE_ID from the apps.kubernetes.io/pod-index label, which Kubernetes auto-stamps only on v1.28+ (got %s). On older clusters the id would silently resolve to \"\" and Core would fall back to IP-derivation, risking duplicate certificate serial numbers. Upgrade the cluster to v1.28+, or set an explicit platformInstanceId on a single-replica workload." .Capabilities.KubeVersion.GitVersion) }}
+            {{- end }}
+            - name: PLATFORM_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+            {{- end }}
+            {{- /* Otherwise (Deployment, no explicit id) PLATFORM_INSTANCE_ID is unset and Core falls back to IP-derivation. */}}
+            {{- if .Values.registerAdmin.enabled }}
+            - name: ADMIN_CERT
+              valueFrom:
+                secretKeyRef:
+                  name: admin-certificate-secret
+                  key: tls.crt
+            {{- end }}
+            - name: OPA_BASE_URL
+              value: "http://localhost:8181"
+            - name: AUTH_SERVICE_BASE_URL
+              value: "http://auth-service:{{ .Values.authService.service.port }}"
+            {{- if or .Values.global.trusted.certificates .Values.trusted.certificates }}
+            - name: TRUSTED_CERTIFICATES
+              valueFrom:
+                secretKeyRef:
+                  name: trusted-certificates
+                  key: ca.crt
+            {{- end }}
+            - name: JAVA_OPTS
+              value: {{ .Values.javaOpts | quote }}
+            - name: BROKER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: messaging-configmap
+                  key: messaging.host
+            - name: BROKER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: messaging-configmap
+                  key: messaging.amqp.port
+            - name: BROKER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secret
+                  key: messaging.core.username
+            - name: BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secret
+                  key: messaging.core.password
+            - name: BROKER_VIRTUAL_HOST
+              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}
+            - name: MESSAGING_TIME_QUALITY_ENABLED
+              value: {{ $timeQualityEnabled | ternary "true" "false" | quote }}
+            - name: SCHEDULER_BASE_URL
+              value: "http://scheduler-service-service:{{ .Values.schedulerService.service.port }}"
+            {{- if .Values.global.keycloak.enabled }}
+            - name: INTERNAL_OAUTH_SECRET
+              value: {{ .Values.global.keycloak.clientSecret | quote }}
+            {{- end }}
+            - name: PROVISIONING_API_URL
+              {{- if .Values.global.provisioning.apiUrl }}
+              value: {{ .Values.global.provisioning.apiUrl | quote }}
+              {{- else if .Values.provisioningRabbitMq.enabled }}
+              value: {{ printf "http://provisioning-rabbitmq-service:%s" (toString .Values.provisioningRabbitMq.service.port) | quote }}
+              {{- else }}
+              value: ""
+              {{- end }}
+            {{- if and $localProvisioningApi .Values.provisioningRabbitMq.bootstrap.security.enabled }}
+            - name: PROVISIONING_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: provisioning-rabbitmq-secret
+                  key: securityApiKey
+            {{- else if and (not $localProvisioningApi) .Values.global.provisioning.apiKey }}
+            - name: PROVISIONING_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: provisioning-secret
+                  key: provisioningApiKey
+            {{- else }}
+            - name: PROVISIONING_API_KEY
+              value: ""
+            {{- end }}
+            - name: PROXY_ENABLED
+              value: {{ .Values.global.proxy.enabled | quote }}
+            {{- if .Values.global.proxy.enabled }}
+            - name: PROXY_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- end }}
+            {{- if $additionalEnv }}
+              {{- $additionalEnv | nindent 12 }}
+            {{- end }}
+          {{- if $additionalEnvFrom }}
+          envFrom:
+            {{- $additionalEnvFrom | indent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          {{- if .Values.image.securityContext }}
+          securityContext: {{- .Values.image.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.image.probes.liveness.enabled }}
+          livenessProbe:
+            {{- if .Values.image.probes.liveness.custom }}
+            {{- toYaml .Values.image.probes.liveness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /api/v1/health/liveness
+              port: {{ .Values.service.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.image.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.image.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.image.probes.liveness.periodSeconds }}
+            successThreshold: {{ .Values.image.probes.liveness.successThreshold }}
+            failureThreshold: {{ .Values.image.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.image.probes.readiness.enabled }}
+          readinessProbe:
+            {{- if .Values.image.probes.readiness.custom }}
+            {{- toYaml .Values.image.probes.readiness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /api/v1/health/readiness
+              port: {{ .Values.service.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.image.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.image.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.image.probes.readiness.periodSeconds }}
+            successThreshold: {{ .Values.image.probes.readiness.successThreshold }}
+            failureThreshold: {{ .Values.image.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.image.probes.startup.enabled }}
+          startupProbe:
+            {{- if .Values.image.probes.startup.custom }}
+            {{- toYaml .Values.image.probes.startup.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /api/v1/health/liveness
+              port: {{ .Values.service.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.image.probes.startup.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.image.probes.startup.timeoutSeconds }}
+            periodSeconds: {{ .Values.image.probes.startup.periodSeconds }}
+            successThreshold: {{ .Values.image.probes.startup.successThreshold }}
+            failureThreshold: {{ .Values.image.probes.startup.failureThreshold }}
+          {{- end }}
+          {{- if .Values.image.resources }}
+          resources: {{- toYaml .Values.image.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: /tmp
+              name: ephemeral
+            {{- if $scripts }}
+            - mountPath: /opt/ilm/scripts
+              name: core-scripts
+            {{- end }}
+            {{- if $additionalVolumeMounts }}
+              {{- $additionalVolumeMounts | nindent 12 }}
+            {{- end }}
+          {{- if $scripts }}
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - "sh"
+                  - "-c"
+                  - |
+                    {{- if .Values.registerAdmin.enabled }}
+                    /opt/ilm/scripts/register-admin.sh;
+                    {{- end }}
+                    {{- if .Values.global.keycloak.enabled }}
+                    /opt/ilm/scripts/register-internal-keycloak.sh $INTERNAL_OAUTH_SECRET;
+                    {{- end }}
+          {{- end }}
+        {{- if and .Values.timeQualityMonitor .Values.timeQualityMonitor.enabled }}
+        - name: time-quality-monitor
+          {{- $tqmPort := 8082 }}
+          image: {{ include "ilm.timeQualityMonitor.image" . }}
+          imagePullPolicy: {{ .Values.timeQualityMonitor.image.pullPolicy }}
+          ports:
+            - containerPort: {{ $tqmPort }}
+          {{- if .Values.timeQualityMonitor.image.command }}
+          command: {{- include "ilm.timeQualityMonitor.image.command" . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.args }}
+          args: {{- include "ilm.timeQualityMonitor.image.args" . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: LISTEN_PORT
+              value: {{ $tqmPort | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.timeQualityMonitor.logging.level | quote }}
+            - name: BROKER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: messaging-configmap
+                  key: messaging.host
+            - name: BROKER_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: messaging-configmap
+                  key: messaging.amqp.port
+            - name: BROKER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secret
+                  key: messaging.time-quality-monitor.username
+            - name: BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: messaging-secret
+                  key: messaging.time-quality-monitor.password
+            - name: BROKER_VIRTUAL_HOST
+              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}
+          {{- if .Values.timeQualityMonitor.image.securityContext }}
+          securityContext: {{- .Values.timeQualityMonitor.image.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.liveness.enabled }}
+          livenessProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.liveness.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.liveness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ $tqmPort }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.liveness.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.liveness.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.readiness.enabled }}
+          readinessProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.readiness.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.readiness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ $tqmPort }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.readiness.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.readiness.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.probes.startup.enabled }}
+          startupProbe:
+            {{- if .Values.timeQualityMonitor.image.probes.startup.custom }}
+            {{- toYaml .Values.timeQualityMonitor.image.probes.startup.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /health
+              port: {{ $tqmPort }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.timeQualityMonitor.image.probes.startup.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.timeQualityMonitor.image.probes.startup.timeoutSeconds }}
+            periodSeconds: {{ .Values.timeQualityMonitor.image.probes.startup.periodSeconds }}
+            successThreshold: {{ .Values.timeQualityMonitor.image.probes.startup.successThreshold }}
+            failureThreshold: {{ .Values.timeQualityMonitor.image.probes.startup.failureThreshold }}
+          {{- end }}
+          {{- if .Values.timeQualityMonitor.image.resources }}
+          resources: {{- toYaml .Values.timeQualityMonitor.image.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- if $additionalSidecarContainers }}
+          {{- $additionalSidecarContainers | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: ephemeral
+          {{- include "ilm.ephemeralVolume" . | indent 10 }}
+        {{- if $scripts }}
+        - name: core-scripts
+          configMap:
+            name: core-scripts-configmap
+            defaultMode: 0777
+        {{- end }}
+        {{- if $additionalVolumes }}
+          {{- $additionalVolumes | nindent 8 }}
+        {{- end }}

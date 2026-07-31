@@ -58,9 +58,9 @@ replicaCount: 1
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-auth-opa-policies
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: auth-opa-policies
   tag: 1.4.1
   # the digest to be used instead of the tag
   digest: ""
@@ -118,9 +118,9 @@ image:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""
@@ -169,7 +169,7 @@ volumes:
     #    sizeLimit: "10Mi"
     #    medium: "Memory"
 
-nameOverride: ""
+nameOverride: auth-opa-policies
 fullnameOverride: ""
 
 serviceAccount:

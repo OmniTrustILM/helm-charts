@@ -5,9 +5,9 @@
   ],
   "hostRules": [
     {
-      "matchHost": "harbor.3key.company",
-      "username": "github-actions",
-      "password": "{{ secrets.HARBOR_GITHUB_ACTIONS_PASSWORD }}"
+      "matchHost": "hub.omnitrustregistry.com",
+      "username": "ilm-github-actions",
+      "password": "{{ secrets.CONTAINER_REGISTRY_PASSWORD }}"
     }
   ]
 }

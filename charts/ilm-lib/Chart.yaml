@@ -1,0 +1,25 @@
+annotations:
+  category: trustLifecycleManagement
+apiVersion: v2
+appVersion: 1.4.2
+name: ilm-lib
+description: ILM library chart
+home: https://github.com/OmniTrustILM/ilm
+icon: https://raw.githubusercontent.com/OmniTrustILM/ilm/main/icon/ot-icon-color.svg
+keywords:
+  - ilm
+  - certificate
+  - cryptography
+  - management
+  - lifecycle
+  - platform
+maintainers:
+  - name: OmniTrustILM
+    email: ilm@omnitrust.com
+    url: https://github.com/OmniTrustILM/helm-charts
+type: library
+sources:
+  - https://github.com/OmniTrustILM/ilm
+  - https://omnitrust.com
+  - https://docs.otilm.com
+version: 1.4.2-1

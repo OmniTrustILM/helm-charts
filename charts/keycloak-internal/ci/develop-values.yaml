@@ -11,5 +11,5 @@ keycloak:
   dbSchema: "public"
   args: [start, --optimized, --import-realm]
 
-czertainly:
+ilm:
   clientSecret: "s0qKH5qItTWoxpBt7Zrj348ZhZ7woAbk"

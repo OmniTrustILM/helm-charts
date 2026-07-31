@@ -1,0 +1,741 @@
+# Default values for ilm.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global parameters that will overwrite local parameters
+global:
+  replicaCount: 1
+  config:
+    enabled: true
+  image:
+    registry: ""
+    repository: ""
+    # array of secret names
+    pullSecrets: []
+  volumes:
+    ephemeral:
+      type: ""
+      sizeLimit: ""
+      storageClassName: ""
+      custom: {}
+  database:
+    # currently only postgresql is supported
+    type: ""
+    host: ""
+    port: ""
+    name: ""
+    username: ""
+    password: ""
+    pgBouncer:
+      enabled: true
+      host: "pg-bouncer-service"
+      port: 5432
+  trusted:
+    certificates: ""
+  httpProxy: ""
+  httpsProxy: ""
+  noProxy: ""
+  hostName: ""
+  keycloak:
+    enabled: false
+    # client secret must be set if keycloak is enabled
+    clientSecret: ""
+  messaging:
+    external:
+      enabled: false
+      host: ""
+      amqp:
+        port: ""
+    remoteAccess: false
+    username: ""
+    password: ""
+    provisionerUsername: ""
+    provisionerPassword: ""
+    proxyUsername: ""
+    proxyPassword: ""
+    coreUsername: ""
+    corePassword: ""
+    timeQualityMonitorUsername: ""
+    timeQualityMonitorPassword: ""
+    virtualHost: ""
+    # Enables Core's time-quality messaging integration. See messaging.timeQuality.enabled.
+    timeQuality:
+      enabled: false
+  provisioning:
+    apiUrl: ""
+    apiKey: ""
+    queue:
+      # destination the per-instance queue is bound under, as understood by the
+      # provisioning service in use
+      exchange: "ilm-proxy"
+      # binding routing key; the literal ${HOSTNAME} token is replaced with the pod name at runtime
+      # (this substitution applies anywhere the token appears in the request body, not just here).
+      # Each pod provisions its own queue under its own name, so a restarted or rescheduled
+      # pod provisions a fresh one; the queue belonging to the replaced pod is left to expire
+      # on its own according to the arguments below. Re-provisioning an existing queue is a
+      # no-op, so a stable pod name (workloadType: StatefulSet) simply reuses its queue.
+      routingKey: "proxymessage.*.${HOSTNAME}"
+      # queue arguments forwarded verbatim to the provisioning API when the queue is
+      # created. The chart does not interpret them; the set of valid arguments is defined
+      # by the provisioning service implementation in use — see its documentation.
+      # A provisioning service ignores arguments it does not recognise and falls back to
+      # its own defaults, so a deployment using a different service should set its own
+      # entries here rather than rely on the default below.
+      # This is a list, not a map, so setting it REPLACES the default outright; use an
+      # empty list to send no arguments at all. Setting it to null does not work: Helm
+      # discards null values while merging, so the default below is restored. The literal
+      # ${HOSTNAME} token, if present in a value, is replaced with the pod name the same
+      # as elsewhere in the body.
+      properties:
+        - name: x-expires
+          value: 1800000
+  proxy:
+    enabled: false
+  utils:
+    enabled: false
+  admin:
+    username: ""
+    password: ""
+    name: ""
+    surname: ""
+    email: ""
+  # additional init containers that will be added to each pod
+  # - name: some-image
+  #   image: some-image
+  #   imagePullPolicy: IfNotPresent
+  #   securityContext:
+  #     runAsNonRoot: true
+  #   ports:
+  #     - name: port
+  #       containerPort: "{{ $.Values.container.port }}"
+  initContainers: []
+  # additional sidecar containers that will be added to each pod
+  # see the sample of init containers above
+  sidecarContainers: []
+  # additional volumes that will be added to each pod
+  # - name: additional-volume
+  #   configMap:
+  #     name: additional-volume
+  additionalVolumes: []
+  # additional volume mounts that will be added to each pod
+  # - name: additional-volume
+  #   mountPath: /opt/app
+  #   readOnly: true
+  additionalVolumeMounts: []
+  # additional service ports that will be added to each pod
+  # - name: other-port
+  #   port: 8080
+  #   targetPort: 8080
+  additionalPorts: []
+  # additional environment variables that will be added to each pod
+  additionalEnv:
+    # - name: SOME_ENV
+    #   value: "some-value"
+    variables: []
+    # list of config maps to be added as environment variables
+    configMaps: []
+    # list of secrets to be added as environment variables
+    secrets: []
+
+database:
+  # currently only postgresql is supported
+  type: "postgresql"
+  host: "host.docker.internal"
+  port: 5432
+  name: "ilmdb"
+  username: "ilmuser"
+  password: "your-strong-password"
+trusted:
+  # Dummy Root CA
+  certificates: |
+    -----BEGIN CERTIFICATE-----
+    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
+    5jpC0vE01lJDVA==
+    -----END CERTIFICATE-----
+httpProxy: ""
+httpsProxy: ""
+noProxy: ""
+
+nameOverride: platform-core
+fullnameOverride: ""
+
+registerAdmin:
+  enabled: true
+  admin:
+    # PEM encoded certificate without chain
+    certificate: |
+      -----BEGIN CERTIFICATE-----
+      MIIEmDCCAoCgAwIBAgIUSpLD/+gTWhMxIlMog2Bdlm3CDjUwDQYJKoZIhvcNAQEN
+      BQAwGDEWMBQGA1UEAwwNRHVtbXkgUm9vdCBDQTAeFw0yNjA0MjAxNDQyMTdaFw00
+      NjA0MTUxNDQyMTdaMBgxFjAUBgNVBAMMDUFkbWluaXN0cmF0b3IwggEiMA0GCSqG
+      SIb3DQEBAQUAA4IBDwAwggEKAoIBAQC00ipGosoB9c+J0xNOZxeCBzVCO14OvQ1W
+      x1apYy6mIb9prbW+JDzzC9PV/Vq/3jARGe7n1nCklzGWESfGzBB+DXRO0z1A+BRJ
+      2jDh6/wym4atB45R9dkfDbhTFmWVmNPVrc5qYkC3JJhmeuhJcz71XBsSL7l9/3qd
+      ruXB/ZeBHSkJLkHVoEviacejKGi9ajuNY0Oo4wY7GDN+S8RQP4X84kKxzJRSwcT8
+      83/kHq2b83pwSygxfLUcz0FLfJeGNf0NtD+ACurznbUELrNDF/xYGJeCnxssmTOy
+      x4BtzA0RLINw4ews8+mPW0frBoCmx7KpQheT7hWYTGZaumVCVCMbAgMBAAGjgdkw
+      gdYwDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCBeAwEwYDVR0lBAwwCgYIKwYB
+      BQUHAwIwHQYDVR0OBBYEFKP9zS5hQtIMB4Xhm3asjv/ZC0QpMB8GA1UdIwQYMBaA
+      FKrDVRKMwNLPigRWgvEnfgyfERiyMGEGA1UdIARaMFgwVgYEVR0gADBOMEwGCCsG
+      AQUFBwICMEAMPlRoaXMgaXMgYSBkdW1teSBhZG1pbmlzdHJhdG9yIGNlcnRpZmlj
+      YXRlIGZvciB0ZXN0aW5nIHB1cnBvc2VzMA0GCSqGSIb3DQEBDQUAA4ICAQBfCGjQ
+      PlYTy1J3o94tGlE26Jwy8b3z/x3zNjztZ4QX5wAIkiUoT24DcZsZp9rlKMHsr4Dc
+      v/JcBKnNrfYD+ESCEXcZcuUIBbv4oErY+fAsmp6gW62gQnDF6GZCfz+KiTy+vtB4
+      93yvbKFepNfI5lgnVh443iD3TSbFmQYfeWLYYyqwjgNxFnPffPZ6w2cV7xw5pmF3
+      FI5RM5SBhSEl0U3Aqbvnklw3A5mHis4t4joaptksg+yVExt38azhS34eIkGUbiGK
+      sfbgr7+qaaqX1MRSrjE5FVh9uCs5ALmHBiZ5iEX1i3NwmLoqth71+AD11yUgX6LG
+      p/kc85OIk1mjkom27ncY+wQ5lSZKuK8Ts1zQSD8iGalL7RSNnRALr+97mDBeZJYB
+      BGPiEYj7UUC0NKw7qcLQ5bowfHnBZUAZbXWdR5AJa7VsPDH6k9Cvy/R9h0miyQF2
+      QMs3+mYHLNdLTzqSkUq9XYnZWbm7CwprH1dW2iW78PdfOtDl90MhbGkVR50xpHNC
+      3hwdBe0hV9RIw46Qtwb8PZSJq8EFlNrSK0J7882JwG8CDhOBxgzQGAahv3wb0B1/
+      W3LRVbR1D9UyvDKN121uw025lJ+rCTUJ5T+fepyQxdvkH+IrmNvkh0kcZISG1If4
+      HASDWFN9OMjvNesiRFHgpNZ26Xh347DfNvNrXQ==
+      -----END CERTIFICATE-----
+    username: "ilm-admin"
+    password: "your-strong-password"
+    name: "admin"
+    surname: "admin"
+    email: "admin@ilm.local"
+    description: "ILM Admin"
+  # options: generated, external
+  source: external
+
+# workload type for the core deployment
+# Options: "Deployment", "StatefulSet"
+workloadType: "Deployment"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+replicaCount: 1
+
+service:
+  type: "ClusterIP"
+  port: 8080
+
+image:
+  # default registry name
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: core
+  tag: 2.18.0
+  # the digest to be used instead of the tag
+  digest: ""
+  pullPolicy: IfNotPresent
+  # array of secret names
+  pullSecrets: []
+  # custom command and args
+  command: []
+  args: []
+  # default security context
+  securityContext:
+    runAsNonRoot: true
+    # runAsUser: 10001
+    readOnlyRootFilesystem: true
+  # probes configuration
+  probes:
+    liveness:
+      enabled: false
+      # custom probe command, will override the default one
+      custom: {}
+      initialDelaySeconds: 60
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    readiness:
+      enabled: true
+      # custom probe command, will override the default one
+      custom: {}
+      initialDelaySeconds: 15
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 3
+    startup:
+      enabled: true
+      # custom probe command, will override the default one
+      custom: {}
+      initialDelaySeconds: 15
+      timeoutSeconds: 5
+      periodSeconds: 10
+      successThreshold: 1
+      failureThreshold: 45
+  resources: {}
+    # We follow recommendations and general guidelines to manage resources from:
+    # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/
+    # We recommend default requests for CPU and Memory, leaving the limits as a conscious
+    # choice for the user. If you do want to specify your own resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources'.
+    # requests:
+    #   cpu: 200m
+    #   memory: 2000M
+    # limits: {}
+
+volumes:
+  ephemeral:
+    # available types are: memory, storage, custom
+    type: memory
+    sizeLimit: "1Mi"
+    storageClassName: ""
+    custom: {}
+    #  emptyDir:
+    #    sizeLimit: "10Mi"
+    #    medium: "Memory"
+
+curl:
+  image:
+    # default registry name
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
+    tag: 8.16.0
+    # the digest to be used instead of the tag
+    digest: ""
+    pullPolicy: IfNotPresent
+    # array of secret names
+    pullSecrets: []
+    # custom command and args
+    command: []
+    args: []
+    # default security context
+    securityContext:
+      runAsNonRoot: true
+      # runAsUser: 100
+      readOnlyRootFilesystem: true
+    # it does not make sense to have probes for curl
+    resources: {}
+      # We follow recommendations and general guidelines to manage resources from:
+      # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/
+      # We recommend default requests for CPU and Memory, leaving the limits as a conscious
+      # choice for the user. If you do want to specify your own resources, uncomment the following
+      # lines, adjust them as necessary, and remove the curly braces after 'resources'.
+      # requests:
+      #   cpu: 50m
+      #   memory: 150M
+      # limits: {}
+
+kubectl:
+  image:
+    # default registry name
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: kubectl
+    tag: 2.16.1
+    # the digest to be used instead of the tag
+    digest: ""
+    pullPolicy: IfNotPresent
+    # array of secret names
+    pullSecrets: []
+    # custom command and args
+    command: []
+    args: []
+    # default security context
+    securityContext:
+      runAsNonRoot: true
+      # runAsUser: 1001
+      readOnlyRootFilesystem: true
+    # it does not make sense to have probes for kubectl
+
+opa:
+  image:
+    # default registry name
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: opa
+    tag: 1.10.0-static
+    # the digest to be used instead of the tag
+    digest: ""
+    pullPolicy: IfNotPresent
+    # array of secret names
+    pullSecrets: []
+    # custom command and args
+    command: []
+    args: []
+    # default security context
+    securityContext:
+      runAsNonRoot: true
+      # runAsUser: 1000
+      readOnlyRootFilesystem: true
+    # probes configuration
+    probes:
+      liveness:
+        enabled: false
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      readiness:
+        enabled: true
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      startup:
+        enabled: false
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+    resources: {}
+      # We follow recommendations and general guidelines to manage resources from:
+      # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/
+      # We recommend default requests for CPU and Memory, leaving the limits as a conscious
+      # choice for the user. If you do want to specify your own resources, uncomment the following
+      # lines, adjust them as necessary, and remove the curly braces after 'resources'.
+      # requests:
+      #   cpu: 50m
+      #   memory: 150M
+      # limits: {}
+
+timeQualityMonitor:
+  # Enables the time-quality-monitor sidecar container.
+  # Core's time-quality messaging integration is enabled separately via messaging.timeQuality.enabled.
+  enabled: false
+  image:
+    # default registry name
+    registry: hub.omnitrustregistry.com
+    repository: ilm-private
+    name: time-quality-monitor
+    tag: 1.0.0
+    # the digest to be used instead of the tag
+    digest: ""
+    pullPolicy: IfNotPresent
+    # array of secret names
+    pullSecrets: []
+    # custom command and args
+    command: []
+    args: []
+    # default security context
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 10001
+      runAsGroup: 10001
+      readOnlyRootFilesystem: true
+    # probes configuration
+    probes:
+      liveness:
+        enabled: true
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      readiness:
+        enabled: true
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+      startup:
+        enabled: false
+        # custom probe command, will override the default one
+        custom: {}
+        initialDelaySeconds: 5
+        timeoutSeconds: 5
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+    resources: {}
+      # We follow recommendations and general guidelines to manage resources from:
+      # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/
+      # We recommend default requests for CPU and Memory, leaving the limits as a conscious
+      # choice for the user. If you do want to specify your own resources, uncomment the following
+      # lines, adjust them as necessary, and remove the curly braces after 'resources'.
+      # requests:
+      #   cpu: 50m
+      #   memory: 150M
+      # limits: {}
+  logging:
+    level: INFO
+
+# customization of the chart
+initContainers: []
+sidecarContainers: []
+additionalVolumes: []
+additionalVolumeMounts: []
+additionalPorts: []
+additionalEnv:
+  variables: []
+  configMaps: []
+  secrets: []
+
+logging:
+  level: "INFO"
+
+# Explicit instance ID (0-65535), exported as PLATFORM_INSTANCE_ID for Core's serial number
+# generator. Set this only on a single-replica workload, when you want the ID under your own
+# control instead of having it generated from the pod's IP address. Setting it on any
+# multi-replica workload is rejected at template time: one explicit value is shared by every
+# replica, which would guarantee duplicate certificate serial numbers.
+#
+# Behavior when left empty:
+#   * workloadType "StatefulSet": each replica derives a unique ID from its pod ordinal
+#     (apps.kubernetes.io/pod-index) — recommended for multi-replica signing.
+#   * workloadType "Deployment": Core derives the ID from the last two octets of the pod's
+#     IPv4. Two pods that share those octets get the same ID, so their serial numbers may
+#     collide. This can happen across separate clusters, or within a pod network whose prefix
+#     is smaller than /16 (e.g. /8 or /12).
+platformInstanceId: ""
+
+javaOpts: ""
+
+auth:
+  header:
+    certificate: "ssl-client-cert"
+
+messaging:
+  external:
+    enabled: false
+    host: ""
+    amqp:
+      port: ""
+  remoteAccess: false
+  username: "admin"
+  password: "admin"
+  host: "messaging-service"
+  amqp:
+    port: 5672
+  virtualHost: "/"
+  # Enables Core's time-quality messaging integration; settable also via global.messaging.timeQuality.enabled.
+  timeQuality:
+    enabled: false
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "ilm-sa"
+
+podLabels: {}
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+certManager:
+  version: ""
+
+hostName: "ilm.local"
+
+letsEncrypt:
+  # email: notifications@sample.com
+  environment: production
+
+ingress:
+  enabled: false
+  certificate:
+    # options: internal, external, letsencrypt
+    source: internal
+  # options: traefik, nginx
+  class: nginx
+  annotations: {
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP",
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional",
+    nginx.ingress.kubernetes.io/auth-tls-secret: "{{ .Release.Namespace }}/trusted-certificates",
+    nginx.ingress.kubernetes.io/auth-tls-verify-depth: "3",
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true",
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+  }
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+    # nginx.ingress.kubernetes.io/backend-protocol: "HTTP",
+    # nginx.ingress.kubernetes.io/auth-tls-verify-client: "optional",
+    # nginx.ingress.kubernetes.io/auth-tls-secret: "ilm/ingress-ca-secret",
+    # nginx.ingress.kubernetes.io/auth-tls-verify-depth: "3",
+    # nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+  # hosts:
+  #  - host: ilm.local
+  #    paths:
+  #      - path: /
+  #        pathType: Prefix
+  tls:
+    secretName: ilm-ingress-tls
+  #  - secretName: ilm.local-tls
+  #    hosts:
+  #      - ilm.local
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+clustering:
+  domain: cluster.local
+
+#
+# dependencies management
+#
+apiGateway:
+  nameOverride: api-gateway
+  config:
+    default: "charts/api-gateway-kong/config/kong.yml"
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+  replicaCount: 1
+  service:
+    type: "ClusterIP"
+    consumer:
+      port: 8000
+  trustedIps: ""
+
+feAdministrator:
+  nameOverride: fe-administrator
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+  replicaCount: 1
+  service:
+    type: "ClusterIP"
+    port: 8080
+  podAnnotations: {}
+
+authService:
+  nameOverride: auth-service
+
+authOpaPolicies:
+  nameOverride: auth-opa-policies
+
+messagingService:
+  nameOverride: messaging-service
+  enabled: true
+
+schedulerService:
+  nameOverride: scheduler-service
+
+provisioningRabbitMq:
+  nameOverride: provisioning-rabbitmq
+  enabled: false
+
+#
+# connectors
+#
+registerConnectors: true
+
+commonCredentialProvider:
+  nameOverride: common-credential-provider
+  enabled: true
+
+ejbcaNgConnector:
+  nameOverride: ejbca-ng-connector
+  enabled: false
+
+externalAuthorityProvider:
+  nameOverride: external-authority-provider
+  enabled: false
+
+pyAdcsConnector:
+  nameOverride: pyadcs-connector
+  enabled: false
+
+otpkiConnector:
+  nameOverride: otpki-connector
+  enabled: false
+
+hashicorpVaultConnector:
+  nameOverride: hashicorp-vault-connector
+  enabled: false
+
+timestampFormattingConnector:
+  nameOverride: timestamp-formatting-connector
+  enabled: false
+
+x509ComplianceProvider:
+  nameOverride: x509-compliance-provider
+  enabled: false
+
+cryptosenseDiscoveryProvider:
+  nameOverride: cryptosense-discovery-provider
+  enabled: false
+
+ctLogsDiscoveryProvider:
+  nameOverride: ct-logs-discovery-provider
+  enabled: false
+
+networkDiscoveryProvider:
+  nameOverride: network-discovery-provider
+  enabled: false
+
+keystoreEntityProvider:
+  nameOverride: keystore-entity-provider
+  enabled: false
+
+softwareCryptographyProvider:
+  nameOverride: software-cryptography-provider
+  enabled: false
+
+emailNotificationProvider:
+  nameOverride: email-notification-provider
+  enabled: false
+
+webhookNotificationProvider:
+  nameOverride: webhook-notification-provider
+  enabled: false
+
+#
+# supportive optional components
+#
+keycloakInternal:
+  nameOverride: keycloak-internal
+  # the enabled flag is defined as global.keycloak.enabled
+
+utilsService:
+  nameOverride: utils-service
+  # the enabled flag is defined as global.utils.enabled

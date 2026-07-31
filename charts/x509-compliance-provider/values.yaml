@@ -51,9 +51,9 @@ replicaCount: 1
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-x509-compliance-provider
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: x509-compliance-provider
   tag: 1.3.1
   # the digest to be used instead of the tag
   digest: ""
@@ -111,9 +111,9 @@ image:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""
@@ -155,7 +155,7 @@ logging:
   # possible values are: INFO, DEBUG, WARN, ERROR, PANIC, FATAL
   level: "INFO"
 
-nameOverride: ""
+nameOverride: x509-compliance-provider
 fullnameOverride: ""
 
 serviceAccount:

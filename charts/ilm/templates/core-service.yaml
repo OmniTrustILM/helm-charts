@@ -1,0 +1,17 @@
+{{- $additionalPorts := (include "ilm.customization.ports" $) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-service
+  labels:
+    {{- include "ilm.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      protocol: "TCP"
+    {{- if $additionalPorts }}
+      {{- $additionalPorts | nindent 4 }}
+    {{- end }}
+  selector:
+    {{- include "ilm.selectorLabels" . | nindent 4 }}

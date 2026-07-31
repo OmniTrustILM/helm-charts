@@ -1,8 +1,8 @@
-# X509 Compliance Provider - CZERTAINLY
+# X509 Compliance Provider - ILM
 
-> This repository is part of the commercial open-source project CZERTAINLY. You can find more information about the project at [CZERTAINLY](https://github.com/3KeyCompany/CZERTAINLY) repository, including the contribution guide.
+> This repository is part of the commercial open-source project ILM. You can find more information about the project at [ILM](https://github.com/OmniTrustILM/ilm) repository, including the contribution guide.
 
-This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAINLY platform.
+This repository contains [Helm](https://helm.sh/) charts as part of the ILM platform.
 
 ## Prerequisites
 - Kubernetes 1.19+
@@ -18,7 +18,7 @@ This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAIN
 
 We’ll need to define a Kubernetes namespace where the resources created by the Chart should be installed:
 ```bash
-kubectl create namespace czertainly
+kubectl create namespace ilm
 ```
 
 **Create `values.yaml`**
@@ -28,7 +28,7 @@ kubectl create namespace czertainly
 
 Copy the default `values.yaml` from the Helm chart and modify the values accordingly:
 ```bash
-helm show values oci://harbor.3key.company/czertainly-helm/x509-compliance-provider > values.yaml
+helm show values oci://hub.omnitrustregistry.com/ilm-helm/x509-compliance-provider > values.yaml
 ```
 Now edit the `values.yaml` according to your desired stated, see [Configurable parameters](#configurable-parameters) for more information.
 
@@ -36,7 +36,7 @@ Now edit the `values.yaml` according to your desired stated, see [Configurable p
 
 For the basic installation, run:
 ```bash
-helm install --namespace czertainly -f values.yaml czertainly-x509-compliance-provider oci://harbor.3key.company/czertainly-helm/x509-compliance-provider
+helm install --namespace ilm -f values.yaml ilm-x509-compliance-provider oci://hub.omnitrustregistry.com/ilm-helm/x509-compliance-provider
 ```
 
 **Save your configuration**
@@ -50,14 +50,14 @@ Always make sure you save the `values.yaml` and all `--set` and `--set-file` opt
 
 For upgrading the installation, update your configuration and run:
 ```bash
-helm upgrade --namespace czertainly -f values.yaml czertainly-x509-compliance-provider oci://harbor.3key.company/czertainly-helm/x509-compliance-provider
+helm upgrade --namespace ilm -f values.yaml ilm-x509-compliance-provider oci://hub.omnitrustregistry.com/ilm-helm/x509-compliance-provider
 ```
 
 ### Uninstall
 
 You can use the `helm uninstall` command to uninstall the application:
 ```bash
-helm uninstall --namespace czertainly czertainly-x509-compliance-provider
+helm uninstall --namespace ilm ilm-x509-compliance-provider
 ```
 
 ## Configurable parameters
@@ -90,9 +90,11 @@ The following values may be configured:
 
 | Parameter                                    | Default value                         | Description                                                                                                            |
 |----------------------------------------------|---------------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| image.registry                               | `docker.io`                           | Docker registry name for the image                                                                                     |
-| image.repository                             | `czertainly`                          | Docker image repository name                                                                                           |
-| image.name                                   | `czertainly-x509-compliance-provider` | Docker image name                                                                                                      |
+| nameOverride                                 | `x509-compliance-provider`                            | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
+| fullnameOverride                             | `""`                                                  | Override for the fully qualified app name.                                                                             |
+| image.registry                               | `hub.omnitrustregistry.com`                           | Docker registry name for the image                                                                                     |
+| image.repository                             | `ilm`                          | Docker image repository name                                                                                           |
+| image.name                                   | `x509-compliance-provider` | Docker image name                                                                                                      |
 | image.tag                                    | `1.3.1`                               | Docker image tag                                                                                                       |
 | image.digest                                 | `""`                                  | Docker image digest, will override tag if specified                                                                    |
 | image.pullPolicy                             | `IfNotPresent`                        | Image pull policy                                                                                                      |

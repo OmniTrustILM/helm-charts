@@ -65,102 +65,102 @@ Create the name of the service account to use
 Return the image name
 */}}
 {{- define "keycloak-internal.image" -}}
-{{ include "czertainly-lib.images.image" (dict "image" .Values.image "global" .Values.global) }}
+{{ include "ilm-lib.images.image" (dict "image" .Values.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
 Return the image name of the theme container
 */}}
 {{- define "keycloak-internal.theme.image" -}}
-{{ include "czertainly-lib.images.image" (dict "image" .Values.theme.image "global" .Values.global) }}
+{{ include "ilm-lib.images.image" (dict "image" .Values.theme.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
 Return the image name of the curl
 */}}
 {{- define "keycloak-internal.curl.image" -}}
-{{ include "czertainly-lib.images.image" (dict "image" .Values.curl.image "global" .Values.global) }}
+{{ include "ilm-lib.images.image" (dict "image" .Values.curl.image "global" .Values.global) }}
 {{- end -}}
 
 {{/*
 Return the image pull secret names
 */}}
 {{- define "keycloak-internal.imagePullSecrets" -}}
-{{ include "czertainly-lib.images.pullSecrets" (dict "images" (list .Values.image) "global" .Values.global) }}
+{{ include "ilm-lib.images.pullSecrets" (dict "images" (list .Values.image) "global" .Values.global) }}
 {{- end -}}
 
 {{/*
 Retun the ephemeral volume configuration
 */}}
 {{- define "keycloak-internal.ephemeralVolume" -}}
-{{ include "czertainly-lib.volumes.ephemeral" (dict "volumes" .Values.volumes "global" .Values.global.volumes) }}
+{{ include "ilm-lib.volumes.ephemeral" (dict "volumes" .Values.volumes "global" .Values.global.volumes) }}
 {{- end -}}
 
 {{/*
 Render init containers, if any
 */}}
 {{- define "keycloak-internal.customization.initContainers" -}}
-{{- include "czertainly-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.initContainers .Values.initContainers) "context" $ ) }}
+{{- include "ilm-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.initContainers .Values.initContainers) "context" $ ) }}
 {{- end -}}
 
 {{/*
 Render sidecar containers, if any
 */}}
 {{- define "keycloak-internal.customization.sidecarContainers" -}}
-{{- include "czertainly-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.sidecarContainers .Values.sidecarContainers) "context" $ ) }}
+{{- include "ilm-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.sidecarContainers .Values.sidecarContainers) "context" $ ) }}
 {{- end -}}
 
 {{/*
 Render additional volumes, if any
 */}}
 {{- define "keycloak-internal.customization.volumes" -}}
-{{- include "czertainly-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.additionalVolumes .Values.additionalVolumes) "context" $ ) }}
+{{- include "ilm-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.additionalVolumes .Values.additionalVolumes) "context" $ ) }}
 {{- end -}}
 
 {{/*
 Render additional volume mounts, if any
 */}}
 {{- define "keycloak-internal.customization.volumeMounts" -}}
-{{- include "czertainly-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.additionalVolumeMounts .Values.additionalVolumeMounts) "context" $ ) }}
+{{- include "ilm-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.additionalVolumeMounts .Values.additionalVolumeMounts) "context" $ ) }}
 {{- end -}}
 
 {{/*
 Render customized ports, if any
 */}}
 {{- define "keycloak-internal.customization.ports" -}}
-{{- include "czertainly-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.additionalPorts .Values.additionalPorts) "context" $ ) }}
+{{- include "ilm-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.additionalPorts .Values.additionalPorts) "context" $ ) }}
 {{- end -}}
 
 {{/*
 Render customized environment variables, if any
 */}}
 {{- define "keycloak-internal.customization.env" -}}
-{{- include "czertainly-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.additionalEnv.variables .Values.additionalEnv.variables) "context" $ ) }}
+{{- include "ilm-lib.customizations.render.yaml" ( dict "parts" (list .Values.global.additionalEnv.variables .Values.additionalEnv.variables) "context" $ ) }}
 {{- end -}}
 
 {{/*
 Render customized environment variables from configmaps and secrets, if any
 */}}
 {{- define "keycloak-internal.customization.envFrom" -}}
-{{- include "czertainly-lib.customizations.render.configMapEnv" ( dict "parts" (list .Values.global.additionalEnv.configMaps .Values.additionalEnv.configMaps) "context" $ ) }}
-{{- include "czertainly-lib.customizations.render.secretEnv" ( dict "parts" (list .Values.global.additionalEnv.secrets .Values.additionalEnv.secrets) "context" $ ) }}
+{{- include "ilm-lib.customizations.render.configMapEnv" ( dict "parts" (list .Values.global.additionalEnv.configMaps .Values.additionalEnv.configMaps) "context" $ ) }}
+{{- include "ilm-lib.customizations.render.secretEnv" ( dict "parts" (list .Values.global.additionalEnv.secrets .Values.additionalEnv.secrets) "context" $ ) }}
 {{- end -}}
 
 {{/*
 Render customized command and arguments, if any
 */}}
 {{- define "keycloak-internal.image.command" -}}
-{{- include "czertainly-lib.tplvalues.render" (dict "value" .Values.image.command "context" $) }}
+{{- include "ilm-lib.tplvalues.render" (dict "value" .Values.image.command "context" $) }}
 {{- end -}}
 
 {{- define "keycloak-internal.image.args" -}}
-{{- include "czertainly-lib.tplvalues.render" (dict "value" .Values.image.args "context" $) }}
+{{- include "ilm-lib.tplvalues.render" (dict "value" .Values.image.args "context" $) }}
 {{- end -}}
 
 {{- define "keycloak-internal.theme.image.command" -}}
-{{- include "czertainly-lib.tplvalues.render" (dict "value" .Values.theme.image.command "context" $) }}
+{{- include "ilm-lib.tplvalues.render" (dict "value" .Values.theme.image.command "context" $) }}
 {{- end -}}
 
 {{- define "keycloak-internal.theme.image.args" -}}
-{{- include "czertainly-lib.tplvalues.render" (dict "value" .Values.theme.image.args "context" $) }}
+{{- include "ilm-lib.tplvalues.render" (dict "value" .Values.theme.image.args "context" $) }}
 {{- end -}}

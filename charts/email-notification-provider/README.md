@@ -1,8 +1,8 @@
-# Email Notification Provider - CZERTAINLY
+# Email Notification Provider - ILM
 
-> This repository is part of the commercial open-source project CZERTAINLY. You can find more information about the project at [CZERTAINLY](https://github.com/CZERTAINLY/CZERTAINLY) repository, including the contribution guide.
+> This repository is part of the commercial open-source project ILM. You can find more information about the project at [ILM](https://github.com/OmniTrustILM/ilm) repository, including the contribution guide.
 
-This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAINLY platform.
+This repository contains [Helm](https://helm.sh/) charts as part of the ILM platform.
 
 ## Prerequisites
 - Kubernetes 1.19+
@@ -17,7 +17,7 @@ This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAIN
 
 We’ll need to define a Kubernetes namespace where the resources created by the Chart should be installed:
 ```bash
-kubectl create namespace czertainly
+kubectl create namespace ilm
 ```
 
 **Create `values.yaml`**
@@ -27,7 +27,7 @@ kubectl create namespace czertainly
 
 Copy the default `values.yaml` from the Helm chart and modify the values accordingly:
 ```bash
-helm show values oci://harbor.3key.company/czertainly-helm/email-notification-provider > values.yaml
+helm show values oci://hub.omnitrustregistry.com/ilm-helm/email-notification-provider > values.yaml
 ```
 Now edit the `values.yaml` according to your desired stated, see [Configurable parameters](#configurable-parameters) for more information.
 
@@ -35,7 +35,7 @@ Now edit the `values.yaml` according to your desired stated, see [Configurable p
 
 For the basic installation, run:
 ```bash
-helm install --namespace czertainly -f values.yaml czertainly-email-notification-provider oci://harbor.3key.company/czertainly-helm/email-notification-provider
+helm install --namespace ilm -f values.yaml ilm-email-notification-provider oci://hub.omnitrustregistry.com/ilm-helm/email-notification-provider
 ```
 
 **Save your configuration**
@@ -49,14 +49,14 @@ Always make sure you save the `values.yaml` and all `--set` and `--set-file` opt
 
 For upgrading the installation, update your configuration and run:
 ```bash
-helm upgrade --namespace czertainly -f values.yaml czertainly-email-notification-provider oci://harbor.3key.company/czertainly-helm/email-notification-provider
+helm upgrade --namespace ilm -f values.yaml ilm-email-notification-provider oci://hub.omnitrustregistry.com/ilm-helm/email-notification-provider
 ```
 
 ### Uninstall
 
 You can use the `helm uninstall` command to uninstall the application:
 ```bash
-helm uninstall --namespace czertainly czertainly-email-notification-provider
+helm uninstall --namespace ilm ilm-email-notification-provider
 ```
 
 ## Configurable parameters
@@ -100,46 +100,48 @@ Global values are used to define common parameters for the chart and all its sub
 
 The following values may be configured:
 
-| Parameter                                    | Default value                            | Description                                                                                                            |
-|----------------------------------------------|------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| image.registry                               | `docker.io`                              | Docker registry name for the image                                                                                     |
-| image.repository                             | `czertainly`                             | Docker image repository name                                                                                           |
-| image.name                                   | `czertainly-email-notification-provider` | Docker image name                                                                                                      |
-| image.tag                                    | `1.1.1`                                  | Docker image tag                                                                                                       |
-| image.digest                                 | `""`                                     | Docker image digest, will override tag if specified                                                                    |
-| image.pullPolicy                             | `IfNotPresent`                           | Image pull policy                                                                                                      |
-| image.pullSecrets                            | `[]`                                     | Array of secret names for image pull                                                                                   |
-| image.command                                | `[]`                                     | Override the default command                                                                                           |
-| image.args                                   | `[]`                                     | Override the default args                                                                                              |
-| image.securityContext.runAsNonRoot           | `true`                                   | Run the container as non-root user                                                                                     |
-| image.securityContext.readOnlyRootFilesystem | `true`                                   | Run the container with read-only root filesystem                                                                       |
-| image.resources                              | `{}`                                     | The resources for the container                                                                                        |
-| podLabels                                    | `{}`                                     | Labels to be added to the pod                                                                                          |
-| podAnnotations                               | `{}`                                     | Annotations to be added to the pod                                                                                     |
-| podSecurityContext                           | `{}`                                     | Pod security context                                                                                                   |
-| volumes.ephemeral.type                       | `memory`                                 | Ephemeral volume type to be used                                                                                       |
-| volumes.ephemeral.sizeLimit                  | `"1Mi"`                                  | Ephemeral volume size limit                                                                                            |
-| volumes.ephemeral.storageClassName           | `""`                                     | Ephemeral volume storage class name for `storage` type                                                                 |
-| volumes.ephemeral.custom                     | `{}`                                     | Custom definition of the ephemeral volume for `custom` type                                                            |
-| database.type                                | `"postgresql"`                           | Type of the database, currently only `postgresql` is supported                                                         |
-| database.host                                | `"host.docker.internal"`                 | Host where is the database located                                                                                     |
-| database.port                                | `5432`                                   | Port on which is the database listening                                                                                |
-| database.name                                | `"czertainlydb"`                         | Database name                                                                                                          |
-| database.username                            | `"czertainlyuser"`                       | Username to access the database                                                                                        |
-| database.password                            | `"your-strong-password"`                 | Password to access the database                                                                                        |
-| logging.level                                | `"INFO"`                                 | Allowed values are `"INFO"`, `"DEBUG"`, `"WARN"`, `"TRACE"`                                                            |
-| service.type                                 | `"ClusterIP"`                            | Type of the service that is exposed                                                                                    |
-| service.port                                 | `8080`                                   | Port number of the exposed service                                                                                     |
-| javaOpts                                     | `""`                                     | Customize Java system properties                                                                                       |
-| smtp.host                                    | `""`                                     | SMTP host                                                                                                              |
-| smtp.port                                    | `587`                                    | SMTP port                                                                                                              |
-| smtp.username                                | `""`                                     | SMTP username                                                                                                          |
-| smtp.password                                | `""`                                     | SMTP password                                                                                                          |
-| smtp.auth                                    | `true`                                   | SMTP authentication                                                                                                    |
-| smtp.tls                                     | `true`                                   | SMTP starttls                                                                                                          |
-| serviceAccount.create                        | `true`                                   | Specifies whether a service account should be created                                                                  |
-| serviceAccount.annotations                   | `{}`                                     | Annotations to add to the service account                                                                              |
-| serviceAccount.name                          | `"email-notification-provider-sa"`       | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
+| Parameter                                    | Default value                      | Description                                                                                                                                                                                                                                      |
+|----------------------------------------------|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| nameOverride                                 | `email-notification-provider`      | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
+| fullnameOverride                             | `""`                               | Override for the fully qualified app name.                                                                                                                                                                                                       |
+| image.registry                               | `hub.omnitrustregistry.com`        | Docker registry name for the image                                                                                                                                                                                                               |
+| image.repository                             | `ilm`                              | Docker image repository name                                                                                                                                                                                                                     |
+| image.name                                   | `email-notification-provider`      | Docker image name                                                                                                                                                                                                                                |
+| image.tag                                    | `1.2.0`                            | Docker image tag                                                                                                                                                                                                                                 |
+| image.digest                                 | `""`                               | Docker image digest, will override tag if specified                                                                                                                                                                                              |
+| image.pullPolicy                             | `IfNotPresent`                     | Image pull policy                                                                                                                                                                                                                                |
+| image.pullSecrets                            | `[]`                               | Array of secret names for image pull                                                                                                                                                                                                             |
+| image.command                                | `[]`                               | Override the default command                                                                                                                                                                                                                     |
+| image.args                                   | `[]`                               | Override the default args                                                                                                                                                                                                                        |
+| image.securityContext.runAsNonRoot           | `true`                             | Run the container as non-root user                                                                                                                                                                                                               |
+| image.securityContext.readOnlyRootFilesystem | `true`                             | Run the container with read-only root filesystem                                                                                                                                                                                                 |
+| image.resources                              | `{}`                               | The resources for the container                                                                                                                                                                                                                  |
+| podLabels                                    | `{}`                               | Labels to be added to the pod                                                                                                                                                                                                                    |
+| podAnnotations                               | `{}`                               | Annotations to be added to the pod                                                                                                                                                                                                               |
+| podSecurityContext                           | `{}`                               | Pod security context                                                                                                                                                                                                                             |
+| volumes.ephemeral.type                       | `memory`                           | Ephemeral volume type to be used                                                                                                                                                                                                                 |
+| volumes.ephemeral.sizeLimit                  | `"1Mi"`                            | Ephemeral volume size limit                                                                                                                                                                                                                      |
+| volumes.ephemeral.storageClassName           | `""`                               | Ephemeral volume storage class name for `storage` type                                                                                                                                                                                           |
+| volumes.ephemeral.custom                     | `{}`                               | Custom definition of the ephemeral volume for `custom` type                                                                                                                                                                                      |
+| database.type                                | `"postgresql"`                     | Type of the database, currently only `postgresql` is supported                                                                                                                                                                                   |
+| database.host                                | `"host.docker.internal"`           | Host where is the database located                                                                                                                                                                                                               |
+| database.port                                | `5432`                             | Port on which is the database listening                                                                                                                                                                                                          |
+| database.name                                | `"ilmdb"`                          | Database name                                                                                                                                                                                                                                    |
+| database.username                            | `"ilmuser"`                        | Username to access the database                                                                                                                                                                                                                  |
+| database.password                            | `"your-strong-password"`           | Password to access the database                                                                                                                                                                                                                  |
+| logging.level                                | `"INFO"`                           | Allowed values are `"INFO"`, `"DEBUG"`, `"WARN"`, `"TRACE"`                                                                                                                                                                                      |
+| service.type                                 | `"ClusterIP"`                      | Type of the service that is exposed                                                                                                                                                                                                              |
+| service.port                                 | `8080`                             | Port number of the exposed service                                                                                                                                                                                                               |
+| javaOpts                                     | `""`                               | Customize Java system properties                                                                                                                                                                                                                 |
+| smtp.host                                    | `""`                               | SMTP host                                                                                                                                                                                                                                        |
+| smtp.port                                    | `587`                              | SMTP port                                                                                                                                                                                                                                        |
+| smtp.username                                | `""`                               | SMTP username                                                                                                                                                                                                                                    |
+| smtp.password                                | `""`                               | SMTP password                                                                                                                                                                                                                                    |
+| smtp.auth                                    | `true`                             | SMTP authentication                                                                                                                                                                                                                              |
+| smtp.tls                                     | `true`                             | SMTP starttls                                                                                                                                                                                                                                    |
+| serviceAccount.create                        | `true`                             | Specifies whether a service account should be created                                                                                                                                                                                            |
+| serviceAccount.annotations                   | `{}`                               | Annotations to add to the service account                                                                                                                                                                                                        |
+| serviceAccount.name                          | `"email-notification-provider-sa"` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template                                                                                                                           |
 
 #### Customization parameters
 

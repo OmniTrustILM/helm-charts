@@ -1,18 +1,18 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 1.1.3
+appVersion: 1.2.0
 name: hashicorp-vault-connector
-description: A Helm chart for HashiCorp Vault Connector for CZERTAINLY platform.
-home: https://github.com/CZERTAINLY/CZERTAINLY-HashiCorp-Vault-Connector
-icon: https://github.com/CZERTAINLY/CZERTAINLY/blob/master/czertainly-logo/czertainly_sign_color.svg
+description: A Helm chart for HashiCorp Vault Connector for ILM platform.
+home: https://github.com/OmniTrustILM/ilm
+icon: https://raw.githubusercontent.com/OmniTrustILM/ilm/main/icon/ot-icon-color.svg
 dependencies:
-  - name: czertainly-lib
-    # repository: oci://harbor.3key.company/czertainly-helm
-    repository: file://../czertainly-lib
-    version: 1.4.2
+  - name: ilm-lib
+    # repository: oci://hub.omnitrustregistry.com/ilm-helm
+    repository: file://../ilm-lib
+    version: 1.4.2-1
 keywords:
-  - czertainly
+  - ilm
   - trust
   - management
   - lifecycle
@@ -22,12 +22,12 @@ keywords:
   - provider
   - hashicorp
 maintainers:
-  - name: CZERTAINLY
-    email: info@czertainly.com
-    url: https://github.com/CZERTAINLY/CZERTAINLY-Helm-Charts
+  - name: OmniTrustILM
+    email: ilm@omnitrust.com
+    url: https://github.com/OmniTrustILM/helm-charts
 type: application
 sources:
-  - https://github.com/CZERTAINLY/CZERTAINLY
-  - https://www.czertainly.com
-  - https://docs.czertainly.com
-version: 1.1.3-3-develop
+  - https://github.com/OmniTrustILM/ilm
+  - https://omnitrust.com
+  - https://docs.otilm.com
+version: 1.2.0-2-develop

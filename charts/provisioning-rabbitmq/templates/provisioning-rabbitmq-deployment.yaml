@@ -1,0 +1,241 @@
+{{- $replicaCount := pluck "replicaCount" .Values.global .Values | compact | first }}
+{{- $messagingHost := .Values.messaging.host }}
+{{- $messagingAmqpPort := .Values.messaging.amqp.port }}
+{{- $externalMessaging := pluck "enabled" .Values.global.messaging.external .Values.messaging.external | compact | first }}
+{{- if $externalMessaging }}
+{{- $messagingHost = pluck "host" .Values.global.messaging.external .Values.messaging.external | compact | first }}
+{{- $messagingAmqpPort = pluck "port" .Values.global.messaging.external.amqp .Values.messaging.external.amqp | compact | first }}
+{{- end }}
+{{- $additionalInitContainers := (include "provisioning-rabbitmq.customization.initContainers" $) }}
+{{- $additionalSidecarContainers := (include "provisioning-rabbitmq.customization.sidecarContainers" $) }}
+{{- $additionalVolumes := (include "provisioning-rabbitmq.customization.volumes" $) }}
+{{- $additionalVolumeMounts := (include "provisioning-rabbitmq.customization.volumeMounts" $) }}
+{{- $additionalEnv := (include "provisioning-rabbitmq.customization.env" $) }}
+{{- $additionalEnvFrom := (include "provisioning-rabbitmq.customization.envFrom" $) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: provisioning-rabbitmq-deployment
+  labels:
+    {{- include "provisioning-rabbitmq.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ $replicaCount | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "provisioning-rabbitmq.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "provisioning-rabbitmq.selectorLabels" . | nindent 8 }}
+      {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/provisioning-rabbitmq-secret.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- include "provisioning-rabbitmq.imagePullSecrets" . | indent 6 }}
+      {{- if .Values.podSecurityContext }}
+      securityContext: {{- .Values.podSecurityContext | toYaml | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ template "provisioning-rabbitmq.serviceAccountName" . }}
+      initContainers:
+        - name: wait-for-messaging-service
+          image: {{ include "provisioning-rabbitmq.curl.image" . }}
+          imagePullPolicy: {{ .Values.curl.image.pullPolicy }}
+          {{- if .Values.curl.image.securityContext }}
+          securityContext: {{- .Values.curl.image.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.curl.image.resources }}
+          resources: {{- toYaml .Values.curl.image.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.curl.image.command }}
+          command: {{- include "provisioning-rabbitmq.curl.image.command" . | nindent 12 }}
+          {{- else }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              while ! nc -z {{ $messagingHost }} {{ $messagingAmqpPort }}; do sleep 1; done &&
+              echo "messaging service seems to be started"
+          {{- end }}
+          {{- if .Values.curl.image.args }}
+          args: {{- include "provisioning-rabbitmq.curl.image.args" . | nindent 12 }}
+          {{- end }}
+        {{- if $additionalInitContainers }}
+          {{- $additionalInitContainers | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: provisioning-rabbitmq
+          image: {{ include "provisioning-rabbitmq.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.image.command }}
+          command: {{- include "provisioning-rabbitmq.image.command" . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.image.args }}
+          args: {{- include "provisioning-rabbitmq.image.args" . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: PORT
+              value: {{ .Values.service.port | quote }}
+            - name: LOGGING_LEVEL_COM_CZERTAINLY
+              value: {{ .Values.logging.level | quote }}
+            - name: JAVA_OPTS
+              value: {{ .Values.javaOpts | quote }}
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  {{- if .Values.global.config.enabled }}
+                  name: messaging-configmap
+                  {{- else }}
+                  name: messaging-configmap-{{ .Chart.Name | lower }}
+                  {{- end }}
+                  key: messaging.host
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  {{- if .Values.global.config.enabled }}
+                  name: messaging-configmap
+                  {{- else }}
+                  name: messaging-configmap-{{ .Chart.Name | lower }}
+                  {{- end }}
+                  key: messaging.amqp.port
+            - name: RABBITMQ_VIRTUAL_HOST
+              value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.global.config.enabled }}
+                  name: messaging-secret
+                  {{- else }}
+                  name: messaging-secret-{{ .Chart.Name | lower }}
+                  {{- end }}
+                  key: messaging.provisioner.username
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.global.config.enabled }}
+                  name: messaging-secret
+                  {{- else }}
+                  name: messaging-secret-{{ .Chart.Name | lower }}
+                  {{- end }}
+                  key: messaging.provisioner.password
+            - name: PROXY_AMQP_URL
+              value: {{ .Values.bootstrap.proxy.amqpUrl | default (printf "amqp://%s:%s" $messagingHost (toString $messagingAmqpPort)) | quote }}
+            - name: PROXY_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.global.config.enabled }}
+                  name: messaging-secret
+                  {{- else }}
+                  name: messaging-secret-{{ .Chart.Name | lower }}
+                  {{- end }}
+                  key: messaging.proxy.username
+            - name: PROXY_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.global.config.enabled }}
+                  name: messaging-secret
+                  {{- else }}
+                  name: messaging-secret-{{ .Chart.Name | lower }}
+                  {{- end }}
+                  key: messaging.proxy.password
+            - name: PROXY_EXCHANGE
+              value: {{ .Values.bootstrap.proxy.exchange | quote }}
+            - name: PROXY_RESPONSE_QUEUE
+              value: {{ .Values.bootstrap.proxy.responseQueue | quote }}
+            - name: SECURITY_API_KEY_ENABLED
+              value: {{ .Values.bootstrap.security.enabled | quote }}
+            {{- if .Values.bootstrap.security.enabled }}
+            - name: SECURITY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: provisioning-rabbitmq-secret
+                  key: securityApiKey
+            {{- end }}
+            {{- if .Values.bootstrap.token.signingKey }}
+            - name: TOKEN_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: provisioning-rabbitmq-secret
+                  key: tokenSigningKey
+            {{- end }}
+            {{- if $additionalEnv }}
+              {{- $additionalEnv | nindent 12 }}
+            {{- end }}
+          {{- if $additionalEnvFrom }}
+          envFrom:
+            {{- $additionalEnvFrom | indent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          {{- if .Values.image.securityContext }}
+          securityContext: {{- .Values.image.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.image.probes.liveness.enabled }}
+          livenessProbe:
+            {{- if .Values.image.probes.liveness.custom }}
+            {{- toYaml .Values.image.probes.liveness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.service.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.image.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.image.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.image.probes.liveness.periodSeconds }}
+            successThreshold: {{ .Values.image.probes.liveness.successThreshold }}
+            failureThreshold: {{ .Values.image.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.image.probes.readiness.enabled }}
+          readinessProbe:
+            {{- if .Values.image.probes.readiness.custom }}
+            {{- toYaml .Values.image.probes.readiness.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.service.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.image.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.image.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.image.probes.readiness.periodSeconds }}
+            successThreshold: {{ .Values.image.probes.readiness.successThreshold }}
+            failureThreshold: {{ .Values.image.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.image.probes.startup.enabled }}
+          startupProbe:
+            {{- if .Values.image.probes.startup.custom }}
+            {{- toYaml .Values.image.probes.startup.custom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.service.port }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.image.probes.startup.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.image.probes.startup.timeoutSeconds }}
+            periodSeconds: {{ .Values.image.probes.startup.periodSeconds }}
+            successThreshold: {{ .Values.image.probes.startup.successThreshold }}
+            failureThreshold: {{ .Values.image.probes.startup.failureThreshold }}
+          {{- end }}
+          {{- if .Values.image.resources }}
+          resources: {{- toYaml .Values.image.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: /tmp
+              name: ephemeral
+            {{- if $additionalVolumeMounts }}
+              {{- $additionalVolumeMounts | nindent 12 }}
+            {{- end }}
+        {{- if $additionalSidecarContainers }}
+          {{- $additionalSidecarContainers | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: ephemeral
+          {{- include "provisioning-rabbitmq.ephemeralVolume" . | indent 10 }}
+        {{- if $additionalVolumes }}
+          {{- $additionalVolumes | nindent 8 }}
+        {{- end }}

@@ -69,9 +69,9 @@ replicaCount: 1
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-kong
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: kong
   tag: 3.9.1
   # the digest to be used instead of the tag
   digest: ""
@@ -129,9 +129,9 @@ image:
 kubectl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-kubectl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: kubectl
     tag: 2.16.1
     # the digest to be used instead of the tag
     digest: ""
@@ -151,9 +151,9 @@ kubectl:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""
@@ -202,7 +202,7 @@ volumes:
     #    sizeLimit: "10Mi"
     #    medium: "Memory"
 
-nameOverride: ""
+nameOverride: api-gateway-kong
 fullnameOverride: ""
 
 serviceAccount:
@@ -241,7 +241,7 @@ service:
     # choose port between 30000-32767
     nodePort: ""
 
-hostName: "czertainly.local"
+hostName: "ilm.local"
 
 backend:
   core:

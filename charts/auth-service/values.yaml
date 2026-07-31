@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-nameOverride: ""
+nameOverride: auth-service
 fullnameOverride: ""
 
 # Global parameters that will overwrite local parameters
@@ -72,8 +72,8 @@ database:
   type: "postgresql"
   host: "host.docker.internal"
   port: 5432
-  name: "czertainlydb"
-  username: "czertainlyuser"
+  name: "ilmdb"
+  username: "ilmuser"
   password: "your-strong-password"
 trusted:
   certificates: ""
@@ -95,9 +95,9 @@ service:
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-auth
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: auth
   tag: 1.6.3
   # the digest to be used instead of the tag
   digest: ""
@@ -155,9 +155,9 @@ image:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""

@@ -1,0 +1,124 @@
+{{- if .Values.registerConnectors }}
+{{- $jobName := "register-connectors-job" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-{{ $jobName }}"
+  labels:
+    {{- include "ilm.labels" . | nindent 4 }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{ .Release.Name }}-{{ $jobName }}"
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    spec:
+      {{- include "ilm.imagePullSecrets" . | indent 6 }}
+      restartPolicy: Never
+      containers:
+        - name: {{ $jobName }}
+          image: {{ include "ilm.curl.image" . }}
+          imagePullPolicy: {{ .Values.curl.image.pullPolicy }}
+          {{- if .Values.curl.image.command }}
+          command: {{- include "ilm.curl.image.command" . | nindent 12 }}
+          {{- else }}
+          command:
+          - /bin/sh
+          - -c
+          - |
+            while ! nc -z core-service {{ .Values.service.port }}; do sleep 1; done &&
+            {{- if .Values.commonCredentialProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Common-Credential-Connector","url": "http://common-credential-provider-service:{{ .Values.commonCredentialProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register && \
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Common-Credential-Connector-v2", "version": "v2", "url": "http://common-credential-provider-service:{{ .Values.commonCredentialProvider.service.port }}","authType": "none", "customAttributes": []}' \
+            http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
+            {{- end }}
+            {{- if .Values.ejbcaNgConnector.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "EJBCA-NG-Connector","url": "http://ejbca-ng-connector-service:{{ .Values.ejbcaNgConnector.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.externalAuthorityProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "External-Authority-Provider","url": "http://external-authority-provider-service:{{ .Values.externalAuthorityProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.cryptosenseDiscoveryProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Cryptosense-Discovery-Provider","url": "http://cryptosense-discovery-provider-service:{{ .Values.cryptosenseDiscoveryProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.x509ComplianceProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "X509-Compliance-Provider","url": "http://x509-compliance-provider-service:{{ .Values.x509ComplianceProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.networkDiscoveryProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Network-Discovery-Provider","url": "http://network-discovery-provider-service:{{ .Values.networkDiscoveryProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.keystoreEntityProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Keystore-Entity-Provider","url": "http://keystore-entity-provider-service:{{ .Values.keystoreEntityProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.softwareCryptographyProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Software-Cryptography-Provider","url": "http://software-cryptography-provider-service:{{ .Values.softwareCryptographyProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.pyAdcsConnector.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "PyADCS-Connector","url": "http://pyadcs-connector-service:{{ .Values.pyAdcsConnector.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.otpkiConnector.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "OTPKI-Connector", "version": "v2", "url": "http://otpki-connector-service:{{ .Values.otpkiConnector.service.port }}","authType": "none", "customAttributes": []}' \
+            http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
+            {{- end }}
+            {{- if .Values.hashicorpVaultConnector.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "HashiCorp-Vault-Connector","url": "http://hashicorp-vault-connector-service:{{ .Values.hashicorpVaultConnector.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register && \
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "HashiCorp-Vault-Connector-v2", "version": "v2", "url": "http://hashicorp-vault-connector-service:{{ .Values.hashicorpVaultConnector.service.port }}","authType": "none", "customAttributes": []}' \
+            http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
+            {{- end }}
+            {{- if .Values.emailNotificationProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Email-Notification-Provider","url": "http://email-notification-provider-service:{{ .Values.emailNotificationProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.ctLogsDiscoveryProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "CT-Logs-Discovery-Provider","url": "http://ct-logs-discovery-provider-service:{{ .Values.ctLogsDiscoveryProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.webhookNotificationProvider.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Webhook-Notification-Provider","url": "http://webhook-notification-provider-service:{{ .Values.webhookNotificationProvider.service.port }}","authType": "none"}' \
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            {{- end }}
+            {{- if .Values.timestampFormattingConnector.enabled }}
+            curl -X POST -k -H 'content-type: application/json' \
+            -d '{"name": "Timestamp-Formatting-Connector", "version": "v2", "url": "http://timestamp-formatting-connector-service:{{ .Values.timestampFormattingConnector.service.port }}","authType": "none", "customAttributes": []}' \
+            http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
+            {{- end }}
+            echo "all done"
+          {{- end }}
+          {{- if .Values.curl.image.args }}
+          args: {{- include "ilm.curl.image.args" . | nindent 12 }}
+          {{- end }}
+{{- end }}

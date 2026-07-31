@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-nameOverride: ""
+nameOverride: network-discovery-provider
 fullnameOverride: ""
 
 # Global parameters that will overwrite local parameters
@@ -76,8 +76,8 @@ database:
   type: "postgresql"
   host: "host.docker.internal"
   port: 5432
-  name: "czertainlydb"
-  username: "czertainlyuser"
+  name: "ilmdb"
+  username: "ilmuser"
   password: "your-strong-password"
 httpProxy: ""
 httpsProxy: ""
@@ -97,9 +97,9 @@ service:
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-ip-discovery-provider
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: ip-discovery-provider
   tag: 1.6.1
   # the digest to be used instead of the tag
   digest: ""
@@ -157,9 +157,9 @@ image:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""

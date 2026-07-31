@@ -1,0 +1,20 @@
+ILM RabbitMQ provisioning service has been deployed.
+
+The service is available at:
+  http://provisioning-rabbitmq-service:{{ .Values.service.port }}
+
+API documentation:
+  POST   /api/v1/proxies                          - Provision a new proxy
+  DELETE /api/v1/proxies/{proxyCode}              - Decommission a proxy
+  GET    /api/v1/proxies/{proxyCode}/installation - Get proxy installation instructions
+
+Authentication:
+{{- if .Values.bootstrap.security.enabled }}
+  All API calls require the X-API-Key header with the configured security API key.
+{{- else }}
+  API calls are unauthenticated because bootstrap.security.enabled is false.
+  Set bootstrap.security.enabled=true and bootstrap.security.apiKey to require X-API-Key.
+{{- end }}
+
+Health check:
+  http://provisioning-rabbitmq-service:{{ .Values.service.port }}/actuator/health

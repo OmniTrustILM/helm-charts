@@ -1,8 +1,8 @@
-# Common Credential Provider - CZERTAINLY
+# Common Credential Provider - ILM
 
-> This repository is part of the commercial open-source project CZERTAINLY. You can find more information about the project at [CZERTAINLY](https://github.com/CZERTAINLY/CZERTAINLY) repository, including the contribution guide.
+> This repository is part of the commercial open-source project ILM. You can find more information about the project at [ILM](https://github.com/OmniTrustILM/ilm) repository, including the contribution guide.
 
-This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAINLY platform.
+This repository contains [Helm](https://helm.sh/) charts as part of the ILM platform.
 
 ## Prerequisites
 - Kubernetes 1.19+
@@ -18,7 +18,7 @@ This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAIN
 
 We’ll need to define a Kubernetes namespace where the resources created by the Chart should be installed:
 ```bash
-kubectl create namespace czertainly
+kubectl create namespace ilm
 ```
 
 **Create `values.yaml`**
@@ -28,7 +28,7 @@ kubectl create namespace czertainly
 
 Copy the default `values.yaml` from the Helm chart and modify the values accordingly:
 ```bash
-helm show values oci://harbor.3key.company/czertainly-helm/common-credential-provider > values.yaml
+helm show values oci://hub.omnitrustregistry.com/ilm-helm/common-credential-provider > values.yaml
 ```
 Now edit the `values.yaml` according to your desired stated, see [Configurable parameters](#configurable-parameters) for more information.
 
@@ -36,7 +36,7 @@ Now edit the `values.yaml` according to your desired stated, see [Configurable p
 
 For the basic installation, run:
 ```bash
-helm install --namespace czertainly -f values.yaml czertainly-common-credential-provider oci://harbor.3key.company/czertainly-helm/common-credential-provider
+helm install --namespace ilm -f values.yaml ilm-common-credential-provider oci://hub.omnitrustregistry.com/ilm-helm/common-credential-provider
 ```
 
 **Save your configuration**
@@ -50,14 +50,14 @@ Always make sure you save the `values.yaml` and all `--set` and `--set-file` opt
 
 For upgrading the installation, update your configuration and run:
 ```bash
-helm upgrade --namespace czertainly -f values.yaml czertainly-common-credential-provider oci://harbor.3key.company/czertainly-helm/common-credential-provider
+helm upgrade --namespace ilm -f values.yaml ilm-common-credential-provider oci://hub.omnitrustregistry.com/ilm-helm/common-credential-provider
 ```
 
 ### Uninstall
 
 You can use the `helm uninstall` command to uninstall the application:
 ```bash
-helm uninstall --namespace czertainly czertainly-common-credential-provider
+helm uninstall --namespace ilm ilm-common-credential-provider
 ```
 
 ## Configurable parameters
@@ -69,24 +69,33 @@ You can also Specify each parameter using the `--set` or `--set-file` argument t
 
 Global values are used to define common parameters for the chart and all its sub-charts by exactly the same name.
 
-| Parameter                                 | Default value | Description                                                        |
-|-------------------------------------------|---------------|--------------------------------------------------------------------|
-| global.replicaCount                       | `1`           | Number of replicas for the application                             |
-| global.image.registry                     | `""`          | Global docker registry name                                        |
-| global.image.repository                   | `""`          | Global docker image repository name                                |
-| global.image.pullSecrets                  | `[]`          | Global array of secret names for image pull                        |
-| global.volumes.ephemeral.type             | `""`          | Global ephemeral volume type to be used                            |
-| global.volumes.ephemeral.sizeLimit        | `""`          | Global ephemeral volume size limit                                 |
-| global.volumes.ephemeral.storageClassName | `""`          | Global ephemeral volume storage class name for `storage` type      |
-| global.volumes.ephemeral.custom           | `{}`          | Global custom definition of the ephemeral volume for `custom` type |
-| global.initContainers                     | `[]`          | Global init containers                                             |
-| global.sidecarContainers                  | `[]`          | Global sidecar containers                                          |
-| global.additionalVolumes                  | `[]`          | Global additional volumes                                          |
-| global.additionalVolumeMounts             | `[]`          | Global additional volume mounts                                    |
-| global.additionalPorts                    | `[]`          | Global additional ports                                            |
-| global.additionalEnv.variables            | `[]`          | Global additional environment variables                            |
-| global.additionalEnv.secrets              | `[]`          | Global additional environment secrets                              |
-| global.additionalEnv.configMaps           | `[]`          | Global additional environment config maps                          |
+| Parameter                                 | Default value          | Description                                                        |
+|-------------------------------------------|------------------------|--------------------------------------------------------------------|
+| global.replicaCount                       | `1`                    | Number of replicas for the application                             |
+| global.image.registry                     | `""`                   | Global docker registry name                                        |
+| global.image.repository                   | `""`                   | Global docker image repository name                                |
+| global.image.pullSecrets                  | `[]`                   | Global array of secret names for image pull                        |
+| global.volumes.ephemeral.type             | `""`                   | Global ephemeral volume type to be used                            |
+| global.volumes.ephemeral.sizeLimit        | `""`                   | Global ephemeral volume size limit                                 |
+| global.volumes.ephemeral.storageClassName | `""`                   | Global ephemeral volume storage class name for `storage` type      |
+| global.volumes.ephemeral.custom           | `{}`                   | Global custom definition of the ephemeral volume for `custom` type |
+| global.database.type                      | `""`                   | Type of the database, currently only `postgresql` is supported     |
+| global.database.host                      | `""`                   | Host where is the database located                                 |
+| global.database.port                      | `""`                   | Port on which is the database listening                            |
+| global.database.name                      | `""`                   | Database name                                                      |
+| global.database.username                  | `""`                   | Username to access the database                                    |
+| global.database.password                  | `""`                   | Password to access the database                                    |
+| global.database.pgBouncer.enabled         | `true`                 | Enable pgBouncer for database connection pooling and management    |
+| global.database.pgBouncer.host            | `"pg-bouncer-service"` | Host where is the pgBouncer located                                |
+| global.database.pgBouncer.port            | `5432`                 | Port on which is the pgBouncer listening                           |
+| global.initContainers                     | `[]`                   | Global init containers                                             |
+| global.sidecarContainers                  | `[]`                   | Global sidecar containers                                          |
+| global.additionalVolumes                  | `[]`                   | Global additional volumes                                          |
+| global.additionalVolumeMounts             | `[]`                   | Global additional volume mounts                                    |
+| global.additionalPorts                    | `[]`                   | Global additional ports                                            |
+| global.additionalEnv.variables            | `[]`                   | Global additional environment variables                            |
+| global.additionalEnv.secrets              | `[]`                   | Global additional environment secrets                              |
+| global.additionalEnv.configMaps           | `[]`                   | Global additional environment config maps                          |
 
 ### Local parameters
 
@@ -94,10 +103,12 @@ The following values may be configured:
 
 | Parameter                                    | Default value                           | Description                                                                                                            |
 |----------------------------------------------|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| image.registry                               | `docker.io`                             | Docker registry name for the image                                                                                     |
-| image.repository                             | `czertainly`                            | Docker image repository name                                                                                           |
-| image.name                                   | `czertainly-common-credential-provider` | Docker image name                                                                                                      |
-| image.tag                                    | `1.3.5`                                 | Docker image tag                                                                                                       |
+| nameOverride                                 | `common-credential-provider`                            | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
+| fullnameOverride                             | `""`                                                    | Override for the fully qualified app name.                                                                             |
+| image.registry                               | `hub.omnitrustregistry.com`                             | Docker registry name for the image                                                                                     |
+| image.repository                             | `ilm`                            | Docker image repository name                                                                                           |
+| image.name                                   | `common-credential-provider` | Docker image name                                                                                                      |
+| image.tag                                    | `1.4.0`                                 | Docker image tag                                                                                                       |
 | image.digest                                 | `""`                                    | Docker image digest, will override tag if specified                                                                    |
 | image.pullPolicy                             | `IfNotPresent`                          | Image pull policy                                                                                                      |
 | image.pullSecrets                            | `[]`                                    | Array of secret names for image pull                                                                                   |

@@ -1,0 +1,51 @@
+{{/*
+Return customized YAML from a template.
+Input is a list of templates to include.
+
+Example:
+{{ include "ilm-lib.customizations.render.yaml" (dict "parts" (list .Values.global.additionalPorts .Values.additionalPorts) "context" $ ) }}
+*/}}
+{{- define "ilm-lib.customizations.render.yaml" -}}
+{{- $context := .context }}
+{{- range .parts }}
+{{- if . }}
+{{- tpl ( . | toYaml) $context }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Return customized envFrom from configmaps.
+Input is a list of templates to include.
+
+Example:
+{{ include "ilm-lib.customizations.render.configMapEnv" ( dict "parts" (list .Values.global.additionalEnv.configMaps .Values.additionalEnv.configMaps) "context" $ ) }}
+*/}}
+{{- define "ilm-lib.customizations.render.configMapEnv" -}}
+{{- range .parts }}
+{{- if . }}
+  {{- range . }}
+- configMapRef:
+    name: {{ . }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Return customized envFrom from secrets.
+Input is a list of templates to include.
+
+Example:
+{{ include "ilm-lib.customizations.render.secretEnv" ( dict "parts" (list .Values.global.additionalEnv.secrets .Values.additionalEnv.secrets) "context" $ ) }}
+*/}}
+{{- define "ilm-lib.customizations.render.secretEnv" -}}
+{{- range .parts }}
+{{- if . }}
+  {{- range . }}
+- secretRef:
+    name: {{ . }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}

@@ -1,0 +1,6 @@
+dependencies:
+- name: ilm-lib
+  repository: file://../ilm-lib
+  version: 1.4.2-1
+digest: sha256:c9343afd64d3fa30364d4c0e013af3a550e0bfb6af1590b9ffd1d082bb457ec8
+generated: "2026-06-30T11:37:00.000000+02:00"

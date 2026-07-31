@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# czertainly-lib is always the first as it is used by other charts
-echo "Updating czertainly-lib dependencies..."
-helm dependency update charts/czertainly-lib --skip-refresh
+# ilm-lib is always the first as it is used by other charts
+echo "Updating ilm-lib dependencies..."
+helm dependency update charts/ilm-lib --skip-refresh
 
 # next, we should update dependencies for all sub-charts
 
@@ -30,6 +30,9 @@ helm dependency update charts/ejbca-ng-connector --skip-refresh
 echo "Updating dependencies for email-notification-provider..."
 helm dependency update charts/email-notification-provider --skip-refresh
 
+echo "Updating dependencies for external-authority-provider..."
+helm dependency update charts/external-authority-provider --skip-refresh
+
 echo "Updating dependencies for fe-administrator..."
 helm dependency update charts/fe-administrator --skip-refresh
 
@@ -47,6 +50,9 @@ helm dependency update charts/messaging-rabbitmq --skip-refresh
 
 echo "Updating dependencies for network-discovery-provider..."
 helm dependency update charts/network-discovery-provider --skip-refresh
+
+echo "Updating dependencies for otpki-connector..."
+helm dependency update charts/otpki-connector --skip-refresh
 
 echo "Updating dependencies for pyadcs-connector..."
 helm dependency update charts/pyadcs-connector --skip-refresh
@@ -69,6 +75,12 @@ helm dependency update charts/webhook-notification-provider --skip-refresh
 echo "Updating dependencies for x509-compliance-provider..."
 helm dependency update charts/x509-compliance-provider --skip-refresh
 
-# finally, update czertainly umbrella chart
-echo "Updating dependencies for czertainly..."
-helm dependency update charts/czertainly --skip-refresh
+echo "Updating dependencies for timestamp-formatting-connector..."
+helm dependency update charts/timestamp-formatting-connector --skip-refresh
+
+echo "Updating dependencies for provisioning-rabbitmq..."
+helm dependency update charts/provisioning-rabbitmq --skip-refresh
+
+# finally, update ilm umbrella chart
+echo "Updating dependencies for ilm..."
+helm dependency update charts/ilm --skip-refresh

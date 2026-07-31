@@ -1,0 +1,104 @@
+global:
+  image:
+    pullSecrets:
+      - ilmcred
+  database:
+    pgBouncer:
+      enabled: false
+    host: "172.17.0.1"
+  messaging:
+    remoteAccess: false
+    timeQualityMonitorUsername: "tqm"
+    timeQualityMonitorPassword: "tqm-ci-placeholder"
+    timeQuality:
+      enabled: true
+  trusted:
+    certificates: |
+      -----BEGIN CERTIFICATE-----
+      MIIFdjCCA16gAwIBAgIUSpLD/+gTWhMxIlMog2Bdlm3CDjQwDQYJKoZIhvcNAQEN
+      BQAwGDEWMBQGA1UEAwwNRHVtbXkgUm9vdCBDQTAgFw0yNjA0MjAxNDQxMDNaGA8y
+      MDUxMDQxNDE0NDEwM1owGDEWMBQGA1UEAwwNRHVtbXkgUm9vdCBDQTCCAiIwDQYJ
+      KoZIhvcNAQEBBQADggIPADCCAgoCggIBALu82xB7+7evVXmTSCpDmNuExm+strHU
+      yMIswiA4q+9rUrWrMJhsTcpkU7VzRvdx0SXlW3KpIX2leK9rhXGs4YwfP2Cx8K4g
+      H0vwh7APrb55oDj25KqvAc8SOAlCasS6DNh2opRYDJsbTD5W8QnM8lW55fx8ORTK
+      aRXo+Kc4ZM3ncADOQ5WmMmzFb/ZhW502N0PDiKjRM3DmRS+DrkonO2JAiznOpp6N
+      EaYcNKPorVf/xb6gv2ieDNoUz1cad+oCQXlk1UI1Z+CAOXkQ5NExR3YZlQQZBCQV
+      P4GSoSEhGCyGZXQQ9Kb9Zii0cbgmWIiWS+Uj6xnC6TxIMARd/d0Aaqal5eFaflhB
+      HOVEe+kJkN4YAq8P6ozWqgmv4XADQ9X09/q9/QnxdnGqMrY3xsPysrhy9XVk9Ogu
+      b9MFN8nXUhNc3B7Fe7BAzHdG7ZOdVpqjELpVIBADQE6UmrBQLU1HieN+tNdMvyVh
+      ijMjZ+iF8gGyLic1P/rZpnSOzReImw4KxiXzUXj2ZdDjifRIWuivL9aGZvoVP0jz
+      OJ77s4jK8Y22F3H/7YFqhoQPG6dJKMJjY83cOZpr/cnht6cxW2xcgqZBjwEqwycl
+      KuWS9H3vOVh2qTvwc4Zmjx/CGLJtxT22Fu9YKqJofClfosnTseTEZvFlO90M7Iy8
+      oLCC34VqerHZAgMBAAGjgbUwgbIwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8E
+      BAMCAQYwHQYDVR0OBBYEFKrDVRKMwNLPigRWgvEnfgyfERiyMB8GA1UdIwQYMBaA
+      FKrDVRKMwNLPigRWgvEnfgyfERiyME8GA1UdIARIMEYwRAYEVR0gADA8MDoGCCsG
+      AQUFBwICMC4MLFRoaXMgaXMgYSBkdW1teSBSb290IENBIGZvciB0ZXN0aW5nIHB1
+      cnBvc2VzMA0GCSqGSIb3DQEBDQUAA4ICAQCqKLK+io8TRYILObQNAhOwRWEgkO7N
+      Tv4HioeJYl7zuEiAli/0RgaLIL4AVzfupDx+UyATXBC+S8iFVN4d9Q1LpozSUKB9
+      GlwJ2Idti5aCUb8lR2+NhN4tUWCrA821PZYSSuybJrTvX5DArGxzGxKop3lesqgp
+      i2AT+qhkmRhi8epOfU/hNuWPi4vqa52W544Ory/44PEgLMg/Vb1LvkOZElSDQ0fb
+      UYrW/TkjYotj9ImMRfcJC/G+m8fNH8w8e4pfajqquD/SvmkWuxwlBtoTOCMVFBjF
+      pqY/KRhTcmHb4pTCiOWzKkOzII82tWMFOX8F7n5YZuIO48Zw84PoVUHUr5jCaLvo
+      0DlBeqJ4yWDSLtTvEAwTD7F+ScAxgxQI+NyE5M8nuoAuqmsk0b6ZwdgTLrlN1LGU
+      BTYWRoZN9x1PKU+55edvmiLse/XjwlebpRTFrXWo05l/03JFhlyEB5f+2ZhESJwN
+      mWLiDwNqpF0WkgnkhqmP7qI6zbGkFINfAka5ovTGvh+u4aENxlH8MD8ZfbulR8rM
+      X5gZcUotqr4RnubuqUxdyH4XS0IHAq8r6SftIhyI/kVc9RiM6sfq7Bni57b9BWEm
+      lpEB7CBRaCQ9noakoXp/G4XWuGgpOoy9SQG3xYhlC7Cp3CrtjixCmrYfrssGOjvx
+      5jpC0vE01lJDVA==
+      -----END CERTIFICATE-----
+
+image:
+  tag: develop-latest
+  pullPolicy: Always
+
+additionalEnv:
+  variables:
+    - name: OTEL_SDK_DISABLED
+      value: "false"
+
+authService:
+  image:
+    tag: develop-latest
+    pullPolicy: Always
+
+authOpaPolicies:
+  image:
+    tag: develop-latest
+    pullPolicy: Always
+
+schedulerService:
+  image:
+    tag: develop-latest
+    pullPolicy: Always
+
+feAdministrator:
+  image:
+    tag: develop-latest
+    pullPolicy: Always
+
+commonCredentialProvider:
+  image:
+    tag: develop-latest
+    pullPolicy: Always
+
+provisioningRabbitMq:
+  enabled: true
+  image:
+    tag: develop-latest
+    pullPolicy: Always
+  bootstrap:
+    security:
+      enabled: true
+      apiKey: "ci-test-key-placeholder-override"
+
+timeQualityMonitor:
+  enabled: true
+  image:
+    tag: develop-latest
+    pullPolicy: Always
+
+timestampFormattingConnector:
+  enabled: true
+  image:
+    tag: develop-latest
+    pullPolicy: Always

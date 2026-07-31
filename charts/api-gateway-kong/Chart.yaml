@@ -3,16 +3,16 @@ annotations:
 apiVersion: v2
 appVersion: 3.9.1
 name: api-gateway-kong
-description: A Helm chart for API Gateway based on the Kong for CZERTAINLY platform.
-home: https://github.com/CZERTAINLY/CZERTAINLY
-icon: https://github.com/CZERTAINLY/CZERTAINLY/blob/master/czertainly-logo/czertainly_sign_color.svg
+description: A Helm chart for API Gateway based on the Kong for ILM platform.
+home: https://github.com/OmniTrustILM/ilm
+icon: https://raw.githubusercontent.com/OmniTrustILM/ilm/main/icon/ot-icon-color.svg
 dependencies:
-  - name: czertainly-lib
-    # repository: oci://harbor.3key.company/czertainly-helm
-    repository: file://../czertainly-lib
-    version: 1.4.2
+  - name: ilm-lib
+    # repository: oci://hub.omnitrustregistry.com/ilm-helm
+    repository: file://../ilm-lib
+    version: 1.4.2-1
 keywords:
-  - czertainly
+  - ilm
   - trust
   - management
   - lifecycle
@@ -20,14 +20,14 @@ keywords:
   - api
   - gateway
 maintainers:
-  - name: CZERTAINLY
-    email: info@czertainly.com
-    url: https://github.com/CZERTAINLY/CZERTAINLY-Helm-Charts
+  - name: OmniTrustILM
+    email: ilm@omnitrust.com
+    url: https://github.com/OmniTrustILM/helm-charts
 type: application
 sources:
-  - https://github.com/CZERTAINLY/CZERTAINLY
-  - https://www.czertainly.com
-  - https://docs.czertainly.com
+  - https://github.com/OmniTrustILM/ilm
+  - https://omnitrust.com
+  - https://docs.otilm.com
   - https://github.com/revomatico/docker-kong-oidc
   - https://github.com/revomatico/kong-oidc
-version: 3.9.1-1
+version: 3.9.1-2

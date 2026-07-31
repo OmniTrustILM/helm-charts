@@ -10,5 +10,6 @@ data:
     {
         "API_URL": {{ .Values.url.api | quote}},
         "LOGIN_URL": {{ .Values.url.login | quote}},
-        "LOGOUT_URL": {{ .Values.url.logout | quote}}
+        "LOGOUT_URL": {{ .Values.url.logout | quote}},
+        "ENABLE_PROXIES": {{ .Values.global.proxy.enabled | toJson }}
     }

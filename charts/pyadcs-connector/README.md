@@ -1,6 +1,6 @@
-# PyADCS Connector - CZERTAINLY
+# PyADCS Connector - ILM
 
-This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAINLY platform.
+This repository contains [Helm](https://helm.sh/) charts as part of the ILM platform.
 
 ## Prerequisites
 - Kubernetes 1.19+
@@ -15,7 +15,7 @@ This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAIN
 
 We’ll need to define a Kubernetes namespace where the resources created by the Chart should be installed:
 ```bash
-kubectl create namespace czertainly
+kubectl create namespace ilm
 ```
 
 **Clone this chart**
@@ -29,7 +29,7 @@ Now edit the `values.yaml` according to your desired stated, see [Configurable p
 
 For the basic installation, run:
 ```bash
-helm install --namespace czertainly -f values.yaml czertainly-pyadcs-connector charts/pyadcs-connector
+helm install --namespace ilm -f values.yaml ilm-pyadcs-connector charts/pyadcs-connector
 ```
 
 **Save your configuration**
@@ -43,14 +43,14 @@ Always make sure you save the `values.yaml` and all `--set` and `--set-file` opt
 
 For upgrading the installation, update your configuration and run:
 ```bash
-helm upgrade --namespace czertainly -f values.yaml czertainly-pyadcs-connector charts/pyadcs-connector
+helm upgrade --namespace ilm -f values.yaml ilm-pyadcs-connector charts/pyadcs-connector
 ```
 
 ### Uninstall
 
 You can use the `helm uninstall` command to uninstall the application:
 ```bash
-helm uninstall --namespace czertainly czertainly-pyadcs-connector
+helm uninstall --namespace ilm ilm-pyadcs-connector
 ```
 
 ## Configurable parameters
@@ -88,9 +88,11 @@ The following values may be configured:
 
 | Parameter                                    | Default value                 | Description                                                                                                            |
 |----------------------------------------------|-------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| image.registry                               | `docker.io`                   | Docker registry name for the image                                                                                     |
-| image.repository                             | `czertainly`                  | Docker image repository name                                                                                           |
-| image.name                                   | `czertainly-pyadcs-connector` | Docker image name                                                                                                      |
+| nameOverride                                 | `pyadcs-connector`                            | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
+| fullnameOverride                             | `""`                                          | Override for the fully qualified app name.                                                                             |
+| image.registry                               | `hub.omnitrustregistry.com`                   | Docker registry name for the image                                                                                     |
+| image.repository                             | `ilm`                  | Docker image repository name                                                                                           |
+| image.name                                   | `pyadcs-connector` | Docker image name                                                                                                      |
 | image.tag                                    | `1.1.6`                       | Docker image tag                                                                                                       |
 | image.digest                                 | `""`                          | Docker image digest, will override tag if specified                                                                    |
 | image.pullPolicy                             | `IfNotPresent`                | Image pull policy                                                                                                      |
@@ -110,9 +112,9 @@ The following values may be configured:
 | database.type                                | `"postgresql"`                | Type of the database, currently only `postgresql` is supported                                                         |
 | database.host                                | `"host.docker.internal"`      | Host where is the database located                                                                                     |
 | database.port                                | `5432`                        | Port on which is the database listening                                                                                |
-| database.name                                | `"czertainlydb"`              | Database name                                                                                                          |
+| database.name                                | `"ilmdb"`              | Database name                                                                                                          |
 | database.schema                              | `"pyadcs"`                    | Database schema                                                                                                        |
-| database.username                            | `"czertainlyuser"`            | Username to access the database                                                                                        |
+| database.username                            | `"ilmuser"`            | Username to access the database                                                                                        |
 | database.password                            | `"your-strong-password"`      | Password to access the database                                                                                        |
 | logging.level                                | `"INFO"`                      | Allowed values are `"INFO"`, `"DEBUG"`, `"WARN"`, `"TRACE"`                                                            |
 | service.type                                 | `"ClusterIP"`                 | Type of the service that is exposed                                                                                    |

@@ -9,8 +9,17 @@ Example:
 {{ include "messaging-rabbitmq.definitions.json" ( dict "global" .Values.global "messagingService" .Values ) }}
 */}}
 {{- define "messaging-rabbitmq.definitions.json" -}}
-{{- $username := pluck "username" .global.messaging .messagingService.messaging | compact | first }}
-{{- $password := pluck "password" .global.messaging .messagingService.messaging | compact | first }}
+{{- $username                   := pluck "username"                   .global.messaging .messagingService.messaging | compact | first }}
+{{- $password                   := pluck "password"                   .global.messaging .messagingService.messaging | compact | first }}
+{{- $provisionerUsername        := pluck "provisionerUsername"        .global.messaging .messagingService.messaging | compact | first }}
+{{- $provisionerPassword        := pluck "provisionerPassword"        .global.messaging .messagingService.messaging | compact | first }}
+{{- $proxyUsername              := pluck "proxyUsername"              .global.messaging .messagingService.messaging | compact | first }}
+{{- $proxyPassword              := pluck "proxyPassword"              .global.messaging .messagingService.messaging | compact | first }}
+{{- $coreUsername               := pluck "coreUsername"               .global.messaging .messagingService.messaging | compact | first }}
+{{- $corePassword               := pluck "corePassword"               .global.messaging .messagingService.messaging | compact | first }}
+{{- $timeQualityMonitorUsername := pluck "timeQualityMonitorUsername" .global.messaging .messagingService.messaging | compact | first }}
+{{- $timeQualityMonitorPassword := pluck "timeQualityMonitorPassword" .global.messaging .messagingService.messaging | compact | first }}
+{{- $virtualHost                := pluck "virtualHost"                .global.messaging .messagingService.messaging | compact | first | default "/" }}
 {
   "users": [
     {
@@ -20,20 +29,258 @@ Example:
         "administrator"
       ],
       "limits": {}
+    },
+    {
+      "name": "{{ $provisionerUsername }}",
+      "password": "{{ $provisionerPassword }}",
+      "tags": [
+        "administrator"
+      ],
+      "limits": {}
+    },
+    {
+      "name": "{{ $proxyUsername }}",
+      "password": "{{ $proxyPassword }}",
+      "tags": []
+    },
+    {
+      "name": "{{ $coreUsername }}",
+      "password": "{{ $corePassword }}",
+      "tags": []
+    },
+    {
+      "name": "{{ $timeQualityMonitorUsername }}",
+      "password": "{{ $timeQualityMonitorPassword }}",
+      "tags": []
     }
   ],
   "vhosts": [
     {
-      "name": "czertainly"
+      "name": "{{ $virtualHost }}"
     }
   ],
   "permissions": [
     {
       "user": "{{ $username }}",
-      "vhost": "czertainly",
+      "vhost": "{{ $virtualHost }}",
       "configure": ".*",
       "write": ".*",
       "read": ".*"
+    },
+    {
+      "user": "{{ $provisionerUsername }}",
+      "vhost": "{{ $virtualHost }}",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "{{ $proxyUsername }}",
+      "vhost": "{{ $virtualHost }}",
+      "configure": "",
+      "write": "^ilm-proxy$",
+      "read": "^proxy\\..*$"
+    },
+    {
+      "user": "{{ $coreUsername }}",
+      "vhost": "{{ $virtualHost }}",
+      "configure": "",
+      "write": "^ilm(-proxy)?$",
+      "read": "^core(\\..+|-.+)?$|^provider\\.status-poll$|^time-quality\\.(config-request|results)$"
+    },
+    {
+      "user": "{{ $timeQualityMonitorUsername }}",
+      "vhost": "{{ $virtualHost }}",
+      "configure": "",
+      "write": "^ilm$",
+      "read": "^time-quality\\.config$"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ilm-proxy",
+      "vhost": "{{ $virtualHost }}",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "core.audit-logs",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "core.notifications",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "core.scheduler",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "core.actions",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "core.validation",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "core.events",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "provider.status-poll",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "core",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "time-quality.config",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 1,
+        "x-overflow": "drop-head"
+      }
+    },
+    {
+      "name": "time-quality.config-request",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 1,
+        "x-overflow": "drop-head"
+      }
+    },
+    {
+      "name": "time-quality.results",
+      "vhost": "{{ $virtualHost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "core.audit-logs",
+      "destination_type": "queue",
+      "routing_key": "audit-logs",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "core.notifications",
+      "destination_type": "queue",
+      "routing_key": "notification",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "core.actions",
+      "destination_type": "queue",
+      "routing_key": "action",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "core.scheduler",
+      "destination_type": "queue",
+      "routing_key": "scheduler",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "core.validation",
+      "destination_type": "queue",
+      "routing_key": "validation",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "core.events",
+      "destination_type": "queue",
+      "routing_key": "event",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "provider.status-poll",
+      "destination_type": "queue",
+      "routing_key": "provider.status-poll",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.config",
+      "destination_type": "queue",
+      "routing_key": "time-quality.config",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.config-request",
+      "destination_type": "queue",
+      "routing_key": "time-quality.config-request",
+      "arguments": {}
+    },
+    {
+      "source": "ilm",
+      "vhost": "{{ $virtualHost }}",
+      "destination": "time-quality.results",
+      "destination_type": "queue",
+      "routing_key": "time-quality.results",
+      "arguments": {}
     }
   ]
 }

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "timestamp-formatting-connector.fullname" . }}-test-connection"
+  labels:
+    {{- include "timestamp-formatting-connector.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: curl
+      image: {{ include "timestamp-formatting-connector.curl.image" . }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          curl --silent --retry 5 --retry-delay 5 --retry-all-errors timestamp-formatting-connector-service:{{ .Values.service.port }}/v1
+  restartPolicy: Never

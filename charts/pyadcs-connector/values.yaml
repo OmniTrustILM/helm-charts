@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-nameOverride: ""
+nameOverride: pyadcs-connector
 fullnameOverride: ""
 
 # Global parameters that will overwrite local parameters
@@ -78,9 +78,9 @@ database:
   type: "postgresql"
   host: "host.docker.internal"
   port: 5432
-  name: "czertainlydb"
+  name: "ilmdb"
   schema: "pyadcs"
-  username: "czertainlyuser"
+  username: "ilmuser"
   password: "your-strong-password"
 
 trusted:
@@ -104,9 +104,9 @@ service:
 
 image:
   # default registry name
-  registry: docker.io
-  repository: czertainly
-  name: czertainly-pyadcs-connector
+  registry: hub.omnitrustregistry.com
+  repository: ilm
+  name: pyadcs-connector
   tag: 1.1.6
   # the digest to be used instead of the tag
   digest: ""
@@ -164,9 +164,9 @@ image:
 curl:
   image:
     # default registry name
-    registry: docker.io
-    repository: czertainly
-    name: czertainly-curl
+    registry: hub.omnitrustregistry.com
+    repository: ilm
+    name: curl
     tag: 8.16.0
     # the digest to be used instead of the tag
     digest: ""

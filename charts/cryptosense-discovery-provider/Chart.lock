@@ -1,6 +1,6 @@
 dependencies:
-- name: czertainly-lib
-  repository: file://../czertainly-lib
-  version: 1.4.2
-digest: sha256:04b802c29a5d18b678c5034f6ab6faffb1353055e58b599da2452804ada13116
-generated: "2025-03-05T18:28:58.641319+01:00"
+- name: ilm-lib
+  repository: file://../ilm-lib
+  version: 1.4.2-1
+digest: sha256:c9343afd64d3fa30364d4c0e013af3a550e0bfb6af1590b9ffd1d082bb457ec8
+generated: "2026-06-06T14:48:42.942717+02:00"

@@ -1,0 +1,17 @@
+{{- $additionalPorts := (include "provisioning-rabbitmq.customization.ports" $) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: provisioning-rabbitmq-service
+  labels:
+    {{- include "provisioning-rabbitmq.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      protocol: "TCP"
+    {{- if $additionalPorts }}
+      {{- $additionalPorts | nindent 4 }}
+    {{- end }}
+  selector:
+    {{- include "provisioning-rabbitmq.selectorLabels" . | nindent 4 }}

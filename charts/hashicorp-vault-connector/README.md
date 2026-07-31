@@ -1,8 +1,8 @@
-# HashiCorp Vault Connector - CZERTAINLY
+# HashiCorp Vault Connector - ILM
 
-> This repository is part of the open-source project CZERTAINLY. You can find more information about the project at [CZERTAINLY](https://github.com/CZERTAINLY/CZERTAINLY) repository, including the contribution guide.
+> This repository is part of the open-source project ILM. You can find more information about the project at [ILM](https://github.com/OmniTrustILM/ilm) repository, including the contribution guide.
 
-This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAINLY platform.
+This repository contains [Helm](https://helm.sh/) charts as part of the ILM platform.
 
 ## Prerequisites
 - Kubernetes 1.19+
@@ -18,7 +18,7 @@ This repository contains [Helm](https://helm.sh/) charts as part of the CZERTAIN
 
 We’ll need to define a Kubernetes namespace where the resources created by the Chart should be installed:
 ```bash
-kubectl create namespace czertainly
+kubectl create namespace ilm
 ```
 
 **Create `values.yaml`**
@@ -28,7 +28,7 @@ kubectl create namespace czertainly
 
 Copy the default `values.yaml` from the Helm chart and modify the values accordingly:
 ```bash
-helm show values oci://harbor.3key.company/czertainly-helm/hashicorp-vault-connector > values.yaml
+helm show values oci://hub.omnitrustregistry.com/ilm-helm/hashicorp-vault-connector > values.yaml
 ```
 Now edit the `values.yaml` according to your desired stated, see [Configurable parameters](#configurable-parameters) for more information.
 
@@ -36,7 +36,7 @@ Now edit the `values.yaml` according to your desired stated, see [Configurable p
 
 For the basic installation, run:
 ```bash
-helm install --namespace czertainly -f values.yaml czertainly-hashicorp-vault-connector oci://harbor.3key.company/czertainly-helm/hashicorp-vault-connector
+helm install --namespace ilm -f values.yaml ilm-hashicorp-vault-connector oci://hub.omnitrustregistry.com/ilm-helm/hashicorp-vault-connector
 ```
 
 **Save your configuration**
@@ -50,14 +50,14 @@ Always make sure you save the `values.yaml` and all `--set` and `--set-file` opt
 
 For upgrading the installation, update your configuration and run:
 ```bash
-helm upgrade --namespace czertainly -f values.yaml czertainly-hashicorp-vault-connector oci://harbor.3key.company/czertainly-helm/hashicorp-vault-connector
+helm upgrade --namespace ilm -f values.yaml ilm-hashicorp-vault-connector oci://hub.omnitrustregistry.com/ilm-helm/hashicorp-vault-connector
 ```
 
 ### Uninstall
 
 You can use the `helm uninstall` command to uninstall the application:
 ```bash
-helm uninstall --namespace czertainly czertainly-hashicorp-vault-connector
+helm uninstall --namespace ilm ilm-hashicorp-vault-connector
 ```
 
 ## Configurable parameters
@@ -106,19 +106,21 @@ The following values may be configured:
 | database.type                                | `"postgresql"`                         | Type of the database, currently only `postgresql` is supported                                                                                |
 | database.host                                | `"host.docker.internal"`               | Host where is the database located                                                                                                            |
 | database.port                                | `5432`                                 | Port on which is the database listening                                                                                                       |
-| database.name                                | `"czertainlydb"`                       | Database name                                                                                                                                 |
+| database.name                                | `"ilmdb"`                       | Database name                                                                                                                                 |
 | database.schema                              | `"hvault"`                             | Database schema name                                                                                                                          |
 | database.sslMode                             | `"disable"`                            | SSL mode for the database connection, see [possible values](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE) |
-| database.username                            | `"czertainlyuser"`                     | Username to access the database                                                                                                               |
+| database.username                            | `"ilmuser"`                     | Username to access the database                                                                                                               |
 | database.password                            | `"your-strong-password"`               | Password to access the database                                                                                                               |
 | trusted.certificates                         | `""`                                   | List of additional CA certificates that should be trusted                                                                                     |
 | httpProxy                                    | `""`                                   | Proxy to be used to access external resources through http                                                                                    |
 | httpsProxy                                   | `""`                                   | Proxy to be used to access external resources through https                                                                                   |
 | httpProxy                                    | `""`                                   | Defines list of external resources that should not use proxy settings                                                                         |
-| image.registry                               | `docker.io`                            | Docker registry name for the image                                                                                                            |
-| image.repository                             | `czertainly`                           | Docker image repository name                                                                                                                  |
-| image.name                                   | `czertainly-hashicorp-vault-connector` | Docker image name                                                                                                                             |
-| image.tag                                    | `1.1.3`                                | Docker image tag                                                                                                                              |
+| nameOverride                                 | `hashicorp-vault-connector`                            | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
+| fullnameOverride                             | `""`                                                   | Override for the fully qualified app name.                                                                                                    |
+| image.registry                               | `hub.omnitrustregistry.com`                            | Docker registry name for the image                                                                                                            |
+| image.repository                             | `ilm`                           | Docker image repository name                                                                                                                  |
+| image.name                                   | `hashicorp-vault-connector` | Docker image name                                                                                                                             |
+| image.tag                                    | `1.2.0`                                | Docker image tag                                                                                                                              |
 | image.digest                                 | `""`                                   | Docker image digest, will override tag if specified                                                                                           |
 | image.pullPolicy                             | `IfNotPresent`                         | Image pull policy                                                                                                                             |
 | image.pullSecrets                            | `[]`                                   | Array of secret names for image pull                                                                                                          |

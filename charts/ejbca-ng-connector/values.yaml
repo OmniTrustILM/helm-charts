@@ -104,7 +104,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm
   name: ejbca-ng-connector
-  tag: 1.11.1
+  tag: 1.12.0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

@@ -9,7 +9,6 @@ apiVersion: certmanager.k8s.io/v1alpha1
   {{- else }}
 apiVersion: cert-manager.io/v1
   {{- end }}
-apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: selfsigned-issuer

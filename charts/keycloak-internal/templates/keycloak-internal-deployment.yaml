@@ -25,8 +25,13 @@ spec:
       {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.podAnnotations }}
       annotations:
+        # when the list of the trusted certificates is changed, restart deployment
+        checksum/trusted-certificates-local: {{ include (print $.Template.BasePath "/trusted-certificates-secret.yaml") . | sha256sum }}
+        {{- if .Values.global.trusted.certificates }}
+        checksum/trusted-certificates-global: {{ include ("ilm-lib.trusted.certificates.secret.global") . | sha256sum }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:

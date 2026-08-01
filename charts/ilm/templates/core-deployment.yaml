@@ -64,7 +64,10 @@ spec:
       annotations:
         # annotation for vault-agent
         # when the list of the trusted certificates is changed, restart deployment
-        checksum/config: {{ include (print $.Template.BasePath "/trusted-certificates-secret.yaml") . | sha256sum }}
+        checksum/trusted-certificates-local: {{ include (print $.Template.BasePath "/trusted-certificates-secret.yaml") . | sha256sum }}
+        {{- if .Values.global.trusted.certificates }}
+        checksum/trusted-certificates-global: {{ include ("ilm-lib.trusted.certificates.secret.global") . | sha256sum }}
+        {{- end }}
         # when the messaging secrets are changed, restart deployment
         checksum/mq-secret: {{ include (print $.Template.BasePath "/messaging-secret.yaml") . | sha256sum }}
 {{/*        checksum/mq-secret: {{ include "messaging-rabbitmq.definitions.json" (dict "global" .Values.global "messagingService" .Values.messagingService) | sha256sum }}*/}}

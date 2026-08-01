@@ -111,7 +111,7 @@ The following values may be configured:
 | image.registry                               | `hub.omnitrustregistry.com`                     | Docker registry name for the image                                                                                     |
 | image.repository                             | `ilm`                    | Docker image repository name                                                                                           |
 | image.name                                   | `ejbca-ng-connector` | Docker image name                                                                                                      |
-| image.tag                                    | `1.11.1`                        | Docker image tag                                                                                                       |
+| image.tag                                    | `1.12.0`                        | Docker image tag                                                                                                       |
 | image.digest                                 | `""`                            | Docker image digest, will override tag if specified                                                                    |
 | image.pullPolicy                             | `IfNotPresent`                  | Image pull policy                                                                                                      |
 | image.pullSecrets                            | `[]`                            | Array of secret names for image pull                                                                                   |

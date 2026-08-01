@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 1.6.3
+appVersion: 1.7.0
 name: auth-service
 description: A Helm chart for ILM Auth service.
 home: https://github.com/OmniTrustILM/ilm
@@ -27,4 +27,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.6.3-2
+version: 1.7.0

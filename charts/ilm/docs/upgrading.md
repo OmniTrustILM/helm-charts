@@ -16,6 +16,20 @@ Upgrading Helm chart is done by running the `helm upgrade` command. The command 
 
 ## To 2.19.0
 
+### Additional connector sub-charts
+
+The following sub-charts were added to support additional connectors as optional components:
+- OT PKI Connector
+- Timestamp Formatting Connector
+
+Both are disabled by default, so no action is required for existing deployments. When you enable a new connector during upgrade, you need to register the connector manually in the platform:
+```yaml
+otpkiConnector:
+  enabled: false
+timestampFormattingConnector:
+  enabled: false
+```
+
 ### RabbitMQ virtual host and exchange rename
 
 The default RabbitMQ virtual host has changed from `czertainly` to `/` (the RabbitMQ default), and the exchange names have changed from `czertainly`/`czertainly-proxy` to `ilm`/`ilm-proxy`.

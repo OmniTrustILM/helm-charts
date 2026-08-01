@@ -249,7 +249,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm
   name: core
-  tag: 2.18.0
+  tag: 2.19.0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

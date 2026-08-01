@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 1.11.1
+appVersion: 1.12.0
 name: ejbca-ng-connector
 description: A Helm chart for EJBCA NG Connector for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
@@ -30,4 +30,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.11.1-3
+version: 1.12.0

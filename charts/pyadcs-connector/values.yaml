@@ -107,7 +107,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm
   name: pyadcs-connector
-  tag: 1.1.6
+  tag: 1.2.0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

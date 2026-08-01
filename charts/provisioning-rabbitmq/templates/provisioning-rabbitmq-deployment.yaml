@@ -82,7 +82,7 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.service.port | quote }}
-            - name: LOGGING_LEVEL_COM_CZERTAINLY
+            - name: LOGGING_LEVEL_COM_OTILM
               value: {{ .Values.logging.level | quote }}
             - name: JAVA_OPTS
               value: {{ .Values.javaOpts | quote }}

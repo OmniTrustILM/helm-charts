@@ -1,3 +1,7 @@
+---
+sidebar_position: 4
+---
+
 # Troubleshooting
 
 ## Timed out waiting for the condition

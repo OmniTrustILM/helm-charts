@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # Configurable parameters
 
 You can also Specify each parameter using the `--set` or `--set-file` argument to `helm install`.

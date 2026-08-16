@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Overview
 
 Helm chart simplifies the deployment of the platform using already pre-defined templates that are parsed as Kubernetes manifests and managed by Helm.
@@ -96,4 +100,4 @@ Internal services can use Persistence Volume Claims to store the data. The PVC i
 
 The following sub-charts requires persistence:
 
-- [Messaging RabbitMQ](../../messaging-rabbitmq)
+- [Messaging RabbitMQ](https://github.com/OmniTrustILM/helm-charts/tree/main/charts/messaging-rabbitmq)

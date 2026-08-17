@@ -45,7 +45,9 @@ The default RabbitMQ virtual host has changed from `czertainly` to `/` (the Rabb
 | `bootstrap.proxy.exchange` | `czertainly-proxy` | `ilm-proxy` |
 
 :::note[The old names are identifiers, not stale branding]
-`czertainly` and `czertainly-proxy` are the virtual host and exchange names that a pre-2.19.0 deployment actually created in RabbitMQ, and they keep those names until you migrate. Type them exactly as shown wherever you inspect, override, or delete the old topology — they are what the broker resolves, regardless of the platform having been renamed to ILM.
+Left at the defaults above, a pre-2.19.0 deployment created three separate objects in RabbitMQ: the virtual host `czertainly`, the main exchange `czertainly` — a different object that happens to carry the same name — and the proxy exchange `czertainly-proxy`. If your values file set `messaging.virtualHost`, `bootstrap.exchange` or `bootstrap.proxy.exchange`, your deployment created the names you chose instead.
+
+Whichever names yours has, they stay until you migrate. Type them exactly as they exist in the broker wherever you inspect, override, or delete the old topology — that is what RabbitMQ resolves, regardless of the platform having been renamed to ILM.
 :::
 
 #### Fresh installation

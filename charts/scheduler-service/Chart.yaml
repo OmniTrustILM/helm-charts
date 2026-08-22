@@ -16,7 +16,7 @@ dependencies:
     repository: file://../messaging-rabbitmq
     tags:
       - messaging
-    version: 4.2.0-3
+    version: 4.2.0-4-develop
     condition: messaging.local
 keywords:
   - ilm
@@ -35,4 +35,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.1.1
+version: 1.1.2-develop

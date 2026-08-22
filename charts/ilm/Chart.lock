@@ -67,15 +67,15 @@ dependencies:
   version: 1.4.1-2
 - name: messaging-rabbitmq
   repository: file://../messaging-rabbitmq
-  version: 4.2.0-3
+  version: 4.2.0-4-develop
 - name: scheduler-service
   repository: file://../scheduler-service
-  version: 1.1.1
+  version: 1.1.2-develop
 - name: provisioning-rabbitmq
   repository: file://../provisioning-rabbitmq
-  version: 1.0.0-1
+  version: 1.0.0-2-develop
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-2
-digest: sha256:a2f2901394ab23602b0299800159a2f8d5d4576a7499fc8507aa96343398c4f5
-generated: "2026-08-01T13:41:10.2515+02:00"
+digest: sha256:56e94418f9d687113eefc20102cc3adb0316f3d77de31752151103cb61bad20b
+generated: "2026-08-22T06:01:04.8731556+02:00"

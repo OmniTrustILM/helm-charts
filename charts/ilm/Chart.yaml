@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 2.19.0
+appVersion: 2.19.1-develop
 name: ilm
 description: A Helm chart for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
@@ -186,14 +186,14 @@ dependencies:
     repository: file://../messaging-rabbitmq
     tags:
       - messaging
-    version: 4.2.0-3
+    version: 4.2.0-4-develop
     alias: messagingService
   - name: scheduler-service
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../scheduler-service
     tags:
       - scheduler
-    version: 1.1.1
+    version: 1.1.2-develop
     alias: schedulerService
   - condition: provisioningRabbitMq.enabled
     name: provisioning-rabbitmq
@@ -201,7 +201,7 @@ dependencies:
     repository: file://../provisioning-rabbitmq
     tags:
       - provisioning-rabbitmq
-    version: 1.0.0-1
+    version: 1.0.0-2-develop
     alias: provisioningRabbitMq
   - condition: global.database.pgBouncer.enabled
     name: pg-bouncer
@@ -228,4 +228,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 2.19.0
+version: 2.19.1-develop

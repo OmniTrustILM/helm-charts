@@ -18,6 +18,10 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ $replicaCount | default 1 }}
   {{- end }}
+  # Old and new pods must not serve the same database at once: a release can migrate the stored secrets into a
+  # format the previous one cannot read, and a rolling update would start the new pod beside the old one.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "software-cryptography-provider.selectorLabels" . | nindent 6 }}
@@ -83,6 +87,13 @@ spec:
                   key: password
             - name: TOKEN_DELETE_ON_REMOVE
               value: {{ .Values.tokenDelete | quote }}
+            {{- if .Values.encryptionKey }}
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: software-cryptography-provider-secret
+                  key: encryption_key
+            {{- end }}
             - name: JAVA_OPTS
               value: {{ .Values.javaOpts | quote }}
             {{- if $additionalEnv }}

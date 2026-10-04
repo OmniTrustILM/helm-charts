@@ -18,6 +18,109 @@ The following contains important information and instructions about upgrading He
 
 Upgrading Helm chart is done by running the `helm upgrade` command. The command upgrades the platform to the specified version. The command can be used to upgrade the platform to the same version with changed parameters.
 
+## To 2.20.0
+
+:::warning[Before upgrading]
+- If you run the Software Cryptography Provider, back up its database schema first. Its 1.4.0 upgrade cannot be undone, see [Software Cryptography Provider 1.4.0](#software-cryptography-provider-140).
+- If you use an external RabbitMQ, create the new `provider.discovery-work` queue first, see [RabbitMQ queue for discovery work](#rabbitmq-queue-for-discovery-work).
+- Core migrates the `discovery_certificate` table at startup, which can take a while on a large installation, see [Longer Core startup](#longer-core-startup).
+:::
+
+### Registering connectors on upgrade
+
+The job that registers connectors runs on `helm install` only. `helm upgrade` registers neither a connector you enable during the upgrade nor a new interface version of a connector that is already registered.
+
+In 2.20.0 the Network Discovery Provider and the Software Cryptography Provider implement the v2 provider interfaces. A fresh installation registers each of them twice, at the same URL: as v1 under its existing name, and as v2 under the name below. On an upgrade, register the v2 interfaces yourself:
+
+| Connector                      | v2 name                             | URL                                                  |
+|--------------------------------|-------------------------------------|------------------------------------------------------|
+| Network Discovery Provider     | `Network-Discovery-Provider-v2`     | `http://network-discovery-provider-service:8080`     |
+| Software Cryptography Provider | `Software-Cryptography-Provider-v2` | `http://software-cryptography-provider-service:8080` |
+
+Register them on the Connectors page of the administrator interface, or through the API from a pod inside the cluster:
+
+```bash
+kubectl run register-connector --rm -i --restart=Never --namespace <your-namespace> --image=curlimages/curl -- \
+  -sS -X POST -H 'content-type: application/json' \
+  -d '{"name": "Network-Discovery-Provider-v2", "version": "v2", "url": "http://network-discovery-provider-service:8080", "authType": "none", "customAttributes": []}' \
+  http://core-service:8080/api/v2/connector/register
+```
+
+Keep the existing v1 registrations. Adjust the ports if you changed `service.port` of Core or of the connector.
+
+### RabbitMQ queue for discovery work
+
+Core 2.20.0 drives discovery v2 runs through the new `provider.discovery-work` queue. The bundled `messaging-rabbitmq` declares the queue, binds it and grants Core read access to it, so the internal broker needs no action.
+
+With external messaging (`global.messaging.external.enabled: true`), create it before the upgrade, on the platform virtual host (`messaging.virtualHost`, `/` by default):
+
+- a durable queue `provider.discovery-work`
+- a binding from the `ilm` exchange (`bootstrap.exchange`) to the queue, with the routing key `provider.discovery-work`
+- read permission on the queue for Core's user (`global.messaging.coreUsername`)
+
+For example:
+
+```bash
+rabbitmqadmin --vhost=/ declare queue name=provider.discovery-work durable=true
+rabbitmqadmin --vhost=/ declare binding source=ilm destination=provider.discovery-work routing_key=provider.discovery-work
+rabbitmqctl set_permissions -p / <core-username> '' '^ilm(-proxy)?$' \
+  '^core(\..+|-.+)?$|^provider\.(status-poll|discovery-work)$|^time-quality\.(config-request|results)$'
+```
+
+`rabbitmqctl set_permissions` replaces all of the user's permissions on the virtual host. The patterns above are the ones the bundled broker grants Core; adjust them if your exchange names differ.
+
+### Longer Core startup
+
+Core runs its database migrations at startup, before it answers the startup probe. The 2.20.0 migration `V202608291000` converts two columns of `discovery_certificate`, which rewrites the whole table under an exclusive lock, and then builds a new index on it. On a large installation that can take longer than the previous startup budget of about 8 minutes, and a pod restarted mid-migration rolls the migration back and starts it over.
+
+`image.probes.startup.failureThreshold` is raised from `45` to `180`, which gives Core about 30 minutes. If your values set it, raise it as well. To estimate the work, check the size of the table before the upgrade:
+
+```sql
+SELECT count(*), pg_size_pretty(pg_total_relation_size('core.discovery_certificate'))
+FROM core.discovery_certificate;
+```
+
+Plan the upgrade for a maintenance window: while the migration runs, requests that touch discovered certificates wait for the lock.
+
+### Network Discovery Provider
+
+The connector moves to ip-discovery-provider 1.7.0, which adds the discovery v2 interface.
+
+- **Single replica.** A discovery v2 run lives in the memory of the pod that started it, so the chart runs one replica and ignores `global.replicaCount`. If you set `global.replicaCount` above `1`, the connector now drops back to one pod. It is updated with the `Recreate` strategy, so the old pod stops before the new one starts.
+- **Probe timeout.** The new `discovery.probe.connectTimeoutMs` value defaults to `300`, which keeps the sweep times of 1.6.1. The connector's own default of 500 ms makes a long sweep about 1.7 times longer, enough to pass Core's 6-hour limit for a run.
+- **Memory.** The connector buffers the undrained results of its discovery v2 runs in heap, up to 512 MiB in total by default (`DISCOVERY_BUFFER_MAX_TOTAL_BYTES`). Size `image.resources` and `javaOpts` for it, or lower the bound through `additionalEnv`.
+
+### Software Cryptography Provider 1.4.0
+
+:::warning[No way back to 1.3.2]
+Back up the connector's database schema (`softcp` by default) before upgrading. Migration `V202609011200` re-encrypts the stored token passwords in a format 1.3.2 cannot read, so restoring the backup is the only way back.
+:::
+
+- **Duplicate token names fail the upgrade.** Migration `V202609031200` adds a unique constraint on the token name. Find duplicates before upgrading and make the names unique:
+  ```sql
+  SELECT name, count(*) FROM softcp.token_instance GROUP BY name HAVING count(*) > 1;
+  ```
+- **Recreate strategy.** An old and a new instance must not serve the same database at once, so the connector is updated with the `Recreate` strategy: the old pod stops before the new one starts.
+- **Encryption key.** The new `encryptionKey` value sets the key the token passwords are encrypted with (`ENCRYPTION_KEY`). Without it, the connector runs on its published default key and 1.4.0 warns about it at startup. Set it only on a new installation, before the first start: the token passwords stay encrypted with the key they were written under, so changing the key of an existing installation leaves them unreadable. If you already pass `ENCRYPTION_KEY` through `additionalEnv`, keep it there or move the same value to `encryptionKey`, not both.
+
+### OT PKI Connector 1.1.0
+
+The connector moves to the OTPKI v1.0.0 API and no longer works with earlier OTPKI servers, so upgrade OTPKI first. OTPKI v1.0.0 also checks the enrollment password on every request, so keep `otpki.loginPasswordKey` at the value the existing end entities were created with. If you built the connector's OTPKI role by hand, make sure it has the `Update` permission on End Entity, which renewal needs. See the connector's README for the full list of prerequisites.
+
+### cbom-repository 1.2.0 or later
+
+Core 2.20.0 pages the CBOM repository with a keyset cursor that cbom-repository 1.1.0 does not serve, so it needs cbom-repository 1.2.0 or later. The charts do not deploy cbom-repository; upgrade it before or together with the platform.
+
+### Logo uploads through ingress-nginx
+
+The platform branding accepts logos of up to 1 MB, but the request that carries a logo is larger than the file itself. The ingress-nginx default body limit of 1 MiB therefore answers files over about 750 KB with `413 Request Entity Too Large`. To accept them, add the annotation to your values; Helm merges it into the default annotations:
+
+```yaml
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+```
+
 ## To 2.19.0
 
 ### Additional connector sub-charts

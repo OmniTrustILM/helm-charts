@@ -83,6 +83,9 @@ httpProxy: ""
 httpsProxy: ""
 noProxy: ""
 
+# The connector runs as a single replica. A discovery v2 run lives in the memory of the pod that started it, so a
+# second replica behind the service would answer Core's calls for runs it does not hold. For the same reason the
+# deployment ignores global.replicaCount and is updated with the Recreate strategy. Keep autoscaling disabled.
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -143,6 +146,9 @@ image:
       periodSeconds: 10
       successThreshold: 1
       failureThreshold: 45
+  # The connector buffers the undrained results of its discovery v2 runs in heap, up to 512 MiB in total by default
+  # (DISCOVERY_BUFFER_MAX_TOTAL_BYTES). Size the memory limit and the JVM heap (javaOpts) to hold it on top of the
+  # connector's own footprint, or lower the bound through additionalEnv.
   resources: {}
     # We follow recommendations and general guidelines to manage resources from:
     # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/
@@ -210,6 +216,14 @@ volumes:
 
 logging:
   level: "INFO"
+
+discovery:
+  probe:
+    # TCP connect timeout of a single target probe in milliseconds (DISCOVERY_PROBE_CONNECT_TIMEOUT_MS). Every
+    # unreachable address in a sweep waits out the whole value, so it drives the duration of a sweep. 300 keeps
+    # the sweep times of 1.6.1; the connector's own default of 500 makes a long sweep about 1.7x longer, which can
+    # take it past Core's 6 h limit for a run. Leave empty to use the connector default.
+    connectTimeoutMs: 300
 
 javaOpts: ""
 

@@ -70,7 +70,7 @@ Global values are used to define common parameters for the chart and all its sub
 
 | Parameter                                 | Default value          | Description                                                           |
 |-------------------------------------------|------------------------|-----------------------------------------------------------------------|
-| global.replicaCount                       | `1`                    | Number of replicas for the application                                |
+| global.replicaCount                       | `1`                    | Not used by this chart, which runs a single replica (see `replicaCount`) |
 | global.image.registry                     | `""`                   | Global docker registry name                                           |
 | global.image.repository                   | `""`                   | Global docker image repository name                                   |
 | global.image.pullSecrets                  | `[]`                   | Global array of secret names for image pull                           |
@@ -107,6 +107,7 @@ The following values may be configured:
 |----------------------------------------------|------------------------------------|------------------------------------------------------------------------------------------------------------------------|
 | nameOverride                                 | `network-discovery-provider`                       | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
 | fullnameOverride                             | `""`                                               | Override for the fully qualified app name.                                                                             |
+| replicaCount                                 | `1`                                | Number of replicas. Keep it at `1`: a discovery v2 run lives in the memory of the pod that started it, so a second replica would answer for runs it does not hold. The deployment uses the `Recreate` strategy for the same reason |
 | image.registry                               | `hub.omnitrustregistry.com`                        | Docker registry name for the image                                                                                     |
 | image.repository                             | `ilm`                       | Docker image repository name                                                                                           |
 | image.name                                   | `ip-discovery-provider` | Docker image name                                                                                                      |
@@ -118,7 +119,7 @@ The following values may be configured:
 | image.args                                   | `[]`                               | Override the default args                                                                                              |
 | image.securityContext.runAsNonRoot           | `true`                             | Run the container as non-root user                                                                                     |
 | image.securityContext.readOnlyRootFilesystem | `true`                             | Run the container with read-only root filesystem                                                                       |
-| image.resources                              | `{}`                               | The resources for the container                                                                                        |
+| image.resources                              | `{}`                               | The resources for the container. Discovery v2 runs buffer their results in heap, up to 512 MiB in total by default (`DISCOVERY_BUFFER_MAX_TOTAL_BYTES`) |
 | podLabels                                    | `{}`                               | Labels to be added to the pod                                                                                          |
 | podAnnotations                               | `{}`                               | Annotations to be added to the pod                                                                                     |
 | podSecurityContext                           | `{}`                               | Pod security context                                                                                                   |
@@ -136,6 +137,7 @@ The following values may be configured:
 | httpsProxy                                   | `""`                               | Proxy to be used to access external resources through https                                                            |
 | httpProxy                                    | `""`                               | Defines list of external resources that should not use proxy settings                                                  |
 | logging.level                                | `"INFO"`                           | Allowed values are `"INFO"`, `"DEBUG"`, `"WARN"`, `"TRACE"`                                                            |
+| discovery.probe.connectTimeoutMs             | `300`                              | TCP connect timeout of a single target probe in milliseconds (`DISCOVERY_PROBE_CONNECT_TIMEOUT_MS`). `300` keeps the sweep times of 1.6.1; empty uses the connector default of `500` |
 | service.type                                 | `"ClusterIP"`                      | Type of the service that is exposed                                                                                    |
 | service.port                                 | `8080`                             | Port number of the exposed service                                                                                     |
 | javaOpts                                     | `""`                               | Customize Java system properties                                                                                       |

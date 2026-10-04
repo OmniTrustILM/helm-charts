@@ -1,4 +1,5 @@
-{{- $replicaCount := pluck "replicaCount" .Values.global .Values | compact | first }}
+{{- /* global.replicaCount is not honoured: a discovery run is held by one pod, see replicaCount in values.yaml */}}
+{{- $replicaCount := .Values.replicaCount }}
 {{- $httpProxy := pluck "httpProxy" .Values.global .Values | compact | first }}
 {{- $httpsProxy := pluck "httpsProxy" .Values.global .Values | compact | first }}
 {{- $noProxy := pluck "noProxy" .Values.global .Values | compact | first }}
@@ -18,6 +19,9 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ $replicaCount | default 1 }}
   {{- end }}
+  # A rolling update would put the old and the new pod behind the service while a discovery run is open on one of them.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "network-discovery-provider.selectorLabels" . | nindent 6 }}
@@ -69,6 +73,10 @@ spec:
             {{- end }}
             - name: LOGGING_LEVEL_COM_CZERTAINLY
               value: {{ .Values.logging.level | quote }}
+            {{- with .Values.discovery.probe.connectTimeoutMs }}
+            - name: DISCOVERY_PROBE_CONNECT_TIMEOUT_MS
+              value: {{ . | quote }}
+            {{- end }}
             - name: JDBC_URL
               value: {{ include "ilm-lib.util.format.jdbcUrl" (list . "?characterEncoding=UTF-8") | quote }}
             - name: JDBC_USERNAME

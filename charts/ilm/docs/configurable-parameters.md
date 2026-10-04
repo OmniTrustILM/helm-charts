@@ -265,7 +265,7 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 | image.probes.startup.timeoutSeconds        | `5`           | Timeout seconds for startup probe                                                  |
 | image.probes.startup.periodSeconds         | `10`          | Period seconds for startup probe                                                   |
 | image.probes.startup.successThreshold      | `1`           | Success threshold for startup probe                                                |
-| image.probes.startup.failureThreshold      | `45`          | Failure threshold for startup probe                                                |
+| image.probes.startup.failureThreshold      | `180`         | Failure threshold for startup probe. Leaves about 30 minutes for the database migrations Core runs at startup |
 
 **Open Policy Agent**
 

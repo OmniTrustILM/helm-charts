@@ -42,8 +42,8 @@ spec:
           - -c
           - |
             while ! nc -z core-service {{ .Values.service.port }}; do sleep 1; done &&
-            left=36 &&
-            ready() { until curl -sfo /dev/null --max-time 5 "$1" || [ "$left" -le 0 ]; do left=$((left - 1)); sleep 5; done; } &&
+            deadline=$(( $(date +%s) + 180 )) &&
+            ready() { until [ "$(date +%s)" -ge "$deadline" ] || curl -sfo /dev/null --max-time 5 "$1"; do sleep 5; done; } &&
             {{- if .Values.commonCredentialProvider.enabled }}
             ready http://common-credential-provider-service:{{ .Values.commonCredentialProvider.service.port }}/v1 &&
             curl -X POST -k -H 'content-type: application/json' \

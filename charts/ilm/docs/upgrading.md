@@ -86,7 +86,7 @@ Plan the upgrade for a maintenance window: while the migration runs, requests th
 
 The connector moves to ip-discovery-provider 1.7.0, which adds the discovery v2 interface.
 
-- **Single replica.** A discovery v2 run lives in the memory of the pod that started it, so the chart runs one replica and ignores `global.replicaCount`. If you set `global.replicaCount` above `1`, the connector now drops back to one pod. It is updated with the `Recreate` strategy, so the old pod stops before the new one starts.
+- **One replica for discovery v2.** A discovery v2 run lives in the memory of the pod that started it, so another replica behind the service would answer Core's calls for runs it does not hold. The v1 interface has no such limit. The connector follows `global.replicaCount` as before, but its own `replicaCount` now wins over it: if you set `global.replicaCount` above `1` and use the v2 interface, set `networkDiscoveryProvider.replicaCount: 1`. The connector is updated with the `Recreate` strategy, so the old pod stops before the new one starts.
 - **Probe timeout.** The new `discovery.probe.connectTimeoutMs` value defaults to `300`, which keeps the sweep times of 1.6.1. The connector's own default of 500 ms makes a long sweep about 1.7 times longer, enough to pass Core's 6-hour limit for a run.
 - **Memory.** The connector buffers the undrained results of its discovery v2 runs in heap, up to 512 MiB in total by default (`DISCOVERY_BUFFER_MAX_TOTAL_BYTES`). Size `image.resources` and `javaOpts` for it, or lower the bound through `additionalEnv`.
 

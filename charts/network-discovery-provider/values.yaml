@@ -83,16 +83,16 @@ httpProxy: ""
 httpsProxy: ""
 noProxy: ""
 
-# The connector runs as a single replica. A discovery v2 run lives in the memory of the pod that started it, so a
-# second replica behind the service would answer Core's calls for runs it does not hold. For the same reason the
-# deployment ignores global.replicaCount and is updated with the Recreate strategy. Keep autoscaling disabled.
 autoscaling:
   enabled: false
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
-replicaCount: 1
+# Number of replicas. Empty follows global.replicaCount; a value set here wins over it. Set it to 1 when the discovery
+# v2 interface is used and global.replicaCount is above 1: a v2 run lives in the memory of the pod that started it,
+# so another replica behind the service would answer Core's calls for runs it does not hold. v1 has no such limit.
+replicaCount: ""
 
 service:
   type: "ClusterIP"

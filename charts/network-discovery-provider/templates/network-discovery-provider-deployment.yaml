@@ -1,5 +1,5 @@
-{{- /* global.replicaCount is not honoured: a discovery run is held by one pod, see replicaCount in values.yaml */}}
-{{- $replicaCount := .Values.replicaCount }}
+{{- /* the local replicaCount wins over the global one, so it can hold this connector to one pod; see values.yaml */}}
+{{- $replicaCount := pluck "replicaCount" .Values .Values.global | compact | first }}
 {{- $httpProxy := pluck "httpProxy" .Values.global .Values | compact | first }}
 {{- $httpsProxy := pluck "httpsProxy" .Values.global .Values | compact | first }}
 {{- $noProxy := pluck "noProxy" .Values.global .Values | compact | first }}

@@ -70,7 +70,7 @@ Global values are used to define common parameters for the chart and all its sub
 
 | Parameter                                 | Default value          | Description                                                           |
 |-------------------------------------------|------------------------|-----------------------------------------------------------------------|
-| global.replicaCount                       | `1`                    | Not used by this chart, which runs a single replica (see `replicaCount`) |
+| global.replicaCount                       | `1`                    | Number of replicas for the application, unless `replicaCount` is set  |
 | global.image.registry                     | `""`                   | Global docker registry name                                           |
 | global.image.repository                   | `""`                   | Global docker image repository name                                   |
 | global.image.pullSecrets                  | `[]`                   | Global array of secret names for image pull                           |
@@ -107,7 +107,7 @@ The following values may be configured:
 |----------------------------------------------|------------------------------------|------------------------------------------------------------------------------------------------------------------------|
 | nameOverride                                 | `network-discovery-provider`                       | Override for the chart name. Used as the `app.kubernetes.io/name` selector label value and as input to the fullname helper. Pinned to keep selectors stable across chart renames; changing this requires manual cleanup of existing Deployments. |
 | fullnameOverride                             | `""`                                               | Override for the fully qualified app name.                                                                             |
-| replicaCount                                 | `1`                                | Number of replicas. Keep it at `1`: a discovery v2 run lives in the memory of the pod that started it, so a second replica would answer for runs it does not hold. The deployment uses the `Recreate` strategy for the same reason |
+| replicaCount                                 | `""`                               | Number of replicas. Empty follows `global.replicaCount`; a value set here wins over it. Set it to `1` when the discovery v2 interface is used and `global.replicaCount` is above `1`: a v2 run lives in the memory of the pod that started it, so another replica would answer for runs it does not hold. v1 has no such limit |
 | image.registry                               | `hub.omnitrustregistry.com`                        | Docker registry name for the image                                                                                     |
 | image.repository                             | `ilm`                       | Docker image repository name                                                                                           |
 | image.name                                   | `ip-discovery-provider` | Docker image name                                                                                                      |

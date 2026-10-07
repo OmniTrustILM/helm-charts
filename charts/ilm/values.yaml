@@ -510,6 +510,9 @@ additionalEnv:
 
 logging:
   level: "INFO"
+  # Format of Core's console log (PLATFORM_LOG_FORMAT): "text" (Core's default), or one JSON object per line
+  # with "ecs" or "logstash". Empty leaves Core's default. The OpenTelemetry log export is the same in every format.
+  format: ""
 
 # Explicit instance ID (0-65535), exported as PLATFORM_INSTANCE_ID for Core's serial number
 # generator. Set this only on a single-replica workload, when you want the ID under your own

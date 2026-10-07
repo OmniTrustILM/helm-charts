@@ -123,6 +123,10 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: "2m"
 ```
 
+### JSON console logs
+
+Core 2.20.0 can write its console log as one JSON object per line. Set `logging.format` to `ecs` or `logstash` to turn it on. Audit and event records then appear as a nested `log_record` object, rather than as JSON inside the message. Left empty, Core keeps its text format, and the OpenTelemetry log export is the same in every format.
+
 ## To 2.19.0
 
 ### Additional connector sub-charts

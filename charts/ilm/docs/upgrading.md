@@ -26,27 +26,18 @@ Upgrading Helm chart is done by running the `helm upgrade` command. The command 
 - Core migrates the `discovery_certificate` table at startup, which can take a while on a large installation, see [Longer Core startup](#longer-core-startup).
 :::
 
-### Registering connectors on upgrade
+### Connector registration on upgrade
 
-The job that registers connectors runs on `helm install` only. `helm upgrade` registers neither a connector you enable during the upgrade nor a new interface version of a connector that is already registered.
+`helm upgrade` now runs the job that registers connectors, which used to run on `helm install` only. It registers the connectors you enable during the upgrade and the interfaces a connector gains with a new version, so they no longer have to be registered by hand. Registrations that already exist are left as they are: Core refuses a second registration with the same name, or with the same URL and interface version.
 
-In 2.20.0 the Network Discovery Provider and the Software Cryptography Provider implement the v2 provider interfaces. A fresh installation registers each of them twice, at the same URL: as v1 under its existing name, and as v2 under the name below. On an upgrade, register the v2 interfaces yourself:
+In 2.20.0 this registers the v2 interfaces of the Network Discovery Provider and the Software Cryptography Provider, as `Network-Discovery-Provider-v2` and `Software-Cryptography-Provider-v2`, at the same URLs as their v1 registrations. Keep the v1 registrations.
 
-| Connector                      | v2 name                             | URL                                                  |
-|--------------------------------|-------------------------------------|------------------------------------------------------|
-| Network Discovery Provider     | `Network-Discovery-Provider-v2`     | `http://network-discovery-provider-service:8080`     |
-| Software Cryptography Provider | `Software-Cryptography-Provider-v2` | `http://software-cryptography-provider-service:8080` |
+The job waits for each connector to serve the interface before it registers it, within 150 seconds in total. On an upgrade the job always ends successfully, within about 4 minutes, which is inside Helm's default timeout. If Core is not reachable within those 150 seconds, for example a single Core replica of a `StatefulSet` that is still migrating its database, the job skips registration. A registration that fails or does not fit in that time is skipped, too. Register what was skipped by hand, or run `helm upgrade` again once Core and the connectors are up.
 
-Register them on the Connectors page of the administrator interface, or through the API from a pod inside the cluster:
+If you pass `--timeout` to `helm upgrade`, keep it at 5 minutes or more.
 
-```bash
-kubectl run register-connector --rm -i --restart=Never --namespace <your-namespace> --image=curlimages/curl -- \
-  -sS -X POST -H 'content-type: application/json' \
-  -d '{"name": "Network-Discovery-Provider-v2", "version": "v2", "url": "http://network-discovery-provider-service:8080", "authType": "none", "customAttributes": []}' \
-  http://core-service:8080/api/v2/connector/register
-```
-
-Keep the existing v1 registrations. Adjust the ports if you changed `service.port` of Core or of the connector.
+- A connector you delete in the platform while it is still enabled in your values is registered again on the next upgrade, waiting for approval. Disable it in your values to keep it removed.
+- Disabling a connector in your values does not remove its registration. Delete it in the platform.
 
 ### RabbitMQ queue for discovery work
 

@@ -82,6 +82,8 @@ FROM core.discovery_certificate;
 
 Plan the upgrade for a maintenance window: while the migration runs, requests that touch discovered certificates wait for the lock.
 
+If you run `helm upgrade` with `--wait` or `--atomic`, Helm waits for Core to become ready within `--timeout`, which defaults to 5 minutes. Set it above the time the migration needs, for example `--timeout 35m`. With the default, Helm fails the upgrade while Core is still migrating. `--atomic` then rolls the release back, which stops the migration midway and starts the previous Core version on a database that the earlier 2.20.0 migrations may already have changed.
+
 ### Network Discovery Provider
 
 The connector moves to ip-discovery-provider 1.7.0, which adds the discovery v2 interface.

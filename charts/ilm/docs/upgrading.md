@@ -46,7 +46,7 @@ Core 2.20.0 drives discovery v2 runs through the new `provider.discovery-work` q
 With external messaging (`global.messaging.external.enabled: true`), create it before the upgrade, on the platform virtual host (`messaging.virtualHost`, `/` by default):
 
 - a durable queue `provider.discovery-work`
-- a binding from the `ilm` exchange (`bootstrap.exchange`) to the queue, with the routing key `provider.discovery-work`
+- a binding from the `ilm` exchange to the queue, with the routing key `provider.discovery-work`
 - read permission on the queue for Core's user (`global.messaging.coreUsername`)
 
 For example:
@@ -79,7 +79,7 @@ If you run `helm upgrade` with `--wait` or `--atomic`, Helm waits for Core to be
 
 The connector moves to ip-discovery-provider 1.7.0, which adds the discovery v2 interface.
 
-- **One replica for discovery v2.** A discovery v2 run lives in the memory of the pod that started it, so another replica behind the service would answer Core's calls for runs it does not hold. The v1 interface has no such limit. The connector follows `global.replicaCount` as before, but its own `replicaCount` now wins over it: if you set `global.replicaCount` above `1` and use the v2 interface, set `networkDiscoveryProvider.replicaCount: 1`. On an update the old pod is taken down before the new one is created (`maxSurge: 0`, `maxUnavailable: 100%`).
+- **One replica for discovery v2.** A discovery v2 run lives in the memory of the pod that started it, so another replica behind the service would answer Core's calls for runs it does not hold. The v1 interface has no such limit. The connector follows `global.replicaCount` as before, but its own `replicaCount` now wins over it: if you set `global.replicaCount` above `1` and use the v2 interface, set `networkDiscoveryProvider.replicaCount: 1`. Keep `autoscaling.enabled` off as well, or hold your autoscaler to one replica: with autoscaling on, the chart leaves the replica count to the autoscaler. On an update the old pod is taken down before the new one is created (`maxSurge: 0`, `maxUnavailable: 100%`).
 - **Probe timeout.** The new `discovery.probe.connectTimeoutMs` value defaults to `300`, which keeps the sweep times of 1.6.1. The connector's own default of 500 ms makes a long sweep about 1.7 times longer, enough to pass Core's 6-hour limit for a run.
 - **Memory.** The connector buffers the undrained results of its discovery v2 runs in heap, up to 512 MiB in total by default (`DISCOVERY_BUFFER_MAX_TOTAL_BYTES`). Size `image.resources` and `javaOpts` for it, or lower the bound through `additionalEnv`.
 

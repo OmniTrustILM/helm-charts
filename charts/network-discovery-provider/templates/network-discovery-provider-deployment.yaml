@@ -19,9 +19,15 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ $replicaCount | default 1 }}
   {{- end }}
-  # A rolling update would put the old and the new pod behind the service while a discovery run is open on one of them.
+  # The old pods are taken down before any new one is created, so an old and a new pod are never both behind the
+  # service while a discovery run is open on one of them.
+  # Not Recreate: Helm 4's server-side apply cannot remove the rollingUpdate block Kubernetes defaulted on
+  # deployments created without a strategy, and the API server refuses Recreate while it is there.
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
   selector:
     matchLabels:
       {{- include "network-discovery-provider.selectorLabels" . | nindent 6 }}

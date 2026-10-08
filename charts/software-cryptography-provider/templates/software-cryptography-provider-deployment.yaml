@@ -19,9 +19,14 @@ spec:
   replicas: {{ $replicaCount | default 1 }}
   {{- end }}
   # Old and new pods must not serve the same database at once: a release can migrate the stored secrets into a
-  # format the previous one cannot read, and a rolling update would start the new pod beside the old one.
+  # format the previous one cannot read. The old pods are taken down before any new one is created.
+  # Not Recreate: Helm 4's server-side apply cannot remove the rollingUpdate block Kubernetes defaulted on
+  # deployments created without a strategy, and the API server refuses Recreate while it is there.
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
   selector:
     matchLabels:
       {{- include "software-cryptography-provider.selectorLabels" . | nindent 6 }}

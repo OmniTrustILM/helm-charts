@@ -79,7 +79,7 @@ If you run `helm upgrade` with `--wait` or `--atomic`, Helm waits for Core to be
 
 The connector moves to ip-discovery-provider 1.7.0, which adds the discovery v2 interface.
 
-- **One replica for discovery v2.** A discovery v2 run lives in the memory of the pod that started it, so another replica behind the service would answer Core's calls for runs it does not hold. The v1 interface has no such limit. The connector follows `global.replicaCount` as before, but its own `replicaCount` now wins over it: if you set `global.replicaCount` above `1` and use the v2 interface, set `networkDiscoveryProvider.replicaCount: 1`. The connector is updated with the `Recreate` strategy, so the old pod stops before the new one starts.
+- **One replica for discovery v2.** A discovery v2 run lives in the memory of the pod that started it, so another replica behind the service would answer Core's calls for runs it does not hold. The v1 interface has no such limit. The connector follows `global.replicaCount` as before, but its own `replicaCount` now wins over it: if you set `global.replicaCount` above `1` and use the v2 interface, set `networkDiscoveryProvider.replicaCount: 1`. On an update the old pod is taken down before the new one is created (`maxSurge: 0`, `maxUnavailable: 100%`).
 - **Probe timeout.** The new `discovery.probe.connectTimeoutMs` value defaults to `300`, which keeps the sweep times of 1.6.1. The connector's own default of 500 ms makes a long sweep about 1.7 times longer, enough to pass Core's 6-hour limit for a run.
 - **Memory.** The connector buffers the undrained results of its discovery v2 runs in heap, up to 512 MiB in total by default (`DISCOVERY_BUFFER_MAX_TOTAL_BYTES`). Size `image.resources` and `javaOpts` for it, or lower the bound through `additionalEnv`.
 
@@ -93,7 +93,7 @@ Back up the connector's database schema (`softcp` by default) before upgrading. 
   ```sql
   SELECT name, count(*) FROM softcp.token_instance GROUP BY name HAVING count(*) > 1;
   ```
-- **Recreate strategy.** An old and a new instance must not serve the same database at once, so the connector is updated with the `Recreate` strategy: the old pod stops before the new one starts.
+- **Old pod first.** An old and a new instance must not serve the same database at once, so on an update the old pod is taken down before the new one is created (`maxSurge: 0`, `maxUnavailable: 100%`).
 - **Encryption key.** The new `encryptionKey` value sets the key the token passwords are encrypted with (`ENCRYPTION_KEY`). Without it, the connector runs on its published default key and 1.4.0 warns about it at startup. Set it only on a new installation, before the first start: the token passwords stay encrypted with the key they were written under, so changing the key of an existing installation leaves them unreadable. If you already pass `ENCRYPTION_KEY` through `additionalEnv`, keep it there or move the same value to `encryptionKey`, not both.
 
 ### OT PKI Connector 1.1.0

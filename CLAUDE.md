@@ -117,8 +117,8 @@ Cutting a platform release (e.g. `2.19.0`) means moving every chart off its deve
 
   | Env var set | Charts |
   |---|---|
-  | `LOGGING_LEVEL_COM_OTILM` | `ilm` (core), `scheduler-service`, `timestamp-formatting-connector`, `ejbca-ng-connector`, `email-notification-provider`, `provisioning-rabbitmq` |
+  | `LOGGING_LEVEL_COM_OTILM` | `ilm` (core), `scheduler-service`, `timestamp-formatting-connector`, `ejbca-ng-connector`, `email-notification-provider`, `provisioning-rabbitmq`, `network-discovery-provider`, `software-cryptography-provider`, `webhook-notification-provider` |
   | Both spellings | `external-authority-provider` — kept during its transition; the `CZERTAINLY` entry is now inert but harmless |
-  | `LOGGING_LEVEL_COM_CZERTAINLY` | `cryptosense-discovery-provider`, `keystore-entity-provider`, `network-discovery-provider`, `software-cryptography-provider`, `webhook-notification-provider` |
+  | `LOGGING_LEVEL_COM_CZERTAINLY` | `cryptosense-discovery-provider`, `keystore-entity-provider` |
 
   `common-credential-provider` is an exception to the whole scheme: its sources sit under a top-level `czertainly.*` package rather than `com.czertainly.*`, so neither spelling matches and its `logging.level` value has no effect at all.

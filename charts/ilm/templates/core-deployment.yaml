@@ -222,6 +222,13 @@ spec:
                   key: jdbcPassword
             - name: LOGGING_LEVEL_COM_OTILM
               value: {{ .Values.logging.level | quote }}
+            {{- with .Values.logging.format }}
+            {{- if not (has (. | trim | lower) (list "text" "ecs" "logstash")) }}
+            {{- fail (printf "logging.format must be one of \"text\", \"ecs\" or \"logstash\", got: %s" .) }}
+            {{- end }}
+            - name: PLATFORM_LOG_FORMAT
+              value: {{ . | quote }}
+            {{- end }}
             {{- /* PLATFORM_INSTANCE_ID: stable, unique 0-65535 integer per Core replica for the serial number generator. */}}
             {{- if $platformInstanceIdSet }}
             - name: PLATFORM_INSTANCE_ID

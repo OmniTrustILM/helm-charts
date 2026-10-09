@@ -291,7 +291,11 @@ image:
       timeoutSeconds: 5
       periodSeconds: 10
       successThreshold: 1
-      failureThreshold: 45
+      # Core runs its database migrations before it answers the probe, and a migration that rewrites a large table
+      # can take minutes. A pod restarted mid-migration rolls it back and starts it over, so the budget leaves room
+      # for the largest tables. The value counts failed probes, so the budget is failureThreshold times periodSeconds:
+      # 180 probes 10 seconds apart, about 30 minutes. Raise it if a migration on your database takes longer.
+      failureThreshold: 180
   resources: {}
     # We follow recommendations and general guidelines to manage resources from:
     # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/
@@ -507,6 +511,9 @@ additionalEnv:
 
 logging:
   level: "INFO"
+  # Format of Core's console log (PLATFORM_LOG_FORMAT): "text" (Core's default), or one JSON object per line
+  # with "ecs" or "logstash". Empty leaves Core's default. The OpenTelemetry log export is the same in every format.
+  format: ""
 
 # Explicit instance ID (0-65535), exported as PLATFORM_INSTANCE_ID for Core's serial number
 # generator. Set this only on a single-replica workload, when you want the ID under your own

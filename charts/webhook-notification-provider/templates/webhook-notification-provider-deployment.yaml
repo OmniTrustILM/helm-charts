@@ -52,7 +52,7 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.service.port | quote }}
-            - name: LOGGING_LEVEL_COM_CZERTAINLY
+            - name: LOGGING_LEVEL_COM_OTILM
               value: {{ .Values.logging.level | quote }}
             - name: JDBC_URL
               value: {{ include "ilm-lib.util.format.jdbcUrl" (list . "?characterEncoding=UTF-8") | quote }}

@@ -99,7 +99,11 @@ spec:
             ready http://network-discovery-provider-service:{{ .Values.networkDiscoveryProvider.service.port }}/v1 &&
             post \
             -d '{"name": "Network-Discovery-Provider","url": "http://network-discovery-provider-service:{{ .Values.networkDiscoveryProvider.service.port }}","authType": "none"}' \
-            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register && \
+            ready http://network-discovery-provider-service:{{ .Values.networkDiscoveryProvider.service.port }}/v2/info &&
+            post \
+            -d '{"name": "Network-Discovery-Provider-v2", "version": "v2", "url": "http://network-discovery-provider-service:{{ .Values.networkDiscoveryProvider.service.port }}","authType": "none", "customAttributes": []}' \
+            http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
             {{- end }}
             {{- if .Values.keystoreEntityProvider.enabled }}
             ready http://keystore-entity-provider-service:{{ .Values.keystoreEntityProvider.service.port }}/v1 &&
@@ -111,7 +115,11 @@ spec:
             ready http://software-cryptography-provider-service:{{ .Values.softwareCryptographyProvider.service.port }}/v1 &&
             post \
             -d '{"name": "Software-Cryptography-Provider","url": "http://software-cryptography-provider-service:{{ .Values.softwareCryptographyProvider.service.port }}","authType": "none"}' \
-            http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
+            http://core-service:{{ .Values.service.port }}/api/v1/connector/register && \
+            ready http://software-cryptography-provider-service:{{ .Values.softwareCryptographyProvider.service.port }}/v2/info &&
+            post \
+            -d '{"name": "Software-Cryptography-Provider-v2", "version": "v2", "url": "http://software-cryptography-provider-service:{{ .Values.softwareCryptographyProvider.service.port }}","authType": "none", "customAttributes": []}' \
+            http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
             {{- end }}
             {{- if .Values.pyAdcsConnector.enabled }}
             ready http://pyadcs-connector-service:{{ .Values.pyAdcsConnector.service.port }}/v1 &&

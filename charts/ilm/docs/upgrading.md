@@ -65,7 +65,7 @@ rabbitmqctl set_permissions -p / <core-username> '' '^ilm(-proxy)?$' \
 
 Core runs its database migrations at startup, before it answers the startup probe. The 2.20.0 migration `V202608291000` converts two columns of `discovery_certificate`, which rewrites the whole table under an exclusive lock, and then builds a new index on it. On a large installation that can take longer than the previous startup budget of about 8 minutes, and a pod restarted mid-migration rolls the migration back and starts it over.
 
-`image.probes.startup.failureThreshold` is raised from `45` to `180`, which gives Core about 30 minutes. If your values set it, raise it as well. To estimate the work, check the size of the table before the upgrade:
+`image.probes.startup.failureThreshold` is raised from `45` to `180`. It counts failed probes, not seconds, so the budget is `failureThreshold` × `periodSeconds`: with the default `periodSeconds` of `10`, Core gets about 30 minutes. If your values set either of them, make sure the product still covers the migration. To estimate the work, check the size of the table before the upgrade:
 
 ```sql
 SELECT count(*), pg_size_pretty(pg_total_relation_size('core.discovery_certificate'))

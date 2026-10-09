@@ -9,7 +9,7 @@ metadata:
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "-5"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
@@ -30,89 +30,132 @@ spec:
           {{- if .Values.curl.image.command }}
           command: {{- include "ilm.curl.image.command" . | nindent 12 }}
           {{- else }}
+          {{- /*
+          The job also runs on upgrade, to register the connectors enabled since and the interfaces a connector has
+          gained. Core refuses a name, or a URL and version, it already holds, and curl without -f exits 0 on that
+          refusal, so existing registrations are left as they are. Core calls the connector before it registers it,
+          so each registration first waits until the connector serves the info endpoint of that interface version,
+          within a budget of 150 s shared by all of them.
+
+          On upgrade the job must not fail or outlast the upgrade, which Helm fails when a post-upgrade hook fails or
+          runs past its timeout (5 minutes by default). The wait for Core shares the budget, since a single Core
+          replica can be down for its whole migration, and the job then skips registration. Each request is capped
+          and may not start after the budget plus 80 s, and none of them fails the job, so it ends within about
+          4 minutes with exit 0. What it could not register is registered by the next upgrade or by hand.
+          */}}
           command:
           - /bin/sh
           - -c
           - |
+            {{- if .Release.IsUpgrade }}
+            deadline=$(( $(date +%s) + 150 )) &&
+            end=$(( deadline + 80 )) &&
+            until nc -z -w 2 core-service {{ .Values.service.port }}; do
+              [ "$(date +%s)" -lt "$deadline" ] || { echo "Core is not reachable, connector registration skipped"; exit 0; }
+              sleep 1
+            done &&
+            post() { [ "$(date +%s)" -lt "$end" ] && curl --max-time 10 -X POST -k -H 'content-type: application/json' "$@"; return 0; } &&
+            {{- else }}
             while ! nc -z core-service {{ .Values.service.port }}; do sleep 1; done &&
+            deadline=$(( $(date +%s) + 150 )) &&
+            post() { curl -X POST -k -H 'content-type: application/json' "$@"; } &&
+            {{- end }}
+            ready() { until [ "$(date +%s)" -ge "$deadline" ] || curl -sfo /dev/null --max-time 5 "$1"; do sleep 5; done; } &&
             {{- if .Values.commonCredentialProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://common-credential-provider-service:{{ .Values.commonCredentialProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "Common-Credential-Connector","url": "http://common-credential-provider-service:{{ .Values.commonCredentialProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register && \
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://common-credential-provider-service:{{ .Values.commonCredentialProvider.service.port }}/v2/info &&
+            post \
             -d '{"name": "Common-Credential-Connector-v2", "version": "v2", "url": "http://common-credential-provider-service:{{ .Values.commonCredentialProvider.service.port }}","authType": "none", "customAttributes": []}' \
             http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
             {{- end }}
             {{- if .Values.ejbcaNgConnector.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://ejbca-ng-connector-service:{{ .Values.ejbcaNgConnector.service.port }}/v1 &&
+            post \
             -d '{"name": "EJBCA-NG-Connector","url": "http://ejbca-ng-connector-service:{{ .Values.ejbcaNgConnector.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.externalAuthorityProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://external-authority-provider-service:{{ .Values.externalAuthorityProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "External-Authority-Provider","url": "http://external-authority-provider-service:{{ .Values.externalAuthorityProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.cryptosenseDiscoveryProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://cryptosense-discovery-provider-service:{{ .Values.cryptosenseDiscoveryProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "Cryptosense-Discovery-Provider","url": "http://cryptosense-discovery-provider-service:{{ .Values.cryptosenseDiscoveryProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.x509ComplianceProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://x509-compliance-provider-service:{{ .Values.x509ComplianceProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "X509-Compliance-Provider","url": "http://x509-compliance-provider-service:{{ .Values.x509ComplianceProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.networkDiscoveryProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://network-discovery-provider-service:{{ .Values.networkDiscoveryProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "Network-Discovery-Provider","url": "http://network-discovery-provider-service:{{ .Values.networkDiscoveryProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.keystoreEntityProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://keystore-entity-provider-service:{{ .Values.keystoreEntityProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "Keystore-Entity-Provider","url": "http://keystore-entity-provider-service:{{ .Values.keystoreEntityProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.softwareCryptographyProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://software-cryptography-provider-service:{{ .Values.softwareCryptographyProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "Software-Cryptography-Provider","url": "http://software-cryptography-provider-service:{{ .Values.softwareCryptographyProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.pyAdcsConnector.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://pyadcs-connector-service:{{ .Values.pyAdcsConnector.service.port }}/v1 &&
+            post \
             -d '{"name": "PyADCS-Connector","url": "http://pyadcs-connector-service:{{ .Values.pyAdcsConnector.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.otpkiConnector.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://otpki-connector-service:{{ .Values.otpkiConnector.service.port }}/v2/info &&
+            post \
             -d '{"name": "OTPKI-Connector", "version": "v2", "url": "http://otpki-connector-service:{{ .Values.otpkiConnector.service.port }}","authType": "none", "customAttributes": []}' \
             http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
             {{- end }}
             {{- if .Values.hashicorpVaultConnector.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://hashicorp-vault-connector-service:{{ .Values.hashicorpVaultConnector.service.port }}/v1 &&
+            post \
             -d '{"name": "HashiCorp-Vault-Connector","url": "http://hashicorp-vault-connector-service:{{ .Values.hashicorpVaultConnector.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register && \
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://hashicorp-vault-connector-service:{{ .Values.hashicorpVaultConnector.service.port }}/v2/info &&
+            post \
             -d '{"name": "HashiCorp-Vault-Connector-v2", "version": "v2", "url": "http://hashicorp-vault-connector-service:{{ .Values.hashicorpVaultConnector.service.port }}","authType": "none", "customAttributes": []}' \
             http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
             {{- end }}
             {{- if .Values.emailNotificationProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://email-notification-provider-service:{{ .Values.emailNotificationProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "Email-Notification-Provider","url": "http://email-notification-provider-service:{{ .Values.emailNotificationProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.ctLogsDiscoveryProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://ct-logs-discovery-provider-service:{{ .Values.ctLogsDiscoveryProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "CT-Logs-Discovery-Provider","url": "http://ct-logs-discovery-provider-service:{{ .Values.ctLogsDiscoveryProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.webhookNotificationProvider.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://webhook-notification-provider-service:{{ .Values.webhookNotificationProvider.service.port }}/v1 &&
+            post \
             -d '{"name": "Webhook-Notification-Provider","url": "http://webhook-notification-provider-service:{{ .Values.webhookNotificationProvider.service.port }}","authType": "none"}' \
             http://core-service:{{ .Values.service.port }}/api/v1/connector/register &&
             {{- end }}
             {{- if .Values.timestampFormattingConnector.enabled }}
-            curl -X POST -k -H 'content-type: application/json' \
+            ready http://timestamp-formatting-connector-service:{{ .Values.timestampFormattingConnector.service.port }}/v2/info &&
+            post \
             -d '{"name": "Timestamp-Formatting-Connector", "version": "v2", "url": "http://timestamp-formatting-connector-service:{{ .Values.timestampFormattingConnector.service.port }}","authType": "none", "customAttributes": []}' \
             http://core-service:{{ .Values.service.port }}/api/v2/connector/register &&
             {{- end }}

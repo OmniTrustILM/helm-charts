@@ -18,6 +18,19 @@ The following contains important information and instructions about upgrading He
 
 Upgrading Helm chart is done by running the `helm upgrade` command. The command upgrades the platform to the specified version. The command can be used to upgrade the platform to the same version with changed parameters.
 
+## To 2.20.0
+
+### Connector registration on upgrade
+
+`helm upgrade` now runs the job that registers connectors, which used to run on `helm install` only. It registers the connectors you enable during the upgrade and the interfaces a connector gains with a new version, so they no longer have to be registered by hand. Registrations that already exist are left as they are: Core refuses a second registration with the same name, or with the same URL and interface version.
+
+The job waits for each connector to serve the interface before it registers it, within 150 seconds in total. On an upgrade the job always ends successfully, within about 4 minutes, which is inside Helm's default timeout. If Core is not reachable within those 150 seconds, for example a single Core replica of a `StatefulSet` that is still migrating its database, the job skips registration. A registration that fails or does not fit in that time is skipped, too. Register what was skipped by hand, or run `helm upgrade` again once Core and the connectors are up.
+
+If you pass `--timeout` to `helm upgrade`, keep it at 5 minutes or more.
+
+- A connector you delete in the platform while it is still enabled in your values is registered again on the next upgrade, waiting for approval. Disable it in your values to keep it removed.
+- Disabling a connector in your values does not remove its registration. Delete it in the platform.
+
 ## To 2.19.0
 
 ### Additional connector sub-charts

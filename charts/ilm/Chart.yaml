@@ -87,7 +87,7 @@ dependencies:
     repository: file://../network-discovery-provider
     tags:
       - discovery-provider
-    version: 1.6.1-3
+    version: 1.6.1-4-develop
     alias: networkDiscoveryProvider
   - condition: keystoreEntityProvider.enabled
     name: keystore-entity-provider
@@ -103,7 +103,7 @@ dependencies:
     repository: file://../software-cryptography-provider
     tags:
       - cryptography-provider
-    version: 1.3.2
+    version: 1.3.2-1-develop
     alias: softwareCryptographyProvider
   - condition: emailNotificationProvider.enabled
     name: email-notification-provider
@@ -119,7 +119,7 @@ dependencies:
     repository: file://../webhook-notification-provider
     tags:
       - notification-provider
-    version: 1.0.0-3
+    version: 1.0.0-4-develop
     alias: webhookNotificationProvider
   - condition: hashicorpVaultConnector.enabled
     name: hashicorp-vault-connector

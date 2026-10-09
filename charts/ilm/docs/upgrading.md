@@ -49,11 +49,12 @@ With external messaging (`global.messaging.external.enabled: true`), create it b
 - a binding from the `ilm` exchange to the queue, with the routing key `provider.discovery-work`
 - read permission on the queue for Core's user (`global.messaging.coreUsername`)
 
-For example:
+For example, with [rabbitmqadmin v2](https://github.com/rabbitmq/rabbitmqadmin-ng), which works with any RabbitMQ 4.x broker (RabbitMQ 4.3 removed v1):
 
 ```bash
-rabbitmqadmin --vhost=/ declare queue name=provider.discovery-work durable=true
-rabbitmqadmin --vhost=/ declare binding source=ilm destination=provider.discovery-work routing_key=provider.discovery-work
+rabbitmqadmin --vhost / queues declare --name provider.discovery-work --type classic --durable true
+rabbitmqadmin --vhost / exchanges bind --source ilm --destination-type queue \
+  --destination provider.discovery-work --routing-key provider.discovery-work
 rabbitmqctl set_permissions -p / <core-username> '' '^ilm(-proxy)?$' \
   '^core(\..+|-.+)?$|^provider\.(status-poll|discovery-work)$|^time-quality\.(config-request|results)$'
 ```

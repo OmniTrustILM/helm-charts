@@ -20,9 +20,17 @@ Upgrading Helm chart is done by running the `helm upgrade` command. The command 
 
 ## To 2.20.0
 
+:::warning[Before upgrading]
+- If you run the Software Cryptography Provider, back up its database schema first. Its 1.4.0 upgrade cannot be undone, see [Software Cryptography Provider 1.4.0](#software-cryptography-provider-140).
+- If you use an external RabbitMQ, create the new `provider.discovery-work` queue first, see [RabbitMQ queue for discovery work](#rabbitmq-queue-for-discovery-work).
+- Core migrates the `discovery_certificate` table at startup, which can take a while on a large installation, see [Longer Core startup](#longer-core-startup).
+:::
+
 ### Connector registration on upgrade
 
 `helm upgrade` now runs the job that registers connectors, which used to run on `helm install` only. It registers the connectors you enable during the upgrade and the interfaces a connector gains with a new version, so they no longer have to be registered by hand. Registrations that already exist are left as they are: Core refuses a second registration with the same name, or with the same URL and interface version.
+
+In 2.20.0 this registers the v2 interfaces of the Network Discovery Provider and the Software Cryptography Provider, as `Network-Discovery-Provider-v2` and `Software-Cryptography-Provider-v2`, at the same URLs as their v1 registrations. Keep the v1 registrations.
 
 The job waits for each connector to serve the interface before it registers it, within 150 seconds in total. On an upgrade the job always ends successfully, within about 4 minutes, which is inside Helm's default timeout. If Core is not reachable within those 150 seconds, for example a single Core replica of a `StatefulSet` that is still migrating its database, the job skips registration. A registration that fails or does not fit in that time is skipped, too. Register what was skipped by hand, or run `helm upgrade` again once Core and the connectors are up.
 
@@ -30,6 +38,85 @@ If you pass `--timeout` to `helm upgrade`, keep it at 5 minutes or more.
 
 - A connector you delete in the platform while it is still enabled in your values is registered again on the next upgrade, waiting for approval. Disable it in your values to keep it removed.
 - Disabling a connector in your values does not remove its registration. Delete it in the platform.
+
+### RabbitMQ queue for discovery work
+
+Core 2.20.0 drives discovery v2 runs through the new `provider.discovery-work` queue. The bundled `messaging-rabbitmq` declares the queue, binds it and grants Core read access to it, so the internal broker needs no action.
+
+With external messaging (`global.messaging.external.enabled: true`), create it before the upgrade, on the platform virtual host (`messaging.virtualHost`, `/` by default):
+
+- a durable queue `provider.discovery-work`
+- a binding from the `ilm` exchange to the queue, with the routing key `provider.discovery-work`
+- read permission on the queue for Core's user (`global.messaging.coreUsername`)
+
+For example:
+
+```bash
+rabbitmqadmin --vhost=/ declare queue name=provider.discovery-work durable=true
+rabbitmqadmin --vhost=/ declare binding source=ilm destination=provider.discovery-work routing_key=provider.discovery-work
+rabbitmqctl set_permissions -p / <core-username> '' '^ilm(-proxy)?$' \
+  '^core(\..+|-.+)?$|^provider\.(status-poll|discovery-work)$|^time-quality\.(config-request|results)$'
+```
+
+`rabbitmqctl set_permissions` replaces all of the user's permissions on the virtual host. The patterns above are the ones the bundled broker grants Core; adjust them if your exchange names differ.
+
+### Longer Core startup
+
+Core runs its database migrations at startup, before it answers the startup probe. The 2.20.0 migration `V202608291000` converts two columns of `discovery_certificate`, which rewrites the whole table under an exclusive lock, and then builds a new index on it. On a large installation that can take longer than the previous startup budget of about 8 minutes, and a pod restarted mid-migration rolls the migration back and starts it over.
+
+`image.probes.startup.failureThreshold` is raised from `45` to `180`, which gives Core about 30 minutes. If your values set it, raise it as well. To estimate the work, check the size of the table before the upgrade:
+
+```sql
+SELECT count(*), pg_size_pretty(pg_total_relation_size('core.discovery_certificate'))
+FROM core.discovery_certificate;
+```
+
+Plan the upgrade for a maintenance window: while the migration runs, requests that touch discovered certificates wait for the lock.
+
+If you run `helm upgrade` with `--wait` or `--atomic`, Helm waits for Core to become ready within `--timeout`, which defaults to 5 minutes. Set it above the time the migration needs, for example `--timeout 35m`. With the default, Helm fails the upgrade while Core is still migrating. `--atomic` then rolls the release back, which stops the migration midway and starts the previous Core version on a database that the earlier 2.20.0 migrations may already have changed.
+
+### Network Discovery Provider
+
+The connector moves to ip-discovery-provider 1.7.0, which adds the discovery v2 interface.
+
+- **One replica for discovery v2.** A discovery v2 run lives in the memory of the pod that started it, so another replica behind the service would answer Core's calls for runs it does not hold. The v1 interface has no such limit. The connector follows `global.replicaCount` as before, but its own `replicaCount` now wins over it: if you set `global.replicaCount` above `1` and use the v2 interface, set `networkDiscoveryProvider.replicaCount: 1`. Keep `autoscaling.enabled` off as well, or hold your autoscaler to one replica: with autoscaling on, the chart leaves the replica count to the autoscaler. On an update the old pod is taken down before the new one is created (`maxSurge: 0`, `maxUnavailable: 100%`).
+- **Probe timeout.** The new `discovery.probe.connectTimeoutMs` value defaults to `300`, which keeps the sweep times of 1.6.1. The connector's own default of 500 ms makes a long sweep about 1.7 times longer, enough to pass Core's 6-hour limit for a run.
+- **Memory.** The connector buffers the undrained results of its discovery v2 runs in heap, up to 512 MiB in total by default (`DISCOVERY_BUFFER_MAX_TOTAL_BYTES`). Size `image.resources` and `javaOpts` for it, or lower the bound through `additionalEnv`.
+
+### Software Cryptography Provider 1.4.0
+
+:::warning[No way back to 1.3.2]
+Back up the connector's database schema (`softcp` by default) before upgrading. Migration `V202609011200` re-encrypts the stored token passwords in a format 1.3.2 cannot read, so restoring the backup is the only way back.
+:::
+
+- **Duplicate token names fail the upgrade.** Migration `V202609031200` adds a unique constraint on the token name. Find duplicates before upgrading and make the names unique:
+  ```sql
+  SELECT name, count(*) FROM softcp.token_instance GROUP BY name HAVING count(*) > 1;
+  ```
+- **Old pod first.** An old and a new instance must not serve the same database at once, so on an update the old pod is taken down before the new one is created (`maxSurge: 0`, `maxUnavailable: 100%`).
+- **Encryption key.** The new `encryptionKey` value sets the key the token passwords are encrypted with (`ENCRYPTION_KEY`). Without it, the connector runs on its published default key and 1.4.0 warns about it at startup. Set it only on a new installation, before the first start: the token passwords stay encrypted with the key they were written under, so changing the key of an existing installation leaves them unreadable. If you already pass `ENCRYPTION_KEY` through `additionalEnv`, keep it there or move the same value to `encryptionKey`, not both.
+
+### OT PKI Connector 1.1.0
+
+The connector moves to the OTPKI v1.0.0 API and no longer works with earlier OTPKI servers, so upgrade OTPKI first. OTPKI v1.0.0 also checks the enrollment password on every request, so keep `otpki.loginPasswordKey` at the value the existing end entities were created with. If you built the connector's OTPKI role by hand, make sure it has the `Update` permission on End Entity, which renewal needs. See the connector's README for the full list of prerequisites.
+
+### cbom-repository 1.2.0 or later
+
+Core 2.20.0 pages the CBOM repository with a keyset cursor that cbom-repository 1.1.0 does not serve, so it needs cbom-repository 1.2.0 or later. The charts do not deploy cbom-repository; upgrade it before or together with the platform.
+
+### Logo uploads through ingress-nginx
+
+The platform branding accepts logos of up to 1 MB, but the request that carries a logo is larger than the file itself. The ingress-nginx default body limit of 1 MiB therefore answers files over about 750 KB with `413 Request Entity Too Large`. To accept them, add the annotation to your values; Helm merges it into the default annotations:
+
+```yaml
+ingress:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+```
+
+### JSON console logs
+
+Core 2.20.0 can write its console log as one JSON object per line. Set `logging.format` to `ecs` or `logstash` to turn it on. Audit and event records then appear as a nested `log_record` object, rather than as JSON inside the message. Left empty, Core keeps its text format, and the OpenTelemetry log export is the same in every format.
 
 ## To 2.19.0
 

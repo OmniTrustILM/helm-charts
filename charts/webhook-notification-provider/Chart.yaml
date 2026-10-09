@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 1.0.0
+appVersion: 1.1.0
 name: webhook-notification-provider
 description: A Helm chart for Webhook Notification Provider for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
@@ -29,4 +29,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.0.0-4-develop
+version: 1.1.0

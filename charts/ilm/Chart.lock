@@ -7,7 +7,7 @@ dependencies:
   version: 1.4.0-1
 - name: ejbca-ng-connector
   repository: file://../ejbca-ng-connector
-  version: 1.12.0
+  version: 1.12.1
 - name: external-authority-provider
   repository: file://../external-authority-provider
   version: 1.0.0
@@ -16,7 +16,7 @@ dependencies:
   version: 1.2.0
 - name: otpki-connector
   repository: file://../otpki-connector
-  version: 1.0.0
+  version: 1.1.0
 - name: x509-compliance-provider
   repository: file://../x509-compliance-provider
   version: 1.3.1-3
@@ -28,25 +28,25 @@ dependencies:
   version: 1.0.2-4
 - name: network-discovery-provider
   repository: file://../network-discovery-provider
-  version: 1.6.1-4-develop
+  version: 1.7.0
 - name: keystore-entity-provider
   repository: file://../keystore-entity-provider
   version: 1.4.2-3
 - name: software-cryptography-provider
   repository: file://../software-cryptography-provider
-  version: 1.3.2-1-develop
+  version: 1.4.0
 - name: email-notification-provider
   repository: file://../email-notification-provider
-  version: 1.2.1
+  version: 1.2.2
 - name: webhook-notification-provider
   repository: file://../webhook-notification-provider
-  version: 1.0.0-4-develop
+  version: 1.1.0
 - name: hashicorp-vault-connector
   repository: file://../hashicorp-vault-connector
   version: 1.2.0-2
 - name: timestamp-formatting-connector
   repository: file://../timestamp-formatting-connector
-  version: 1.0.0
+  version: 1.1.0
 - name: utils-service
   repository: file://../utils-service
   version: 1.0.2-2
@@ -58,7 +58,7 @@ dependencies:
   version: 3.9.1-2
 - name: fe-administrator
   repository: file://../fe-administrator
-  version: 2.19.0
+  version: 2.20.0
 - name: auth-service
   repository: file://../auth-service
   version: 1.7.0
@@ -67,15 +67,15 @@ dependencies:
   version: 1.4.1-2
 - name: messaging-rabbitmq
   repository: file://../messaging-rabbitmq
-  version: 4.2.0-4-develop
+  version: 4.2.0-4
 - name: scheduler-service
   repository: file://../scheduler-service
-  version: 1.1.2-develop
+  version: 1.2.0
 - name: provisioning-rabbitmq
   repository: file://../provisioning-rabbitmq
-  version: 1.0.0-2-develop
+  version: 1.0.0-2
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-2
-digest: sha256:0ca401ea6f89b0fd1f09dede0ae5eb362da3f3ab6e076bb79be99dc8d796dfb4
-generated: "2026-10-09T17:48:15.7247167+02:00"
+digest: sha256:f941a36fba8ede772ec220e957fc6092192160d76ecd2fc6edc7823d4d925036
+generated: "2026-10-07T22:43:06.6504235+02:00"

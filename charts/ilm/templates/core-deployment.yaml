@@ -287,7 +287,7 @@ spec:
               value: {{ $timeQualityEnabled | ternary "true" "false" | quote }}
             - name: SCHEDULER_BASE_URL
               value: "http://scheduler-service-service:{{ .Values.schedulerService.service.port }}"
-            {{- if .Values.global.keycloak.enabled }}
+            {{- if $registerKeycloak }}
             - name: INTERNAL_OAUTH_SECRET
               {{- $ref := .Values.global.keycloak.clientSecretRef | default dict }}
               {{- if $ref }}

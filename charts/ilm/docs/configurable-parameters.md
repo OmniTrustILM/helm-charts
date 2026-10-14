@@ -334,7 +334,7 @@ See dependent charts for the description of available parameters.
 | `keycloakInternal.existingSecret` | `""` | `username`, `password`, `database_host`, `database_port`, `database_name`, `database_user`, `database_password`; endpoint keys must match the effective JDBC values, including pgBouncer host/port when enabled |
 | `keycloakInternal.realmImport.existingSecret` | `""` | Complete realm JSON, used without Helm template expansion |
 | `keycloakInternal.realmImport.key` | `ilm_realm.json` | Key mapped to fixed import file `ilm_realm.json` |
-| `global.keycloak.clientSecretRef` | `{}` | Core OAuth Secret reference with required `name` and `key` |
+| `global.keycloak.clientSecretRef` | `{}` | Client Secret reference for automatic internal-provider registration, with required `name` and `key` |
 | `schedulerService.existingSecret` | `""` | `dbUsername`, `dbPassword` |
 | `emailNotificationProvider.existingSecret` | `""` | `dbUsername`, `dbPassword`, `smtpUsername`, `smtpPassword` |
 | `webhookNotificationProvider.existingSecret` | `""` | `dbUsername`, `dbPassword` |
@@ -349,13 +349,13 @@ See dependent charts for the description of available parameters.
 | `otpkiConnector.existingSecret` | `""` | `login_password_key`; works with an empty inline HMAC key |
 | `global.messaging.existingSecret` | `""` | Shared messaging bundle, ahead of chart-local `messaging.existingSecret` |
 | `messaging.existingSecret` | `""` | Core-local messaging bundle name |
-| `registerInternalKeycloak` | `true` | Register the internal provider when Keycloak is enabled; false preserves OAuth while skipping provider registration |
+| `registerInternalKeycloak` | `true` | Register the internal provider when Keycloak is enabled; false skips automatic provider registration and leaves existing provider settings unchanged |
 
 References select namespace-local Secrets and suppress only their matching generated credential resources and credential-derived checksums. Empty options retain legacy behavior. Each database component retains its own key format. Keep noncredential database URLs/schema/SSL configuration unchanged. Prepare the complete referenced bundles before synchronizing workloads; charts do not look up Secret data or automatically roll out on external Secret changes.
 
 The shared messaging bundle preserves `messaging.username`, `messaging.password`, `messaging.core.username`, `messaging.core.password`, `messaging.provisioner.username`, `messaging.provisioner.password`, `messaging.proxy.username`, `messaging.proxy.password`, `messaging.cookie` and complete `messaging.definitions.json`. When the time-quality monitor is enabled, also supply `messaging.time-quality-monitor.username` and `messaging.time-quality-monitor.password`. Existing external-broker configurations keep their current subset of applicable keys.
 
-For adoption without registration reruns, select `registerConnectors: false`, `registerAdmin.enabled: false` and `registerInternalKeycloak: false` explicitly. Their defaults remain unchanged. Secret-backed realm import preserves the schema script and maps unchanged JSON to a read-only subPath; restart the workload to receive file changes. Disable provider registration independently while retaining Core's OAuth Secret reference.
+For adoption without registration reruns, select `registerConnectors: false`, `registerAdmin.enabled: false` and `registerInternalKeycloak: false` explicitly. Their defaults remain unchanged. Secret-backed realm import preserves the schema script and maps unchanged JSON to a read-only subPath; restart the workload to receive file changes. Core's `INTERNAL_OAUTH_SECRET` is a provider-registration input and is omitted when that registration is disabled; runtime OAuth uses the existing stored provider settings.
 
 Use `global.messaging.existingSecret` for the umbrella shared bundle. A Core-local `messaging.existingSecret` alone is rejected while `global.config.enabled` is true, because sibling charts also consume the shared bundle. The local Core name is available with global sharing disabled.
 

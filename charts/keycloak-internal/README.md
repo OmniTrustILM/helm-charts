@@ -254,4 +254,4 @@ The bundle retains both master-administrator and database key schemas.
 
 External realm input is independent of the credential bundle. It removes only the realm data from the generated ConfigMap; `create_schema.sh` and `createDbSchema` behavior remain. The JSON is used as supplied, without Helm template expansion. Preserve realm/user identities when adopting an existing realm. The file uses a read-only subPath mount and requires a workload restart to receive Secret changes.
 
-When `global.keycloak.clientSecretRef` selects Core OAuth credentials, also set `realmImport.existingSecret` so the realm client uses the matching unchanged secret. Reference-only OAuth with a generated inline realm is rejected.
+When `global.keycloak.clientSecretRef` selects the client credential for Core's automatic provider registration, also set `realmImport.existingSecret` so the realm client uses the matching unchanged secret. This realm requirement applies even when provider registration is disabled. A client Secret reference with a generated inline realm is rejected.

@@ -48,6 +48,57 @@ class CredentialSecretReferences(unittest.TestCase):
         self.assertFalse(any(obj['kind'] == 'Secret' and obj['metadata']['name'] == name
                              for obj in objects), name)
 
+    def test_external_bundle_cannot_reuse_chart_managed_secret(self):
+        # Reusing a generated name would remove that resource during Helm upgrade.
+        contracts = [
+            ('ilm', None, ('database', 'existingSecret'), 'core-secret'),
+            ('auth-service', 'authService', ('database', 'existingSecret'), 'auth-secret'),
+            ('pg-bouncer', 'pgBouncer', ('database', 'existingSecret'), 'pg-bouncer-secret'),
+            ('keycloak-internal', 'keycloakInternal', ('existingSecret',), 'keycloak-internal-secret'),
+            ('scheduler-service', 'schedulerService', ('existingSecret',), 'scheduler-service-secret'),
+        ] + [(chart, COMPONENTS[chart], ('existingSecret',), chart + '-secret')
+             for chart in BUNDLE_CONTRACTS if chart != 'scheduler-service']
+        for chart, alias, path, name in contracts:
+            for umbrella in (False, True):
+                with self.subTest(chart=chart, umbrella=umbrella):
+                    values = synthetic_values('ilm' if umbrella else chart)
+                    target = values.setdefault(alias, {}) if umbrella and alias else values
+                    for key in path[:-1]:
+                        target = target.setdefault(key, {})
+                    target[path[-1]] = name
+                    with self.assertRaisesRegex(AssertionError, 'chart-managed'):
+                        render('ilm' if umbrella else chart, values)
+
+    def test_messaging_bundle_cannot_reuse_chart_managed_secret(self):
+        for chart, local_name in [
+            ('ilm', 'messaging-secret'),
+            ('messaging-rabbitmq', 'messaging-secret-messaging-rabbitmq'),
+            ('scheduler-service', 'messaging-secret-scheduler-service'),
+            ('provisioning-rabbitmq', 'messaging-secret-provisioning-rabbitmq'),
+        ]:
+            for shared in (False, True):
+                for name in {local_name, 'messaging-secret'}:
+                    with self.subTest(chart=chart, shared=shared, name=name):
+                        values = synthetic_values(chart)
+                        values['global']['config'] = {'enabled': shared}
+                        values['global']['messaging']['existingSecret'] = name
+                        with self.assertRaisesRegex(AssertionError, 'chart-managed'):
+                            render(chart, values)
+
+    def test_local_messaging_bundle_cannot_reuse_chart_managed_secret(self):
+        for chart, name in [
+            ('ilm', 'messaging-secret'),
+            ('messaging-rabbitmq', 'messaging-secret-messaging-rabbitmq'),
+            ('scheduler-service', 'messaging-secret-scheduler-service'),
+            ('provisioning-rabbitmq', 'messaging-secret-provisioning-rabbitmq'),
+        ]:
+            with self.subTest(chart=chart):
+                values = synthetic_values(chart)
+                values['global']['config'] = {'enabled': False}
+                values.setdefault('messaging', {})['existingSecret'] = name
+                with self.assertRaisesRegex(AssertionError, 'chart-managed'):
+                    render(chart, values)
+
     @unittest.skipUnless(BASELINE, 'explicit release compatibility baseline')
     def test_legacy_render_matches_baseline(self):
         values = synthetic_values('ilm')
@@ -172,7 +223,7 @@ class CredentialSecretReferences(unittest.TestCase):
                 with self.assertRaisesRegex(AssertionError, 'clientSecretRef'):
                     render('ilm', values)
 
-    def test_registration_false_preserves_oauth_and_admin_independence(self):
+    def test_registration_false_removes_client_secret_and_preserves_admin_independence(self):
         for admin in (True, False):
             with self.subTest(admin=admin):
                 values = synthetic_values('ilm')
@@ -182,7 +233,9 @@ class CredentialSecretReferences(unittest.TestCase):
                 values['keycloakInternal']['realmImport'] = {'existingSecret': 'external-realm'}
                 objects = render('ilm', values)
                 workload = object_by_name(objects, 'Deployment', 'core-deployment')
-                self.assert_ref(workload, 'INTERNAL_OAUTH_SECRET', 'external-oauth', 'client-secret')
+                self.assertFalse(any(entry['name'] == 'INTERNAL_OAUTH_SECRET'
+                                     for container in workload['spec']['template']['spec']['containers']
+                                     for entry in container.get('env', [])))
                 self.assertTrue(any(obj['metadata']['name'] == 'keycloak-internal-deployment' for obj in objects))
                 core = next(c for c in workload['spec']['template']['spec']['containers'] if c['name'] == 'core')
                 self.assertEqual('lifecycle' in core, admin)
@@ -192,6 +245,15 @@ class CredentialSecretReferences(unittest.TestCase):
                 if admin:
                     self.assertEqual(set(scripts[0]['data']), {'register-admin.sh'})
                     self.assertNotIn('register-internal-keycloak.sh', str(core['lifecycle']))
+
+    def test_registration_false_removes_inline_client_secret(self):
+        values = synthetic_values('ilm')
+        values['registerInternalKeycloak'] = False
+        workload = object_by_name(render('ilm', values), 'Deployment', 'core-deployment')
+        self.assertFalse(any(entry['name'] == 'INTERNAL_OAUTH_SECRET'
+                             for container in workload['spec']['template']['spec']['containers']
+                             for entry in container.get('env', [])))
+        assert_no_credential_sentinels(self, [workload], ['SYNTHETIC_OAUTH_SECRET'])
 
     def test_missing_registration_toggle_preserves_legacy_true(self):
         values = synthetic_values('ilm')

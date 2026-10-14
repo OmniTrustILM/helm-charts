@@ -245,6 +245,8 @@ A nonempty name takes precedence over inline credentials and suppresses the matc
 
 The bundle retains both master-administrator and database key schemas.
 
+`database_host`, `database_port` and `database_name` must match the effective database values used to build `KC_DB_URL`. With pgBouncer enabled, use `global.database.pgBouncer.host` and `global.database.pgBouncer.port`; otherwise use the selected global/local database host and port. The database name must match the selected global/local `database.name`. The schema-creation script uses these bundle keys while Keycloak uses the value-built JDBC URL; inconsistent endpoints can create the schema in a different database. Helm does not read the Secret to verify this agreement.
+
 | Parameter | Default | Description |
 | --- | --- | --- |
 | `realmImport.existingSecret` | `""` | Secret containing the complete realm JSON |

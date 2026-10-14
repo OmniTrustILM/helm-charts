@@ -331,7 +331,7 @@ See dependent charts for the description of available parameters.
 | `database.existingSecret` | `""` | Core: `jdbcUsername`, `jdbcPassword` |
 | `authService.database.existingSecret` | `""` | Complete `connection-string` |
 | `pgBouncer.database.existingSecret` | `""` | Complete `userlist.txt`; keep nonsecret `auth_user` username configured |
-| `keycloakInternal.existingSecret` | `""` | `username`, `password`, `database_host`, `database_port`, `database_name`, `database_user`, `database_password` |
+| `keycloakInternal.existingSecret` | `""` | `username`, `password`, `database_host`, `database_port`, `database_name`, `database_user`, `database_password`; endpoint keys must match the effective JDBC values, including pgBouncer host/port when enabled |
 | `keycloakInternal.realmImport.existingSecret` | `""` | Complete realm JSON, used without Helm template expansion |
 | `keycloakInternal.realmImport.key` | `ilm_realm.json` | Key mapped to fixed import file `ilm_realm.json` |
 | `global.keycloak.clientSecretRef` | `{}` | Core OAuth Secret reference with required `name` and `key` |

@@ -1,9 +1,14 @@
+{{- if and .Values.global.keycloak.clientSecretRef (not .Values.realmImport.existingSecret) -}}
+{{- fail "realmImport.existingSecret is required with global.keycloak.clientSecretRef" -}}
+{{- end -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: keycloak-internal-configmap
 data:
+  {{- if not .Values.realmImport.existingSecret }}
   ilm_realm.json: |-
     {{- tpl (.Files.Get "realms/ilm-2.18.0_realm.json") . | indent 4 }}
+  {{- end }}
   create_schema.sh: |-
     {{- tpl (.Files.Get "create_schema.sh") . | indent 4 }}

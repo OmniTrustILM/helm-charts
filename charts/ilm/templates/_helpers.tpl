@@ -395,3 +395,28 @@ fail the init container immediately.
       done
 {{- end }}
 {{- end -}}
+
+{{/* Keep provider registration independent from enabled OAuth and admin registration. */}}
+{{- define "ilm.registerInternalKeycloak" -}}
+{{- $enabled := true -}}
+{{- if hasKey .Values "registerInternalKeycloak" -}}
+{{- if not (kindIs "bool" .Values.registerInternalKeycloak) -}}
+{{- fail "registerInternalKeycloak must be a boolean" -}}
+{{- end -}}
+{{- $enabled = .Values.registerInternalKeycloak -}}
+{{- end -}}
+{{- if and .Values.global.keycloak.enabled $enabled -}}true{{- end -}}
+{{- end -}}
+
+{{/* Preserve generated-name rules unless a global or local existing bundle is selected. */}}
+{{- define "ilm.messagingSecretName" -}}
+{{- if and .Values.messaging.existingSecret (not .Values.global.messaging.existingSecret) .Values.global.config.enabled -}}
+{{- fail "Use global.messaging.existingSecret for the ILM shared messaging bundle" -}}
+{{- end -}}
+{{- $existing := pluck "existingSecret" .Values.global.messaging .Values.messaging | compact | first -}}
+{{- if $existing -}}
+{{- $existing -}}
+{{- else -}}
+messaging-secret
+{{- end -}}
+{{- end -}}

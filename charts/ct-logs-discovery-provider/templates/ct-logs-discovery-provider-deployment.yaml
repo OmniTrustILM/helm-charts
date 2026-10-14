@@ -61,17 +61,17 @@ spec:
             - name: DATABASE_HOST
               valueFrom:
                 secretKeyRef:
-                  name: ct-logs-discovery-provider-secret
+                  name: {{ .Values.existingSecret | default "ct-logs-discovery-provider-secret" | quote }}
                   key: database_host
             - name: DATABASE_PORT
               valueFrom:
                 secretKeyRef:
-                  name: ct-logs-discovery-provider-secret
+                  name: {{ .Values.existingSecret | default "ct-logs-discovery-provider-secret" | quote }}
                   key: database_port
             - name: DATABASE_NAME
               valueFrom:
                 secretKeyRef:
-                  name: ct-logs-discovery-provider-secret
+                  name: {{ .Values.existingSecret | default "ct-logs-discovery-provider-secret" | quote }}
                   key: database_name
             - name: DATABASE_SCHEMA
               value: {{ .Values.database.schema | quote }}
@@ -80,12 +80,12 @@ spec:
             - name: DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: ct-logs-discovery-provider-secret
+                  name: {{ .Values.existingSecret | default "ct-logs-discovery-provider-secret" | quote }}
                   key: database_user
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: ct-logs-discovery-provider-secret
+                  name: {{ .Values.existingSecret | default "ct-logs-discovery-provider-secret" | quote }}
                   key: database_password
             - name: SERVER_PORT
               value: {{ .Values.service.port | quote }}

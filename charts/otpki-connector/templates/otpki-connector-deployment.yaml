@@ -34,7 +34,7 @@ spec:
         {{- if .Values.global.trusted.certificates }}
         checksum/trusted-certificates-global: {{ include ("ilm-lib.trusted.certificates.secret.global") . | sha256sum }}
         {{- end }}
-        {{- if .Values.otpki.loginPasswordKey }}
+        {{- if and (not .Values.existingSecret) .Values.otpki.loginPasswordKey }}
         # when the login password key changes, restart deployment
         checksum/secret: {{ include (print $.Template.BasePath "/otpki-connector-secret.yaml") . | sha256sum }}
         {{- end }}
@@ -89,11 +89,11 @@ spec:
                   name: trusted-certificates-{{ .Chart.Name | lower }}
                   key: ca.crt
             {{- end }}
-            {{- if .Values.otpki.loginPasswordKey }}
+            {{- if or .Values.existingSecret .Values.otpki.loginPasswordKey }}
             - name: OTPKI_LOGIN_PASSWORD_KEY
               valueFrom:
                 secretKeyRef:
-                  name: otpki-connector-secret
+                  name: {{ .Values.existingSecret | default "otpki-connector-secret" | quote }}
                   key: login_password_key
             {{- end }}
             {{- if $httpProxy }}

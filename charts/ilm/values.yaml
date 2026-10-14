@@ -40,7 +40,10 @@ global:
     enabled: false
     # client secret must be set if keycloak is enabled
     clientSecret: ""
+    # Namespace-local Secret reference takes precedence over clientSecret.
+    clientSecretRef: {}
   messaging:
+    existingSecret: ""
     external:
       enabled: false
       host: ""
@@ -138,6 +141,8 @@ global:
     secrets: []
 
 database:
+  # Existing namespace-local credential Secret; empty keeps chart-generated credentials.
+  existingSecret: ""
   # currently only postgresql is supported
   type: "postgresql"
   host: "host.docker.internal"
@@ -530,6 +535,7 @@ auth:
     certificate: "ssl-client-cert"
 
 messaging:
+  existingSecret: ""
   external:
     enabled: false
     host: ""
@@ -667,6 +673,8 @@ provisioningRabbitMq:
 #
 # connectors
 #
+registerInternalKeycloak: true
+
 registerConnectors: true
 
 commonCredentialProvider:

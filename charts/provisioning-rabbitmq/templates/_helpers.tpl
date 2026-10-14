@@ -157,3 +157,16 @@ Render customized command and arguments, if any
 {{- define "provisioning-rabbitmq.curl.image.args" -}}
 {{- include "ilm-lib.tplvalues.render" (dict "value" .Values.curl.image.args "context" $) }}
 {{- end -}}
+
+{{/* Preserve generated-name rules unless a global or local existing bundle is selected. */}}
+{{- define "provisioning-rabbitmq.messagingSecretName" -}}
+{{- if and .Values.messaging.existingSecret (not .Values.global.messaging.existingSecret) (or .Values.messaging.local .Values.global.config.enabled) -}}
+{{- fail "Use global.messaging.existingSecret for shared configuration or an embedded broker" -}}
+{{- end -}}
+{{- $existing := pluck "existingSecret" .Values.global.messaging .Values.messaging | compact | first -}}
+{{- if $existing -}}
+{{- $existing -}}
+{{- else -}}
+{{- if .Values.global.config.enabled -}}messaging-secret{{- else -}}messaging-secret-{{ .Chart.Name | lower }}{{- end -}}
+{{- end -}}
+{{- end -}}

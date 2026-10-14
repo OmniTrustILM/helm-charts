@@ -59,12 +59,12 @@ spec:
             - name: JDBC_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: webhook-notification-provider-secret
+                  name: {{ .Values.existingSecret | default "webhook-notification-provider-secret" | quote }}
                   key: dbUsername
             - name: JDBC_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: webhook-notification-provider-secret
+                  name: {{ .Values.existingSecret | default "webhook-notification-provider-secret" | quote }}
                   key: dbPassword
             - name: JAVA_OPTS
               value: {{ .Values.javaOpts | quote }}

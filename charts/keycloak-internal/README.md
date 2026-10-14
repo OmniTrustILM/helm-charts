@@ -234,3 +234,22 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 
 Additional parameters may be found in the [values.yaml](values.yaml) and dependencies.
 See dependent charts for the description of available parameters.
+
+## Existing credential Secret
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `existingSecret` | `""` | Namespace-local Secret containing `username`, `password`, `database_host`, `database_port`, `database_name`, `database_user`, `database_password` |
+
+A nonempty name takes precedence over inline credentials and suppresses the matching generated credential Secret. Empty keeps the current generated-Secret behavior. The referenced bundle must exist in the release namespace before the workload starts. Secret contents are not read during rendering; update the workload explicitly after changing external credentials.
+
+The bundle retains both master-administrator and database key schemas.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `realmImport.existingSecret` | `""` | Secret containing the complete realm JSON |
+| `realmImport.key` | `ilm_realm.json` | Key mapped to `/opt/keycloak/data/import/ilm_realm.json` |
+
+External realm input is independent of the credential bundle. It removes only the realm data from the generated ConfigMap; `create_schema.sh` and `createDbSchema` behavior remain. The JSON is used as supplied, without Helm template expansion. Preserve realm/user identities when adopting an existing realm. The file uses a read-only subPath mount and requires a workload restart to receive Secret changes.
+
+When `global.keycloak.clientSecretRef` selects Core OAuth credentials, also set `realmImport.existingSecret` so the realm client uses the matching unchanged secret. Reference-only OAuth with a generated inline realm is rejected.

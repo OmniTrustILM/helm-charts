@@ -196,3 +196,24 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 
 Additional parameters may be found in the [values.yaml](values.yaml) and dependencies.
 See dependent charts for the description of available parameters.
+
+## Existing credential Secret
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `existingSecret` | `""` | Namespace-local Secret containing `dbUsername`, `dbPassword` |
+
+A nonempty name takes precedence over inline credentials and suppresses the matching generated credential Secret. Empty keeps the current generated-Secret behavior. The referenced bundle must exist in the release namespace before the workload starts. Secret contents are not read during rendering; update the workload explicitly after changing external credentials.
+
+## Existing messaging Secret
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `global.messaging.existingSecret` | `""` | Existing shared bundle; takes precedence over the local name |
+| `messaging.existingSecret` | `""` | Existing namespace-local messaging bundle |
+
+A selected name suppresses the matching generated messaging Secret. Empty names preserve the current global/local ownership rules. Keep the complete existing key schema: scheduler uses `messaging.username`/`messaging.password`; provisioning uses `messaging.provisioner.username`/`messaging.provisioner.password` and `messaging.proxy.username`/`messaging.proxy.password`; RabbitMQ uses `messaging.username`, `messaging.password`, `messaging.cookie` and `messaging.definitions.json`. The RabbitMQ definitions key contains the complete definitions JSON. The Helm connection test also consumes referenced credentials. Existing Secrets must be ready before starting workloads; external credential changes require an explicit rollout.
+
+When `messaging.local: true` enables the embedded RabbitMQ chart, use `global.messaging.existingSecret` so the client and broker share the same bundle. A local-only reference is rejected in that composition; `messaging.existingSecret` remains available for clients using an external broker.
+
+With `global.config.enabled: true`, select `global.messaging.existingSecret` for shared ownership. A local-only name is rejected in this mode. Pin the chart version explicitly when using these references; chart-only packaging suffixes are SemVer prerelease identifiers.

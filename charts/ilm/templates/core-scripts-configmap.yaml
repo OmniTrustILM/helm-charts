@@ -1,4 +1,5 @@
-{{- $scripts := or .Values.global.keycloak.enabled .Values.registerAdmin.enabled }}
+{{- $registerKeycloak := eq (include "ilm.registerInternalKeycloak" .) "true" }}
+{{- $scripts := or $registerKeycloak .Values.registerAdmin.enabled }}
 {{- if $scripts }}
 apiVersion: v1
 kind: ConfigMap
@@ -9,7 +10,7 @@ data:
   register-admin.sh: |
     {{- tpl (.Files.Get "scripts/register-admin.sh") . | indent 4 }}
   {{- end }}
-  {{- if .Values.global.keycloak.enabled }}
+  {{- if $registerKeycloak }}
   register-internal-keycloak.sh: |
     {{- tpl (.Files.Get "scripts/register-internal-keycloak.sh") . | indent 4 }}
   {{- end }}

@@ -30,7 +30,9 @@ spec:
       {{- end }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/pg-bouncer-configmap.yaml") . | sha256sum }}
+        {{- if not .Values.database.existingSecret }}
         checksum/secret: {{ include (print $.Template.BasePath "/pg-bouncer-secret.yaml") . | sha256sum }}
+        {{- end }}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -146,7 +148,12 @@ spec:
               - configMap:
                   name: pg-bouncer-configmap
               - secret:
-                  name: pg-bouncer-secret
+                  name: {{ .Values.database.existingSecret | default "pg-bouncer-secret" | quote }}
+                  {{- if .Values.database.existingSecret }}
+                  items:
+                    - key: userlist.txt
+                      path: userlist.txt
+                  {{- end }}
         {{- if $additionalVolumes }}
           {{- $additionalVolumes | nindent 8 }}
         {{- end }}

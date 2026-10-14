@@ -323,3 +323,40 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 
 Additional parameters may be found in the respective `values.yaml` and dependencies.
 See dependent charts for the description of available parameters.
+
+## Existing credential bundles
+
+| Parameter | Default | Required keys / behavior |
+| --- | --- | --- |
+| `database.existingSecret` | `""` | Core: `jdbcUsername`, `jdbcPassword` |
+| `authService.database.existingSecret` | `""` | Complete `connection-string` |
+| `pgBouncer.database.existingSecret` | `""` | Complete `userlist.txt`; keep nonsecret `auth_user` username configured |
+| `keycloakInternal.existingSecret` | `""` | `username`, `password`, `database_host`, `database_port`, `database_name`, `database_user`, `database_password` |
+| `keycloakInternal.realmImport.existingSecret` | `""` | Complete realm JSON, used without Helm template expansion |
+| `keycloakInternal.realmImport.key` | `ilm_realm.json` | Key mapped to fixed import file `ilm_realm.json` |
+| `global.keycloak.clientSecretRef` | `{}` | Core OAuth Secret reference with required `name` and `key` |
+| `schedulerService.existingSecret` | `""` | `dbUsername`, `dbPassword` |
+| `emailNotificationProvider.existingSecret` | `""` | `dbUsername`, `dbPassword`, `smtpUsername`, `smtpPassword` |
+| `webhookNotificationProvider.existingSecret` | `""` | `dbUsername`, `dbPassword` |
+| `commonCredentialProvider.existingSecret` | `""` | `username`, `password` |
+| `ejbcaNgConnector.existingSecret` | `""` | `username`, `password` |
+| `keystoreEntityProvider.existingSecret` | `""` | `username`, `password` |
+| `networkDiscoveryProvider.existingSecret` | `""` | `username`, `password` |
+| `softwareCryptographyProvider.existingSecret` | `""` | `username`, `password` |
+| `ctLogsDiscoveryProvider.existingSecret` | `""` | `database_host`, `database_port`, `database_name`, `database_user`, `database_password` |
+| `hashicorpVaultConnector.existingSecret` | `""` | `database_host`, `database_port`, `database_name`, `database_user`, `database_password` |
+| `pyAdcsConnector.existingSecret` | `""` | `database_host`, `database_port`, `database_name`, `database_user`, `database_password` |
+| `otpkiConnector.existingSecret` | `""` | `login_password_key`; works with an empty inline HMAC key |
+| `global.messaging.existingSecret` | `""` | Shared messaging bundle, ahead of chart-local `messaging.existingSecret` |
+| `messaging.existingSecret` | `""` | Core-local messaging bundle name |
+| `registerInternalKeycloak` | `true` | Register the internal provider when Keycloak is enabled; false preserves OAuth while skipping provider registration |
+
+References select namespace-local Secrets and suppress only their matching generated credential resources and credential-derived checksums. Empty options retain legacy behavior. Each database component retains its own key format. Keep noncredential database URLs/schema/SSL configuration unchanged. Prepare the complete referenced bundles before synchronizing workloads; charts do not look up Secret data or automatically roll out on external Secret changes.
+
+The shared messaging bundle preserves `messaging.username`, `messaging.password`, `messaging.core.username`, `messaging.core.password`, `messaging.provisioner.username`, `messaging.provisioner.password`, `messaging.proxy.username`, `messaging.proxy.password`, `messaging.cookie` and complete `messaging.definitions.json`. When the time-quality monitor is enabled, also supply `messaging.time-quality-monitor.username` and `messaging.time-quality-monitor.password`. Existing external-broker configurations keep their current subset of applicable keys.
+
+For adoption without registration reruns, select `registerConnectors: false`, `registerAdmin.enabled: false` and `registerInternalKeycloak: false` explicitly. Their defaults remain unchanged. Secret-backed realm import preserves the schema script and maps unchanged JSON to a read-only subPath; restart the workload to receive file changes. Disable provider registration independently while retaining Core's OAuth Secret reference.
+
+Use `global.messaging.existingSecret` for the umbrella shared bundle. A Core-local `messaging.existingSecret` alone is rejected while `global.config.enabled` is true, because sibling charts also consume the shared bundle. The local Core name is available with global sharing disabled.
+
+A Core `global.keycloak.clientSecretRef` also requires `keycloakInternal.realmImport.existingSecret` while the internal Keycloak chart is rendered. Prepare the complete realm JSON with the same client credential; this avoids a separate inline realm secret. All shared messaging consumers require the global bundle name when `global.config.enabled` is true. Pin the desired chart package version explicitly; packaging counters are SemVer prerelease identifiers.

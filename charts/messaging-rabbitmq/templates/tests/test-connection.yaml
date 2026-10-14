@@ -1,3 +1,4 @@
+{{- $existing := pluck "existingSecret" .Values.global.messaging .Values.messaging | compact | first }}
 {{- $username := pluck "username" .Values.global.messaging .Values.messaging | compact | first | quote }}
 {{- $password := pluck "password" .Values.global.messaging .Values.messaging | compact | first | quote }}
 apiVersion: v1
@@ -12,9 +13,26 @@ spec:
   containers:
     - name: curl
       image: {{ include "messaging-rabbitmq.curl.image" . }}
+      {{- if $existing }}
+      env:
+        - name: RABBITMQ_TEST_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "messaging-rabbitmq.messagingSecretName" . | quote }}
+              key: messaging.username
+        - name: RABBITMQ_TEST_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "messaging-rabbitmq.messagingSecretName" . | quote }}
+              key: messaging.password
+      {{- end }}
       command:
         - /bin/sh
         - -c
         - |
+          {{- if $existing }}
+          curl -u "${RABBITMQ_TEST_USER}:${RABBITMQ_TEST_PASSWORD}" --retry 10 --retry-delay 5 --retry-all-errors messaging-service:{{ .Values.service.client.http.port }}/api
+          {{- else }}
           curl -u {{ $username }}:{{ $password }} --retry 10 --retry-delay 5 --retry-all-errors messaging-service:{{ .Values.service.client.http.port }}/api
+          {{- end }}
   restartPolicy: Never

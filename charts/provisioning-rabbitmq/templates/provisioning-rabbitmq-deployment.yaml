@@ -109,40 +109,24 @@ spec:
             - name: RABBITMQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "provisioning-rabbitmq.messagingSecretName" . | quote }}
                   key: messaging.provisioner.username
             - name: RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "provisioning-rabbitmq.messagingSecretName" . | quote }}
                   key: messaging.provisioner.password
             - name: PROXY_AMQP_URL
               value: {{ .Values.bootstrap.proxy.amqpUrl | default (printf "amqp://%s:%s" $messagingHost (toString $messagingAmqpPort)) | quote }}
             - name: PROXY_RABBITMQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "provisioning-rabbitmq.messagingSecretName" . | quote }}
                   key: messaging.proxy.username
             - name: PROXY_RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "provisioning-rabbitmq.messagingSecretName" . | quote }}
                   key: messaging.proxy.password
             - name: PROXY_EXCHANGE
               value: {{ .Values.bootstrap.proxy.exchange | quote }}

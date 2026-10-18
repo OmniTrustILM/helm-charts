@@ -1,3 +1,6 @@
+# Existing namespace-local credential bundle; empty keeps chart-generated credentials.
+existingSecret: ""
+
 # Default values for software-cryptography-provider.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.

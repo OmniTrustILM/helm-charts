@@ -184,3 +184,11 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 
 Additional parameters may be found in the [values.yaml](values.yaml) and dependencies.
 See dependent charts for the description of available parameters.
+
+## Existing credential Secret
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `existingSecret` | `""` | Namespace-local Secret containing `database_host`, `database_port`, `database_name`, `database_user`, `database_password` |
+
+A nonempty name takes precedence over inline credentials and suppresses the matching generated credential Secret. Empty keeps the current generated-Secret behavior. The referenced bundle must exist in the release namespace before the workload starts. Secret contents are not read during rendering; update the workload explicitly after changing external credentials.

@@ -83,12 +83,12 @@ spec:
             - name: JDBC_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: software-cryptography-provider-secret
+                  name: {{ .Values.existingSecret | default "software-cryptography-provider-secret" | quote }}
                   key: username
             - name: JDBC_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: software-cryptography-provider-secret
+                  name: {{ .Values.existingSecret | default "software-cryptography-provider-secret" | quote }}
                   key: password
             - name: TOKEN_DELETE_ON_REMOVE
               value: {{ .Values.tokenDelete | quote }}

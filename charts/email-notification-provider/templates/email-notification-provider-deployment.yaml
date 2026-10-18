@@ -59,12 +59,12 @@ spec:
             - name: JDBC_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: email-notification-provider-secret
+                  name: {{ .Values.existingSecret | default "email-notification-provider-secret" | quote }}
                   key: dbUsername
             - name: JDBC_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: email-notification-provider-secret
+                  name: {{ .Values.existingSecret | default "email-notification-provider-secret" | quote }}
                   key: dbPassword
             - name: JAVA_OPTS
               value: {{ .Values.javaOpts | quote }}
@@ -75,12 +75,12 @@ spec:
             - name: SMTP_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: email-notification-provider-secret
+                  name: {{ .Values.existingSecret | default "email-notification-provider-secret" | quote }}
                   key: smtpUsername
             - name: SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: email-notification-provider-secret
+                  name: {{ .Values.existingSecret | default "email-notification-provider-secret" | quote }}
                   key: smtpPassword
             - name: SMTP_AUTH
               value: {{ .Values.smtp.auth | quote }}

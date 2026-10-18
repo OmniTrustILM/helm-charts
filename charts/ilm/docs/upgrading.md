@@ -18,6 +18,12 @@ The following contains important information and instructions about upgrading He
 
 Upgrading Helm chart is done by running the `helm upgrade` command. The command upgrades the platform to the specified version. The command can be used to upgrade the platform to the same version with changed parameters.
 
+## Moving credentials to existing Secrets
+
+Before selecting an `existingSecret` option, create the complete credential bundle in the release namespace under a new name that differs from the chart-managed Secret. For example, Core's `database.existingSecret` must not be `core-secret`, and the shared `global.messaging.existingSecret` must not be `messaging-secret`. The same rule applies to each component's generated Secret name and to standalone messaging bundles.
+
+Then update the corresponding references and upgrade using the selected fixed chart version. Selecting an external reference removes the generated credential Secret from the chart. Helm can delete that previously managed resource during upgrade, so pointing the reference back to its old name would leave the workload without credentials. Charts reject these name collisions; an existing Secret is not a request to retain the previous chart-managed resource.
+
 ## To 2.20.0
 
 :::warning[Before upgrading]

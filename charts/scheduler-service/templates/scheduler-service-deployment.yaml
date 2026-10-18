@@ -34,7 +34,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       annotations:
+        {{- if not .Values.existingSecret }}
         checksum/config: {{ include (print $.Template.BasePath "/scheduler-service-secret.yaml") . | sha256sum }}
+        {{- end }}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -90,12 +92,12 @@ spec:
             - name: JDBC_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: scheduler-service-secret
+                  name: {{ .Values.existingSecret | default "scheduler-service-secret" | quote }}
                   key: dbUsername
             - name: JDBC_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: scheduler-service-secret
+                  name: {{ .Values.existingSecret | default "scheduler-service-secret" | quote }}
                   key: dbPassword
             - name: JAVA_OPTS
               value: {{ .Values.javaOpts | quote }}
@@ -120,20 +122,12 @@ spec:
             - name: BROKER_USERNAME
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "scheduler-service.messagingSecretName" . | quote }}
                   key: messaging.username
             - name: BROKER_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "scheduler-service.messagingSecretName" . | quote }}
                   key: messaging.password
             - name: BROKER_VIRTUAL_HOST
               value: {{ pluck "virtualHost" .Values.global.messaging .Values.messaging | compact | first | default "/" | quote }}

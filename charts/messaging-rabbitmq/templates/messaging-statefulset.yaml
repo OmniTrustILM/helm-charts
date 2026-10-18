@@ -33,7 +33,9 @@ spec:
         # when the messaging config map is changed, restart deployment
         checksum/config: {{ include "messaging-rabbitmq.rabbitmq.conf" (dict "global" .Values.global "messagingService" .Values) | sha256sum }}
         # when the messaging secret is changed, restart deployment
+        {{- if not (pluck "existingSecret" .Values.global.messaging .Values.messaging | compact | first) }}
         checksum/secret: {{ include "messaging-rabbitmq.definitions.json" (dict "global" .Values.global "messagingService" .Values) | sha256sum }}
+        {{- end }}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -61,29 +63,17 @@ spec:
             - name: RABBITMQ_DEFAULT_PASS
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "messaging-rabbitmq.messagingSecretName" . | quote }}
                   key: messaging.password
             - name: RABBITMQ_DEFAULT_USER
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "messaging-rabbitmq.messagingSecretName" . | quote }}
                   key: messaging.username
             - name: RABBITMQ_ERLANG_COOKIE
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.global.config.enabled }}
-                  name: messaging-secret
-                  {{- else }}
-                  name: messaging-secret-{{ .Chart.Name | lower }}
-                  {{- end }}
+                  name: {{ include "messaging-rabbitmq.messagingSecretName" . | quote }}
                   key: messaging.cookie
             - name: RABBITMQ_LOGS
               value: "-"
@@ -252,11 +242,7 @@ spec:
                 path: "enabled_plugins"
         - name: definitions
           secret:
-            {{- if .Values.global.config.enabled }}
-            secretName: messaging-secret
-            {{- else }}
-            secretName: messaging-secret-{{ .Chart.Name | lower }}
-            {{- end }}
+            secretName: {{ include "messaging-rabbitmq.messagingSecretName" . | quote }}
             optional: false
             items:
               - key: messaging.definitions.json

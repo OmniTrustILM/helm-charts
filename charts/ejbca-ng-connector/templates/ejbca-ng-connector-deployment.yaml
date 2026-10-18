@@ -79,12 +79,12 @@ spec:
             - name: JDBC_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: ejbca-ng-connector-secret
+                  name: {{ .Values.existingSecret | default "ejbca-ng-connector-secret" | quote }}
                   key: username
             - name: JDBC_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: ejbca-ng-connector-secret
+                  name: {{ .Values.existingSecret | default "ejbca-ng-connector-secret" | quote }}
                   key: password
             {{- if or .Values.global.trusted.certificates .Values.trusted.certificates }}
             - name: TRUSTED_CERTIFICATES

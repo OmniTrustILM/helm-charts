@@ -30,4 +30,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.12.0
+version: 1.12.0-1-develop

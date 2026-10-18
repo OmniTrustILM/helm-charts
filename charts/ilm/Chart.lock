@@ -73,9 +73,9 @@ dependencies:
   version: 1.2.0
 - name: provisioning-rabbitmq
   repository: file://../provisioning-rabbitmq
-  version: 1.1.0
+  version: 1.0.0-3
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-3
-digest: sha256:908811c8a772aad28da652e5f27dca3656e02b166295d64d104135b7e5ac08b6
-generated: "2026-10-18T07:32:30.6451156+02:00"
+digest: sha256:a4c9c96788320cc7d363d756c23a7992a10fb6cb14a1478a5f6c8c8b4d7e0cb1
+generated: "2026-10-18T08:09:14.590818+02:00"

@@ -228,7 +228,7 @@ The following values may be configured for the ILM core service:
 | timeQualityMonitor.image.registry                               | `hub.omnitrustregistry.com` | Docker registry name for the image                       |
 | timeQualityMonitor.image.repository                             | `ilm-private`               | Docker image repository name                             |
 | timeQualityMonitor.image.name                                   | `time-quality-monitor`      | Docker image name                                        |
-| timeQualityMonitor.image.tag                                    | `1.0.0`                     | Docker image tag                                         |
+| timeQualityMonitor.image.tag                                    | `1.0.1`                     | Docker image tag                                         |
 | timeQualityMonitor.image.digest                                 | `""`                        | Docker image digest, will override tag if specified      |
 | timeQualityMonitor.image.pullPolicy                             | `IfNotPresent`              | Image pull policy                                        |
 | timeQualityMonitor.image.pullSecrets                            | `[]`                        | Array of secret names for image pull                     |

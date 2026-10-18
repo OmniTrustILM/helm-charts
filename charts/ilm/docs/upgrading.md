@@ -30,6 +30,9 @@ Then update the corresponding references and upgrade using the selected fixed ch
 - If you run the Software Cryptography Provider, back up its database schema first. Its 1.4.0 upgrade cannot be undone, see [Software Cryptography Provider 1.4.0](#software-cryptography-provider-140).
 - If you use an external RabbitMQ, create the new `provider.discovery-work` queue first, see [RabbitMQ queue for discovery work](#rabbitmq-queue-for-discovery-work).
 - Core migrates the `discovery_certificate` table at startup, which can take a while on a large installation, see [Longer Core startup](#longer-core-startup).
+- If the HashiCorp Vault Connector logs in to Vault without an explicit role, create the `vault-connector-role` role in Vault first, see [HashiCorp Vault Connector 1.2.1](#hashicorp-vault-connector-121).
+- If a webhook receiver checks the delivery headers, update it first, see [Webhook Notification Provider 1.1.0](#webhook-notification-provider-110).
+- If an email template uses `?html`, edit it first, see [Email Notification Provider 1.3.0](#email-notification-provider-130).
 :::
 
 ### Connector registration on upgrade
@@ -78,9 +81,25 @@ SELECT count(*), pg_size_pretty(pg_total_relation_size('core.discovery_certifica
 FROM core.discovery_certificate;
 ```
 
-Plan the upgrade for a maintenance window: while the migration runs, requests that touch discovered certificates wait for the lock.
+Plan the upgrade for a maintenance window: while the migration runs, requests that touch discovered certificates wait for the lock. The upgrade also builds new indexes for the inventory listings, and writes to a table wait while its index is built. That takes seconds: about 6.5 seconds in total for 500,000 certificates and 3.8 million attribute assignments, and it grows with the tables.
 
 If you run `helm upgrade` with `--wait` or `--atomic`, Helm waits for Core to become ready within `--timeout`, which defaults to 5 minutes. Set it above the time the migration needs, for example `--timeout 35m`. With the default, Helm fails the upgrade while Core is still migrating. `--atomic` then rolls the release back, which stops the migration midway and starts the previous Core version on a database that the earlier 2.20.0 migrations may already have changed.
+
+### Database migrations behind PgBouncer
+
+Core's database migrations can fail at random when Core connects to the database through PgBouncer in transaction pool mode, which is the chart default (`global.database.pgBouncer.enabled: true`). Core then exits, and the next start continues with the migrations that are left, so a few Core restarts during the upgrade are expected. If Core keeps restarting, upgrade with PgBouncer disabled, and enable it again with a second `helm upgrade` once Core is ready:
+
+```bash
+helm upgrade <release> <chart> -f <your-values> --set global.database.pgBouncer.enabled=false
+# once Core is ready
+helm upgrade <release> <chart> -f <your-values>
+```
+
+With PgBouncer disabled, every service connects to the database at `global.database.host` and `global.database.port` directly, and the chart removes the PgBouncer deployment until the second upgrade. Every service that uses the database restarts on both upgrades. Before you disable it, check:
+
+- **Connections.** Each service then holds its own connections to the database instead of sharing PgBouncer's pool. Core alone keeps up to 40 per replica, the scheduler up to 20 and each Java connector up to 10, and Keycloak and the authentication service open more under load. Make sure the database's connection limit covers them (`max_connections`, 100 by default in PostgreSQL), or lower Core's pool for the upgrade by setting `CONNECTION_POOL_MAX_POOL_SIZE` in `additionalEnv`.
+- **Network access.** The database must accept connections from every pod of the platform, not only from PgBouncer.
+- **Existing Secrets.** If you use `existingSecret` bundles, the ones for the authentication service (`connection-string`), Keycloak, the CT Logs Discovery Provider, the HashiCorp Vault Connector and the PyADCS Connector (`database_host`, `database_port`) carry the database address themselves. Point them at the database while PgBouncer is disabled, and back at PgBouncer afterwards.
 
 ### Network Discovery Provider
 
@@ -89,6 +108,7 @@ The connector moves to ip-discovery-provider 1.7.0, which adds the discovery v2 
 - **One replica for discovery v2.** A discovery v2 run lives in the memory of the pod that started it, so another replica behind the service would answer Core's calls for runs it does not hold. The v1 interface has no such limit. The connector follows `global.replicaCount` as before, but its own `replicaCount` now wins over it: if you set `global.replicaCount` above `1` and use the v2 interface, set `networkDiscoveryProvider.replicaCount: 1`. Keep `autoscaling.enabled` off as well, or hold your autoscaler to one replica: with autoscaling on, the chart leaves the replica count to the autoscaler. On an update the old pod is taken down before the new one is created (`maxSurge: 0`, `maxUnavailable: 100%`).
 - **Probe timeout.** The new `discovery.probe.connectTimeoutMs` value defaults to `300`, which keeps the sweep times of 1.6.1. The connector's own default of 500 ms makes a long sweep about 1.7 times longer, enough to pass Core's 6-hour limit for a run.
 - **Memory.** The connector buffers the undrained results of its discovery v2 runs in heap, up to 512 MiB in total by default (`DISCOVERY_BUFFER_MAX_TOTAL_BYTES`). Size `image.resources` and `javaOpts` for it, or lower the bound through `additionalEnv`.
+- **Probe bounds.** A probe now gives up on a host that stops answering after 2 seconds without data and after 10 seconds in total. Before, such a host held a scanner thread until the connector restarted. To change the bounds, set `DISCOVERY_PROBE_READ_TIMEOUT_MS` and `DISCOVERY_PROBE_TOTAL_TIMEOUT_MS` through `additionalEnv`.
 
 ### Software Cryptography Provider 1.4.0
 
@@ -101,11 +121,29 @@ Back up the connector's database schema (`softcp` by default) before upgrading. 
   SELECT name, count(*) FROM softcp.token_instance GROUP BY name HAVING count(*) > 1;
   ```
 - **Old pod first.** An old and a new instance must not serve the same database at once, so on an update the old pod is taken down before the new one is created (`maxSurge: 0`, `maxUnavailable: 100%`).
-- **Encryption key.** The new `encryptionKey` value sets the key the token passwords are encrypted with (`ENCRYPTION_KEY`). Without it, the connector runs on its published default key and 1.4.0 warns about it at startup. Set it only on a new installation, before the first start: the token passwords stay encrypted with the key they were written under, so changing the key of an existing installation leaves them unreadable. If you already pass `ENCRYPTION_KEY` through `additionalEnv`, keep it there or move the same value to `encryptionKey`, not both.
+- **Encryption key.** The new `encryptionKey` value sets the key the token passwords are encrypted with (`ENCRYPTION_KEY`). Without it, the connector runs on its published default key and 1.4.0 warns about it at startup. Set it only on a new installation, before the first start: the token passwords stay encrypted with the key they were written under, so changing the key of an existing installation leaves them unreadable. If you already pass `ENCRYPTION_KEY` through `additionalEnv`, keep it there or move the same value to `encryptionKey`, not both. With `existingSecret`, the key is read from the Secret's `encryption_key` entry instead, and `encryptionKey` is ignored.
+- **JSON logs only.** Every log line is a JSON object, and there is no text format. Log pipelines that parse the text lines must change.
+- **Readiness includes the database.** The pod reports not ready while its database is unreachable.
 
 ### OT PKI Connector 1.1.0
 
 The connector moves to the OTPKI v1.0.0 API and no longer works with earlier OTPKI servers, so upgrade OTPKI first. OTPKI v1.0.0 also checks the enrollment password on every request, so keep `otpki.loginPasswordKey` at the value the existing end entities were created with. If you built the connector's OTPKI role by hand, make sure it has the `Update` permission on End Entity, which renewal needs. See the connector's README for the full list of prerequisites.
+
+### Webhook Notification Provider 1.1.0
+
+The delivery headers are renamed: `X-CZERTAINLY-Timestamp` is now `X-Webhook-Timestamp`, and `X-CZERTAINLY-Nonce` is now `X-Webhook-Nonce`. The body and the request are unchanged. Update receivers that check the headers before the upgrade.
+
+### Email Notification Provider 1.3.0
+
+Every value inserted into the HTML content of a template is now escaped. A template that escapes with `?html` is refused, and a stored notification instance that uses one stops delivering until it is edited. Remove `?html` before the upgrade, and use `?no_esc` for a value that must stay markup. The subject is plain text and is not escaped.
+
+### HashiCorp Vault Connector 1.2.1
+
+The connector's default Vault login role changes from `czertainly-role` to `vault-connector-role`. An authority that logs in with JWT or Kubernetes authentication and names no role asks Vault for `vault-connector-role`. Before the upgrade, create that role in Vault with the same bindings as `czertainly-role`. The connector logs in with the token of its pod's service account, `hashicorp-vault-connector-sa` by default. Or set the role explicitly on each authority.
+
+### Timestamp Formatting Connector 1.1.0
+
+While the connector is being updated, a timestamp request whose two steps reach the old and the new version can fail when its profile turns off `includeSigningTimeAttribute` or `includeCMSAlgorithmProtection`. A retry succeeds. With both on, the default, requests are not affected. 1.1.0 also leaves those attributes out when the flag is off, which 1.0.0 did not.
 
 ### cbom-repository 1.2.0 or later
 

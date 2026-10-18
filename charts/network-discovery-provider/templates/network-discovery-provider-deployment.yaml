@@ -88,12 +88,12 @@ spec:
             - name: JDBC_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: network-discovery-provider-secret
+                  name: {{ .Values.existingSecret | default "network-discovery-provider-secret" | quote }}
                   key: username
             - name: JDBC_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: network-discovery-provider-secret
+                  name: {{ .Values.existingSecret | default "network-discovery-provider-secret" | quote }}
                   key: password
             - name: JAVA_OPTS
               value: {{ .Values.javaOpts | quote }}

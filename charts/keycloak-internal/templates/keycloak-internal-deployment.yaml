@@ -82,12 +82,12 @@ spec:
             - name: KEYCLOAK_ADMIN
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: username
             - name: KEYCLOAK_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: password
             - name: JAVA_OPTS_APPEND
               value: "-Djgroups.dns.query=keycloak-service-internal-headless"
@@ -115,12 +115,12 @@ spec:
             - name: KC_DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: database_user
             - name: KC_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: database_password
             - name: KC_LOG_LEVEL
               value: {{ .Values.logging.level | quote }}
@@ -128,27 +128,27 @@ spec:
             - name: PGHOST
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: database_host
             - name: PGPORT
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: database_port
             - name: PGDATABASE
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: database_name
             - name: PGUSER
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: database_user
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: keycloak-internal-secret
+                  name: {{ .Values.existingSecret | default "keycloak-internal-secret" | quote }}
                   key: database_password
             {{- if $additionalEnv }}
               {{- $additionalEnv | nindent 12 }}
@@ -223,9 +223,12 @@ spec:
           volumeMounts:
             - mountPath: /opt/keycloak/data
               name: ephemeral
-            - name: keycloak-internal-configmap-volume
+            - name: {{ ternary "keycloak-internal-realm-volume" "keycloak-internal-configmap-volume" (not (empty .Values.realmImport.existingSecret)) }}
               mountPath: /opt/keycloak/data/import/ilm_realm.json
               subPath: ilm_realm.json
+              {{- if .Values.realmImport.existingSecret }}
+              readOnly: true
+              {{- end }}
             - name: keycloak-internal-configmap-volume
               mountPath: /opt/keycloak/create_schema.sh
               subPath: create_schema.sh
@@ -254,10 +257,20 @@ spec:
           configMap:
             name: keycloak-internal-configmap
             items:
+              {{- if not .Values.realmImport.existingSecret }}
               - key: ilm_realm.json
                 path: ilm_realm.json
+              {{- end }}
               - key: create_schema.sh
                 path: create_schema.sh
+        {{- if .Values.realmImport.existingSecret }}
+        - name: keycloak-internal-realm-volume
+          secret:
+            secretName: {{ .Values.realmImport.existingSecret | quote }}
+            items:
+              - key: {{ required "realmImport.key is required with realmImport.existingSecret" .Values.realmImport.key | quote }}
+                path: ilm_realm.json
+        {{- end }}
         - name: ephemeral
           {{- include "keycloak-internal.ephemeralVolume" . | indent 10 }}
         {{- if .Values.global.trusted.certificates }}

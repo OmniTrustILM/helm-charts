@@ -1,3 +1,6 @@
+# Existing namespace-local credential bundle; empty keeps chart-generated credentials.
+existingSecret: ""
+
 # Default values for software-cryptography-provider.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -224,7 +227,8 @@ tokenDelete: "false"
 # Key the connector encrypts the stored token passwords with (ENCRYPTION_KEY). When empty, the connector runs on its
 # published default key and warns at startup. Set it before the first start: the token passwords stay encrypted
 # with the key they were written under, so changing it later leaves the existing ones unreadable. When set, it is
-# stored in the software-cryptography-provider-secret Secret.
+# stored in the software-cryptography-provider-secret Secret. With existingSecret set, this value is ignored and the
+# key is read from the encryption_key entry of that Secret, when it has one.
 encryptionKey: ""
 javaOpts: ""
 

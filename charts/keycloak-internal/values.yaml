@@ -1,3 +1,10 @@
+# Existing credential bundle with the chart's current Secret keys.
+existingSecret: ""
+realmImport:
+  # Complete realm JSON from a namespace-local Secret; empty keeps legacy import.
+  existingSecret: ""
+  key: ilm_realm.json
+
 # Default values for keycloak-internal.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.

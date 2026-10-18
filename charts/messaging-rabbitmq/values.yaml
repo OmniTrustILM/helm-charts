@@ -19,6 +19,7 @@ global:
       storageClassName: ""
       custom: {}
   messaging:
+    existingSecret: ""
     remoteAccess: false
     username: ""
     password: ""
@@ -248,6 +249,7 @@ persistence:
   annotations: {}
 
 messaging:
+  existingSecret: ""
   remoteAccess: false
   username: "admin"
   password: "admin"

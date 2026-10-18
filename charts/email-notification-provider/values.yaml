@@ -1,3 +1,6 @@
+# Existing namespace-local credential bundle; empty keeps chart-generated credentials.
+existingSecret: ""
+
 # Default values for email-notification-provider.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -94,7 +97,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm
   name: email-notification-provider
-  tag: 1.2.2
+  tag: 1.3.0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

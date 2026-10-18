@@ -1,3 +1,6 @@
+# Existing namespace-local credential bundle; empty keeps chart-generated credentials.
+existingSecret: ""
+
 # Default values for ct-logs-discovery-provider.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -88,7 +91,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm
   name: ct-logs-discovery-provider
-  tag: 1.0.2
+  tag: 1.0.3
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

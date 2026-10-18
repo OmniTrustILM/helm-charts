@@ -1,3 +1,6 @@
+# Existing namespace-local credential bundle; empty keeps chart-generated credentials.
+existingSecret: ""
+
 # Default values for scheduler-service.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -33,6 +36,7 @@ global:
       host: "pg-bouncer-service"
       port: 5432
   messaging:
+    existingSecret: ""
     external:
       enabled: false
       host: ""
@@ -235,6 +239,7 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 messaging:
+  existingSecret: ""
   local: false
   external:
     enabled: false

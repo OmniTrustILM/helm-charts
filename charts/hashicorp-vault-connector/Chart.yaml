@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 1.2.0
+appVersion: 1.2.1
 name: hashicorp-vault-connector
 description: A Helm chart for HashiCorp Vault Connector for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
@@ -30,4 +30,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 1.2.0-2
+version: 1.2.1

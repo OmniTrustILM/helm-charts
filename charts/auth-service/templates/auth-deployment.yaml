@@ -35,7 +35,9 @@ spec:
         checksum/trusted-certificates-global: {{ include ("ilm-lib.trusted.certificates.secret.global") . | sha256sum }}
         {{- end }}
         # when connection string is changed, restart deployment
+        {{- if not .Values.database.existingSecret }}
         checksum/secret: {{ include (print $.Template.BasePath "/auth-secret.yaml") . | sha256sum }}
+        {{- end }}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -69,7 +71,7 @@ spec:
             - name: AUTH_DB_CONNECTION_STRING
               valueFrom:
                 secretKeyRef:
-                  name: auth-secret
+                  name: {{ .Values.database.existingSecret | default "auth-secret" | quote }}
                   key: connection-string
             - name: ASPNETCORE_URLS
               value: "http://+:{{ .Values.service.port }}"

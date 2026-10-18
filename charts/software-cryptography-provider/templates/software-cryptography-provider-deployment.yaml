@@ -83,21 +83,25 @@ spec:
             - name: JDBC_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: software-cryptography-provider-secret
+                  name: {{ .Values.existingSecret | default "software-cryptography-provider-secret" | quote }}
                   key: username
             - name: JDBC_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: software-cryptography-provider-secret
+                  name: {{ .Values.existingSecret | default "software-cryptography-provider-secret" | quote }}
                   key: password
             - name: TOKEN_DELETE_ON_REMOVE
               value: {{ .Values.tokenDelete | quote }}
-            {{- if .Values.encryptionKey }}
+            {{- if or .Values.existingSecret .Values.encryptionKey }}
             - name: ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: software-cryptography-provider-secret
+                  name: {{ .Values.existingSecret | default "software-cryptography-provider-secret" | quote }}
                   key: encryption_key
+                  {{- if .Values.existingSecret }}
+                  {{- /* a bundle without encryption_key leaves the connector on its default key, as an empty encryptionKey does */}}
+                  optional: true
+                  {{- end }}
             {{- end }}
             - name: JAVA_OPTS
               value: {{ .Values.javaOpts | quote }}

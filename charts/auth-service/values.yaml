@@ -68,6 +68,8 @@ global:
     secrets: []
 
 database:
+  # Existing namespace-local credential Secret; empty keeps chart-generated credentials.
+  existingSecret: ""
   # currently only postgresql is supported
   type: "postgresql"
   host: "host.docker.internal"
@@ -98,7 +100,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm
   name: auth
-  tag: 1.7.0
+  tag: 1.8.0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

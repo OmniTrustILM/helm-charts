@@ -16,7 +16,7 @@ dependencies:
     repository: file://../messaging-rabbitmq
     tags:
       - messaging
-    version: 4.2.0-4
+    version: 4.2.0-5
     condition: messaging.local
 keywords:
   - ilm

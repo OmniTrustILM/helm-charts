@@ -107,7 +107,7 @@ The following values may be configured:
 | image.registry                               | `hub.omnitrustregistry.com`        | Docker registry name for the image                                                                                                                                                                                                               |
 | image.repository                             | `ilm`                              | Docker image repository name                                                                                                                                                                                                                     |
 | image.name                                   | `email-notification-provider`      | Docker image name                                                                                                                                                                                                                                |
-| image.tag                                    | `1.2.2`                            | Docker image tag                                                                                                                                                                                                                                 |
+| image.tag                                    | `1.3.0`                            | Docker image tag                                                                                                                                                                                                                                 |
 | image.digest                                 | `""`                               | Docker image digest, will override tag if specified                                                                                                                                                                                              |
 | image.pullPolicy                             | `IfNotPresent`                     | Image pull policy                                                                                                                                                                                                                                |
 | image.pullSecrets                            | `[]`                               | Array of secret names for image pull                                                                                                                                                                                                             |
@@ -188,3 +188,13 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 
 Additional parameters may be found in the [values.yaml](values.yaml) and dependencies.
 See dependent charts for the description of available parameters.
+
+## Existing credential Secret
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `existingSecret` | `""` | Namespace-local Secret containing `dbUsername`, `dbPassword`, `smtpUsername`, `smtpPassword` |
+
+A nonempty name takes precedence over inline credentials and suppresses the matching generated credential Secret. Empty keeps the current generated-Secret behavior. The referenced bundle must exist in the release namespace before the workload starts. Secret contents are not read during rendering; update the workload explicitly after changing external credentials.
+
+The single bundle supplies both database and SMTP credentials.

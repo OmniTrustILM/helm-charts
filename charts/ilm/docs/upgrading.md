@@ -85,22 +85,6 @@ Plan the upgrade for a maintenance window: while the migration runs, requests th
 
 If you run `helm upgrade` with `--wait` or `--atomic`, Helm waits for Core to become ready within `--timeout`, which defaults to 5 minutes. Set it above the time the migration needs, for example `--timeout 35m`. With the default, Helm fails the upgrade while Core is still migrating. `--atomic` then rolls the release back, which stops the migration midway and starts the previous Core version on a database that the earlier 2.20.0 migrations may already have changed.
 
-### Database migrations behind PgBouncer
-
-Core's database migrations can fail at random when Core connects to the database through PgBouncer in transaction pool mode, which is the chart default (`global.database.pgBouncer.enabled: true`). Core then exits, and the next start continues with the migrations that are left, so a few Core restarts during the upgrade are expected. If Core keeps restarting, upgrade with PgBouncer disabled, and enable it again with a second `helm upgrade` once Core is ready:
-
-```bash
-helm upgrade <release> <chart> -f <your-values> --set global.database.pgBouncer.enabled=false
-# once Core is ready
-helm upgrade <release> <chart> -f <your-values>
-```
-
-With PgBouncer disabled, every service connects to the database at `global.database.host` and `global.database.port` directly, and the chart removes the PgBouncer deployment until the second upgrade. Every service that uses the database restarts on both upgrades. Before you disable it, check:
-
-- **Connections.** Each service then holds its own connections to the database instead of sharing PgBouncer's pool. Core alone keeps up to 40 per replica, the scheduler up to 20 and each Java connector up to 10, and Keycloak and the authentication service open more under load. Make sure the database's connection limit covers them (`max_connections`, 100 by default in PostgreSQL), or lower Core's pool for the upgrade by setting `CONNECTION_POOL_MAX_POOL_SIZE` in `additionalEnv`.
-- **Network access.** The database must accept connections from every pod of the platform, not only from PgBouncer.
-- **Existing Secrets.** If you use `existingSecret` bundles, the ones for the authentication service (`connection-string`), Keycloak, the CT Logs Discovery Provider, the HashiCorp Vault Connector and the PyADCS Connector (`database_host`, `database_port`) carry the database address themselves. Point them at the database while PgBouncer is disabled, and back at PgBouncer afterwards.
-
 ### Network Discovery Provider
 
 The connector moves to ip-discovery-provider 1.7.0, which adds the discovery v2 interface.

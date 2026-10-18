@@ -309,6 +309,27 @@ class CredentialSecretReferences(unittest.TestCase):
                     self.assert_ref(workload, 'OTPKI_LOGIN_PASSWORD_KEY', external, 'login_password_key')
                     self.assert_no_secret(objects, 'otpki-connector-secret')
 
+    def test_software_cryptography_encryption_key_follows_bundle(self):
+        for external, literal in [('', ''), ('', 'SYNTHETIC_ENCRYPTION_KEY'),
+                                  ('external-softcp', ''), ('external-softcp', 'SYNTHETIC_ENCRYPTION_KEY')]:
+            with self.subTest(external=external, literal=bool(literal)):
+                values = synthetic_values('software-cryptography-provider')
+                values.update(existingSecret=external, encryptionKey=literal)
+                objects = render('software-cryptography-provider', values)
+                workload = object_by_name(objects, 'Deployment', 'software-cryptography-provider-deployment')
+                entries = [entry for entry in workload['spec']['template']['spec']['containers'][0]['env']
+                           if entry['name'] == 'ENCRYPTION_KEY']
+                if external:
+                    self.assertEqual(entries, [{'name': 'ENCRYPTION_KEY', 'valueFrom': {'secretKeyRef': {
+                        'name': external, 'key': 'encryption_key', 'optional': True}}}])
+                    self.assert_no_secret(objects, 'software-cryptography-provider-secret')
+                    assert_no_credential_sentinels(self, objects, ['SYNTHETIC_ENCRYPTION_KEY'])
+                elif literal:
+                    self.assert_ref(workload, 'ENCRYPTION_KEY', 'software-cryptography-provider-secret',
+                                    'encryption_key')
+                else:
+                    self.assertEqual(entries, [])
+
     def test_unrelated_database_configuration_is_preserved(self):
         for chart, mapping in BUNDLE_CONTRACTS.items():
             with self.subTest(chart=chart):
@@ -322,6 +343,10 @@ class CredentialSecretReferences(unittest.TestCase):
                 if chart in ('scheduler-service', 'otpki-connector'):
                     key = 'checksum/config' if chart == 'scheduler-service' else 'checksum/secret'
                     old['spec']['template']['metadata']['annotations'].pop(key)
+                if chart == 'software-cryptography-provider':
+                    # The only addition: the bundle's optional encryption_key, covered by its own test.
+                    container = normalized['spec']['template']['spec']['containers'][0]
+                    container['env'] = [entry for entry in container['env'] if entry['name'] != 'ENCRYPTION_KEY']
                 for obj in (old, normalized):
                     metadata = obj['spec']['template']['metadata']
                     if not metadata.get('annotations'):

@@ -27,11 +27,9 @@ Then update the corresponding references and upgrade using the selected fixed ch
 ## To 2.20.0
 
 :::warning[Before upgrading]
-- Back up the databases. The Core and Software Cryptography Provider migrations cannot be undone.
 - If you run `helm upgrade` with `--wait` or `--atomic`, set `--timeout` above Core's startup budget, for example `35m`. See [Longer Core startup](#longer-core-startup).
-- With an external RabbitMQ, create the `provider.discovery-work` queue. See [RabbitMQ queue for discovery work](#rabbitmq-queue-for-discovery-work).
+- With an external broker, create the `provider.discovery-work` queue. See [Messaging queue for discovery work](#messaging-queue-for-discovery-work).
 - If a CBOM repository URL is set in the platform settings, upgrade cbom-repository to 1.2.0 or later before or together with the platform: Core 2.20.0 pages it with a cursor that 1.1.0 does not serve.
-- Prepare the connector changes that need action outside the cluster: the Vault role, webhook receivers and email templates. See [Connectors](#connectors).
 :::
 
 ### Longer Core startup
@@ -47,14 +45,20 @@ The startup budget (`image.probes.startup.failureThreshold` × `periodSeconds`) 
 
 ### Connector registration on upgrade
 
-`helm upgrade` now registers the enabled connectors and the new interfaces of upgraded ones, as `helm install` does. In 2.20.0 it adds `Network-Discovery-Provider-v2` and `Software-Cryptography-Provider-v2` next to the existing v1 registrations; keep both. If Core or a connector is not ready within 150 seconds, the job skips the registration: register it by hand or run `helm upgrade` again.
+`helm upgrade` now registers the enabled connectors and the new interfaces of upgraded ones, as `helm install` does. In 2.20.0 it adds `Software-Cryptography-Provider-v2` next to the existing v1 registration; keep both. If Core or a connector is not ready within 150 seconds, the job skips the registration: register it by hand or run `helm upgrade` again.
 
 - A connector you delete in the platform but keep enabled in your values is registered again, waiting for approval. Disable it in your values to keep it removed.
 - Disabling a connector in your values does not remove its registration.
 
-### RabbitMQ queue for discovery work
+### Messaging queue for discovery work
 
-The bundled broker needs no action. With external messaging (`global.messaging.external.enabled: true`), create on the platform virtual host (`messaging.virtualHost`, `/` by default) a durable queue `provider.discovery-work`, bound to the `ilm` exchange with the routing key `provider.discovery-work`, and give Core's user (`global.messaging.coreUsername`) read permission on it. For example, with [rabbitmqadmin v2](https://github.com/rabbitmq/rabbitmqadmin-ng):
+Core 2.20.0 reads discovery work from a new queue, `provider.discovery-work`. The bundled broker needs no action. With external messaging (`global.messaging.external.enabled: true`), set it up on your broker before the upgrade:
+
+- a durable queue `provider.discovery-work`;
+- the messages Core publishes to the `ilm` exchange with the routing key `provider.discovery-work`, routed into it;
+- permission for Core's broker user (`global.messaging.coreUsername`) to read from it.
+
+On a topic-based broker such as Azure Service Bus, that is a durable subscription `provider.discovery-work` on the `ilm` topic, which Core filters by the `routingKey` property. On RabbitMQ, it is a queue on the platform virtual host (`messaging.virtualHost`, `/` by default) bound to the `ilm` exchange, for example with [rabbitmqadmin v2](https://github.com/rabbitmq/rabbitmqadmin-ng):
 
 ```bash
 rabbitmqadmin --vhost / queues declare --name provider.discovery-work --type classic --durable true
@@ -65,37 +69,6 @@ rabbitmqctl set_permissions -p / <core-username> '' '^ilm(-proxy)?$' \
 ```
 
 `rabbitmqctl set_permissions` replaces all of the user's permissions on the virtual host; the patterns above are the ones the bundled broker grants Core.
-
-### Connectors
-
-- **Network Discovery Provider 1.7.0**:
-  - Discovery v2 needs a single replica. If `global.replicaCount` is above `1`, set `networkDiscoveryProvider.replicaCount: 1`, and keep autoscaling off or at one replica.
-  - Size its memory for up to 512 MiB of buffered v2 results (`DISCOVERY_BUFFER_MAX_TOTAL_BYTES`).
-  - `discovery.probe.connectTimeoutMs` defaults to `300` ms, which keeps the 1.6.1 sweep times.
-- **Software Cryptography Provider 1.4.0**:
-  - Back up its schema (`softcp` by default): 1.3.2 cannot read the re-encrypted token passwords.
-  - Duplicate token names fail the upgrade. Check first: `SELECT name, count(*) FROM softcp.token_instance GROUP BY name HAVING count(*) > 1;`
-  - Logs are JSON only.
-  - The new `encryptionKey` value is for new installations only: changing the key of an existing installation leaves its token passwords unreadable. With `existingSecret`, the key comes from the Secret's `encryption_key`.
-- **HashiCorp Vault Connector 1.2.1**: the default Vault login role changes from `czertainly-role` to `vault-connector-role`. Create that role in Vault with the same bindings, or set the role on each authority.
-- **Webhook Notification Provider 1.1.0**: the delivery headers are renamed to `X-Webhook-Timestamp` and `X-Webhook-Nonce`. Update receivers that verify them.
-- **Email Notification Provider 1.3.0**: values are escaped, and templates that use `?html` are refused. Remove `?html`; use `?no_esc` for a value that must stay markup.
-- **OT PKI Connector 1.1.0**: requires OTPKI v1.0.0, so upgrade OTPKI first. Keep `otpki.loginPasswordKey` unchanged, and give a hand-built OTPKI role the `Update` permission on End Entity.
-- **Timestamp Formatting Connector 1.1.0**: while it updates, a request can fail once when its profile turns off signing time or CMS algorithm protection; a retry succeeds.
-
-### Logo uploads through ingress-nginx
-
-Logos larger than about 750 KB exceed the ingress-nginx default body limit. To accept logos up to the 1 MB maximum:
-
-```yaml
-ingress:
-  annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
-```
-
-### JSON console logs
-
-Set `logging.format` to `ecs` or `logstash` to have Core write its console log as JSON. Left empty, it keeps the text format.
 
 ## To 2.19.0
 

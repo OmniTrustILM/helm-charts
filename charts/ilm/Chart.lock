@@ -28,19 +28,19 @@ dependencies:
   version: 1.0.2-5-develop
 - name: network-discovery-provider
   repository: file://../network-discovery-provider
-  version: 1.6.1-5-develop
+  version: 1.7.0-develop
 - name: keystore-entity-provider
   repository: file://../keystore-entity-provider
   version: 1.4.2-4-develop
 - name: software-cryptography-provider
   repository: file://../software-cryptography-provider
-  version: 1.3.2-2-develop
+  version: 1.4.0-develop
 - name: email-notification-provider
   repository: file://../email-notification-provider
   version: 1.2.1-1-develop
 - name: webhook-notification-provider
   repository: file://../webhook-notification-provider
-  version: 1.0.0-5-develop
+  version: 1.1.0-develop
 - name: hashicorp-vault-connector
   repository: file://../hashicorp-vault-connector
   version: 1.2.0-3-develop
@@ -77,5 +77,5 @@ dependencies:
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-3-develop
-digest: sha256:ca3f18e3b075f4e5fe3711f841185974a770485f0b013377c3dc2f4176ec1ed7
-generated: "2026-10-18T07:27:34.4918043+02:00"
+digest: sha256:47054d56d39bef9620fb4f89d51424b2988863703fac2ff93c07da3476d40f07
+generated: "2026-10-19T10:15:23.9815546+02:00"

@@ -1,4 +1,5 @@
-{{- $replicaCount := pluck "replicaCount" .Values.global .Values | compact | first }}
+{{- /* the local replicaCount wins over the global one, so it can hold this connector to one pod; see values.yaml */}}
+{{- $replicaCount := pluck "replicaCount" .Values .Values.global | compact | first }}
 {{- $httpProxy := pluck "httpProxy" .Values.global .Values | compact | first }}
 {{- $httpsProxy := pluck "httpsProxy" .Values.global .Values | compact | first }}
 {{- $noProxy := pluck "noProxy" .Values.global .Values | compact | first }}
@@ -18,6 +19,15 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ $replicaCount | default 1 }}
   {{- end }}
+  # The old pods are taken down before any new one is created, so an old and a new pod are never both behind the
+  # service while a discovery run is open on one of them.
+  # Not Recreate: Helm 4's server-side apply cannot remove the rollingUpdate block Kubernetes defaulted on
+  # deployments created without a strategy, and the API server refuses Recreate while it is there.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
   selector:
     matchLabels:
       {{- include "network-discovery-provider.selectorLabels" . | nindent 6 }}
@@ -67,8 +77,12 @@ spec:
             - name: NO_PROXY
               value: {{ $noProxy }}
             {{- end }}
-            - name: LOGGING_LEVEL_COM_CZERTAINLY
+            - name: LOGGING_LEVEL_COM_OTILM
               value: {{ .Values.logging.level | quote }}
+            {{- with .Values.discovery.probe.connectTimeoutMs }}
+            - name: DISCOVERY_PROBE_CONNECT_TIMEOUT_MS
+              value: {{ . | quote }}
+            {{- end }}
             - name: JDBC_URL
               value: {{ include "ilm-lib.util.format.jdbcUrl" (list . "?characterEncoding=UTF-8") | quote }}
             - name: JDBC_USERNAME

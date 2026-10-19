@@ -26,16 +26,49 @@ Then update the corresponding references and upgrade using the selected fixed ch
 
 ## To 2.20.0
 
+:::warning[Before upgrading]
+- If you run `helm upgrade` with `--wait` or `--atomic`, set `--timeout` above Core's startup budget, for example `35m`. See [Longer Core startup](#longer-core-startup).
+- With an external broker, create the `provider.discovery-work` queue. See [Messaging queue for discovery work](#messaging-queue-for-discovery-work).
+- If a CBOM repository URL is set in the platform settings, upgrade cbom-repository to 1.2.0 or later before or together with the platform: Core 2.20.0 pages it with a cursor that 1.1.0 does not serve.
+:::
+
+### Longer Core startup
+
+Core migrates the `discovery_certificate` table at startup. On a large installation this takes minutes, and requests that touch discovered certificates wait until it finishes, so plan a maintenance window. To estimate the size:
+
+```sql
+SELECT count(*), pg_size_pretty(pg_total_relation_size('core.discovery_certificate'))
+FROM core.discovery_certificate;
+```
+
+The startup budget (`image.probes.startup.failureThreshold` × `periodSeconds`) is raised to about 30 minutes. If you override either value, keep the product above the migration time. With `--wait` or `--atomic`, a shorter `--timeout` fails the upgrade mid-migration, and `--atomic` then starts the previous Core on a partly migrated database.
+
 ### Connector registration on upgrade
 
-`helm upgrade` now runs the job that registers connectors, which used to run on `helm install` only. It registers the connectors you enable during the upgrade and the interfaces a connector gains with a new version, so they no longer have to be registered by hand. Registrations that already exist are left as they are: Core refuses a second registration with the same name, or with the same URL and interface version.
+`helm upgrade` now registers the enabled connectors and the new interfaces of upgraded ones, as `helm install` does. In 2.20.0 it adds `Software-Cryptography-Provider-v2` next to the existing v1 registration; keep both. If Core or a connector is not ready within 150 seconds, the job skips the registration: register it by hand or run `helm upgrade` again.
 
-The job waits for each connector to serve the interface before it registers it, within 150 seconds in total. On an upgrade the job always ends successfully, within about 4 minutes, which is inside Helm's default timeout. If Core is not reachable within those 150 seconds, for example a single Core replica of a `StatefulSet` that is still migrating its database, the job skips registration. A registration that fails or does not fit in that time is skipped, too. Register what was skipped by hand, or run `helm upgrade` again once Core and the connectors are up.
+- A connector you delete in the platform but keep enabled in your values is registered again, waiting for approval. Disable it in your values to keep it removed.
+- Disabling a connector in your values does not remove its registration.
 
-If you pass `--timeout` to `helm upgrade`, keep it at 5 minutes or more.
+### Messaging queue for discovery work
 
-- A connector you delete in the platform while it is still enabled in your values is registered again on the next upgrade, waiting for approval. Disable it in your values to keep it removed.
-- Disabling a connector in your values does not remove its registration. Delete it in the platform.
+Core 2.20.0 reads discovery work from a new queue, `provider.discovery-work`. The bundled broker needs no action. With external messaging (`global.messaging.external.enabled: true`), set it up on your broker before the upgrade:
+
+- a durable queue `provider.discovery-work`;
+- the messages Core publishes to the `ilm` exchange with the routing key `provider.discovery-work`, routed into it;
+- permission for Core's broker user (`global.messaging.coreUsername`) to read from it.
+
+On a topic-based broker such as Azure Service Bus, that is a durable subscription `provider.discovery-work` on the `ilm` topic, filtered on `sys.Label = 'provider.discovery-work'`: Core sends the routing key as the message label. On RabbitMQ, it is a queue on the platform virtual host (`messaging.virtualHost`, `/` by default) bound to the `ilm` exchange, for example with [rabbitmqadmin v2](https://github.com/rabbitmq/rabbitmqadmin-ng):
+
+```bash
+rabbitmqadmin --vhost / queues declare --name provider.discovery-work --type classic --durable true
+rabbitmqadmin --vhost / exchanges bind --source ilm --destination-type queue \
+  --destination provider.discovery-work --routing-key provider.discovery-work
+rabbitmqctl set_permissions -p / <core-username> '' '^ilm(-proxy)?$' \
+  '^core(\..+|-.+)?$|^provider\.(status-poll|discovery-work)$|^time-quality\.(config-request|results)$'
+```
+
+`rabbitmqctl set_permissions` replaces all of the user's permissions on the virtual host; the patterns above are the ones the bundled broker grants Core.
 
 ## To 2.19.0
 

@@ -58,7 +58,7 @@ Core 2.20.0 reads discovery work from a new queue, `provider.discovery-work`. Th
 - the messages Core publishes to the `ilm` exchange with the routing key `provider.discovery-work`, routed into it;
 - permission for Core's broker user (`global.messaging.coreUsername`) to read from it.
 
-On a topic-based broker such as Azure Service Bus, that is a durable subscription `provider.discovery-work` on the `ilm` topic, which Core filters by the `routingKey` property. On RabbitMQ, it is a queue on the platform virtual host (`messaging.virtualHost`, `/` by default) bound to the `ilm` exchange, for example with [rabbitmqadmin v2](https://github.com/rabbitmq/rabbitmqadmin-ng):
+On a topic-based broker such as Azure Service Bus, that is a durable subscription `provider.discovery-work` on the `ilm` topic, filtered on `sys.Label = 'provider.discovery-work'`: Core sends the routing key as the message label. On RabbitMQ, it is a queue on the platform virtual host (`messaging.virtualHost`, `/` by default) bound to the `ilm` exchange, for example with [rabbitmqadmin v2](https://github.com/rabbitmq/rabbitmqadmin-ng):
 
 ```bash
 rabbitmqadmin --vhost / queues declare --name provider.discovery-work --type classic --durable true

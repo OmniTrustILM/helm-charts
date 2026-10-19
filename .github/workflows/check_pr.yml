@@ -35,7 +35,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_credential_secret_refs.py' -v
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.7.0
+        uses: helm/chart-testing-action@v2.9.0
 
       - name: Detect Changed Charts
         id: detect-changes

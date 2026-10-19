@@ -97,7 +97,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm
   name: email-notification-provider
-  tag: 1.2.1
+  tag: 1.3.0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

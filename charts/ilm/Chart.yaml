@@ -1,7 +1,7 @@
 annotations:
   category: trustLifecycleManagement
 apiVersion: v2
-appVersion: 2.20.0-develop
+appVersion: 2.20.0
 name: ilm
 description: A Helm chart for ILM platform.
 home: https://github.com/OmniTrustILM/ilm
@@ -13,7 +13,7 @@ dependencies:
     repository: file://../keycloak-internal
     tags:
       - keycloak-internal
-    version: 26.4.2-0-5-develop
+    version: 26.4.2-0-5
     alias: keycloakInternal
   - condition: commonCredentialProvider.enabled
     name: common-credential-provider
@@ -21,7 +21,7 @@ dependencies:
     repository: file://../common-credential-provider
     tags:
       - credential-provider
-    version: 1.4.0-2-develop
+    version: 1.4.0-2
     alias: commonCredentialProvider
   - condition: ejbcaNgConnector.enabled
     name: ejbca-ng-connector
@@ -30,7 +30,7 @@ dependencies:
     tags:
       - authority-provider
       - discovery-provider
-    version: 1.12.0-1-develop
+    version: 1.13.0
     alias: ejbcaNgConnector
   - condition: externalAuthorityProvider.enabled
     name: external-authority-provider
@@ -47,7 +47,7 @@ dependencies:
     tags:
       - authority-provider
       - discovery-provider
-    version: 1.2.0-1-develop
+    version: 1.2.1
     alias: pyAdcsConnector
   - condition: otpkiConnector.enabled
     name: otpki-connector
@@ -55,7 +55,7 @@ dependencies:
     repository: file://../otpki-connector
     tags:
       - authority-provider
-    version: 1.0.0-2-develop
+    version: 1.1.0
     alias: otpkiConnector
   - condition: x509ComplianceProvider.enabled
     name: x509-compliance-provider
@@ -79,7 +79,7 @@ dependencies:
     repository: file://../ct-logs-discovery-provider
     tags:
       - ct-logs-discovery-provider
-    version: 1.0.2-5-develop
+    version: 1.0.3
     alias: ctLogsDiscoveryProvider
   - condition: networkDiscoveryProvider.enabled
     name: network-discovery-provider
@@ -87,7 +87,7 @@ dependencies:
     repository: file://../network-discovery-provider
     tags:
       - discovery-provider
-    version: 1.7.0-develop
+    version: 1.7.0
     alias: networkDiscoveryProvider
   - condition: keystoreEntityProvider.enabled
     name: keystore-entity-provider
@@ -95,7 +95,7 @@ dependencies:
     repository: file://../keystore-entity-provider
     tags:
       - entity-provider
-    version: 1.4.2-4-develop
+    version: 1.4.2-4
     alias: keystoreEntityProvider
   - condition: softwareCryptographyProvider.enabled
     name: software-cryptography-provider
@@ -103,7 +103,7 @@ dependencies:
     repository: file://../software-cryptography-provider
     tags:
       - cryptography-provider
-    version: 1.4.0-develop
+    version: 1.4.0
     alias: softwareCryptographyProvider
   - condition: emailNotificationProvider.enabled
     name: email-notification-provider
@@ -111,7 +111,7 @@ dependencies:
     repository: file://../email-notification-provider
     tags:
       - notification-provider
-    version: 1.2.1-1-develop
+    version: 1.3.0
     alias: emailNotificationProvider
   - condition: webhookNotificationProvider.enabled
     name: webhook-notification-provider
@@ -119,7 +119,7 @@ dependencies:
     repository: file://../webhook-notification-provider
     tags:
       - notification-provider
-    version: 1.1.0-develop
+    version: 1.1.0
     alias: webhookNotificationProvider
   - condition: hashicorpVaultConnector.enabled
     name: hashicorp-vault-connector
@@ -128,7 +128,7 @@ dependencies:
     tags:
       - authority-provider
       - discovery-provider
-    version: 1.2.0-3-develop
+    version: 1.2.1
     alias: hashicorpVaultConnector
   - condition: timestampFormattingConnector.enabled
     name: timestamp-formatting-connector
@@ -136,7 +136,7 @@ dependencies:
     repository: file://../timestamp-formatting-connector
     tags:
       - timestamp-connector
-    version: 1.0.0
+    version: 1.1.0
     alias: timestampFormattingConnector
   - condition: global.utils.enabled
     name: utils-service
@@ -163,14 +163,14 @@ dependencies:
     repository: file://../fe-administrator
     tags:
       - fe
-    version: 2.19.0
+    version: 2.20.0
     alias: feAdministrator
   - name: auth-service
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../auth-service
     tags:
       - auth
-    version: 1.7.0-1-develop
+    version: 1.8.0
     alias: authService
   - name: auth-opa-policies
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
@@ -186,14 +186,14 @@ dependencies:
     repository: file://../messaging-rabbitmq
     tags:
       - messaging
-    version: 4.2.0-5-develop
+    version: 4.2.0-5
     alias: messagingService
   - name: scheduler-service
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
     repository: file://../scheduler-service
     tags:
       - scheduler
-    version: 1.1.2-1-develop
+    version: 1.2.0
     alias: schedulerService
   - condition: provisioningRabbitMq.enabled
     name: provisioning-rabbitmq
@@ -201,7 +201,7 @@ dependencies:
     repository: file://../provisioning-rabbitmq
     tags:
       - provisioning-rabbitmq
-    version: 1.0.0-3-develop
+    version: 1.0.0-3
     alias: provisioningRabbitMq
   - condition: global.database.pgBouncer.enabled
     name: pg-bouncer
@@ -210,7 +210,7 @@ dependencies:
     tags:
       - database
       - pgbouncer
-    version: 1.24.1-p1-3-develop
+    version: 1.24.1-p1-3
     alias: pgBouncer
 keywords:
   - ilm
@@ -228,4 +228,4 @@ sources:
   - https://github.com/OmniTrustILM/ilm
   - https://omnitrust.com
   - https://docs.otilm.com
-version: 2.20.0-develop
+version: 2.20.0

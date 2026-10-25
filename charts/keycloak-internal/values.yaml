@@ -118,7 +118,7 @@ image:
   registry: hub.omnitrustregistry.com
   repository: ilm
   name: keycloak-optimized
-  tag: 26.4.2-0
+  tag: 26.8.1-0
   # the digest to be used instead of the tag
   digest: ""
   pullPolicy: IfNotPresent

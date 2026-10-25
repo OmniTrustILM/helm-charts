@@ -24,6 +24,12 @@ Before selecting an `existingSecret` option, create the complete credential bund
 
 Then update the corresponding references and upgrade using the selected fixed chart version. Selecting an external reference removes the generated credential Secret from the chart. Helm can delete that previously managed resource during upgrade, so pointing the reference back to its old name would leave the workload without credentials. Charts reject these name collisions; an existing Secret is not a request to retain the previous chart-managed resource.
 
+## To 2.20.0-1
+
+When internal Keycloak is enabled (`global.keycloak.enabled: true`), this chart upgrades it from 26.4.2 to 26.8.1 using `keycloak-optimized:26.8.1-0`.
+
+Plan authentication downtime and follow the [Keycloak upgrade procedure](../../keycloak-internal/README.md#upgrade) using your ILM release name and values. All old Keycloak pods must be stopped and deleted before the new server migrates the database; the Deployment strategy remains unchanged, so an ordinary rolling `helm upgrade` does not provide this barrier. Back up the database after shutdown and restore the original replica count after the upgrade.
+
 ## To 2.20.0
 
 :::warning[Before upgrading]

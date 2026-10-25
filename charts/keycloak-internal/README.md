@@ -7,7 +7,7 @@ This repository contains [Helm](https://helm.sh/) charts as part of the ILM plat
 ## Prerequisites
 - Kubernetes 1.19+
 - Helm 3.8.0+
-- PostgreSQL 11+
+- PostgreSQL 14–18 (see [supported databases](https://www.keycloak.org/server/db#_supported_databases))
 
 ## Using this Chart
 
@@ -47,9 +47,42 @@ Always make sure you save the `values.yaml` and all `--set` and `--set-file` opt
 > **Warning**
 > Be sure that you always save your previous configuration!
 
-For upgrading the installation, update your configuration and run:
+The chart uses `keycloak-optimized:26.8.1-0`.
+
+Upgrading from Keycloak 26.4.x to 26.8.x requires authentication downtime: [Keycloak minor upgrades require all old instances to stop before database migration](https://www.keycloak.org/docs/latest/upgrading/index.html#_prep_migration). The Deployment uses rolling updates, so stop the old pods explicitly before upgrading. Suspend any autoscaler or external reconciler that could restart them during this maintenance window.
+
+Set the namespace and the Helm release that owns Keycloak (`ilm-keycloak-internal` for the standalone example, or your ILM release name when bundled). The selector below assumes the default `nameOverride: keycloak-internal`; adjust it if you changed that value.
+
 ```bash
-helm upgrade --namespace ilm -f values.yaml ilm-keycloak-internal oci://hub.omnitrustregistry.com/ilm-helm/keycloak-internal
+keycloak_namespace=ilm
+keycloak_release=ilm-keycloak-internal
+keycloak_replicas=$(kubectl get deployment/keycloak-internal-deployment --namespace "$keycloak_namespace" -o jsonpath='{.spec.replicas}')
+
+kubectl scale deployment/keycloak-internal-deployment --namespace "$keycloak_namespace" --replicas=0
+kubectl wait --for=delete pod --namespace "$keycloak_namespace" --selector "app.kubernetes.io/instance=$keycloak_release,app.kubernetes.io/name=keycloak-internal" --timeout=180s
+```
+
+Continue only after the wait succeeds and every old Keycloak pod has terminated. Back up the Keycloak database, configuration, and themes at this point; rolling back the migrated database requires restoring that backup.
+
+Saved values override the new chart defaults. Before upgrading, set `image.tag` to `26.8.1-0` for a standalone installation, or `keycloakInternal.image.tag` to `26.8.1-0` when bundled with ILM.
+
+Upgrade the matching chart with those saved values. For a standalone installation:
+
+```bash
+helm upgrade --namespace "$keycloak_namespace" -f values.yaml "$keycloak_release" oci://hub.omnitrustregistry.com/ilm-helm/keycloak-internal --version 26.8.1-0
+```
+
+For Keycloak bundled with ILM, use your ILM values and release name instead:
+
+```bash
+helm upgrade --namespace "$keycloak_namespace" -f values.yaml "$keycloak_release" oci://hub.omnitrustregistry.com/ilm-helm/ilm --version 2.20.0-1
+```
+
+After the upgrade succeeds, restore the original replica count explicitly, wait for readiness, and resume any suspended autoscaler or reconciler:
+
+```bash
+kubectl scale deployment/keycloak-internal-deployment --namespace "$keycloak_namespace" --replicas="$keycloak_replicas"
+kubectl rollout status deployment/keycloak-internal-deployment --namespace "$keycloak_namespace" --timeout=300s
 ```
 
 ### Uninstall
@@ -116,7 +149,7 @@ The following values may be configured:
 | image.registry                                 | `hub.omnitrustregistry.com`            | Docker registry name for the image                                                                                     |
 | image.repository                               | `ilm`                                  | Docker image repository name                                                                                           |
 | image.name                                     | `keycloak-optimized`                   | Docker image name                                                                                                      |
-| image.tag                                      | `26.4.2-0`                             | Docker image tag                                                                                                       |
+| image.tag                                      | `26.8.1-0`                             | Docker image tag                                                                                                       |
 | image.digest                                   | `""`                                   | Docker image digest, will override tag if specified                                                                    |
 | image.pullPolicy                               | `IfNotPresent`                         | Image pull policy                                                                                                      |
 | image.pullSecrets                              | `[]`                                   | Array of secret names for image pull                                                                                   |

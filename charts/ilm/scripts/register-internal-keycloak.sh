@@ -29,6 +29,10 @@ curl -X PUT \
     "jwkSetUrl": "http://keycloak-internal-service.{{ .Release.Namespace }}.svc.{{ .Values.clustering.domain }}:{{ $internalKeycloakHttpPort }}/kc/realms/ILM/protocol/openid-connect/certs",
     "scope": ["openid"],
     "audiences": ["ilm"],
+    {{- with include "ilm.mcp.delegateFields" . }}
+    {{- /* The registration replaces the whole provider, so it has to name the MCP delegate every time. */}}
+    {{- . | nindent 4 }}
+    {{- end }}
     "postLogoutUrl": "https://{{ $hostName }}/administrator/",
     "skew": 60
   }' \

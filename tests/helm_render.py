@@ -1,4 +1,4 @@
-"""Temporary, offline chart renders with deterministic synthetic inputs."""
+"""Temporary chart renders with deterministic synthetic inputs; only the MCP chart is fetched from a registry."""
 import atexit
 import base64
 import copy
@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BASELINE = os.environ.get('ILM_COMPATIBILITY_BASELINE')
 ARCHIVE_SHA256 = '5a63c556841b4c920896ab59e82d3b7f3266325b162f21096b427a321dd1cb13'
 HELM = os.environ.get('HELM_BIN', 'helm')
+MCP_SERVER_CHART = os.environ.get('MCP_SERVER_CHART')
 COMPONENTS = {
     'common-credential-provider': 'commonCredentialProvider',
     'ejbca-ng-connector': 'ejbcaNgConnector',
@@ -82,18 +83,38 @@ def _tree(baseline):
     return destination
 
 
+def _fetch_oci(dependency, target):
+    """Unpack a chart released from another repository, without registry credentials."""
+    if MCP_SERVER_CHART and dependency['name'] == 'mcp-server':
+        # A checkout of the chart, for behavior that is not yet in a published version. Helm takes a chart for the
+        # dependency, with its alias and condition, only when its Chart.yaml version satisfies the pinned one.
+        shutil.copytree(MCP_SERVER_CHART, target, dirs_exist_ok=True)
+        return
+    with tempfile.TemporaryDirectory(prefix='ilm-oci-chart-') as tmp:
+        result = subprocess.run([HELM, 'pull', f"{dependency['repository']}/{dependency['name']}",
+                                 '--version', dependency['version'], '--untar', '--untardir', tmp],
+                                capture_output=True, text=True)
+        if result.returncode:
+            raise AssertionError(result.stderr)
+        shutil.copytree(Path(tmp) / dependency['name'], target, dirs_exist_ok=True)
+
+
 @lru_cache(maxsize=None)
 def _build(chart, baseline):
     path = _tree(baseline) / 'charts' / chart
     metadata = yaml.safe_load((path / 'Chart.yaml').read_text())
     for dependency in metadata.get('dependencies', []):
         repository = dependency.get('repository', '')
+        target = path / 'charts' / dependency['name']
+        if repository.startswith('oci://'):
+            _fetch_oci(dependency, target)
+            continue
         if not repository.startswith('file://../'):
-            raise AssertionError('Tests require local chart dependencies')
+            raise AssertionError('Tests require file:// or oci:// chart dependencies')
         source = _build(repository.removeprefix('file://../'), baseline)
         # Helm accepts unpacked dependencies. Use actual chart sources while
-        # avoiding repeated compression and any registry access in render tests.
-        shutil.copytree(source, path / 'charts' / dependency['name'], dirs_exist_ok=True)
+        # avoiding repeated compression of the local charts in render tests.
+        shutil.copytree(source, target, dirs_exist_ok=True)
     return path
 
 
@@ -132,7 +153,7 @@ def object_by_name(objects, kind, name):
 def legacy_contract(objects):
     result = copy.deepcopy(objects)
     changed_names = set(COMPONENTS) | set(COMPONENTS.values()) | {
-        'ilm', 'auth-service', 'authService', 'pg-bouncer', 'pgBouncer',
+        'ilm', 'api-gateway-kong', 'apiGateway', 'auth-service', 'authService', 'pg-bouncer', 'pgBouncer',
         'keycloak-internal', 'keycloakInternal', 'scheduler-service', 'schedulerService',
         'messaging-rabbitmq', 'messagingService', 'provisioning-rabbitmq', 'provisioningRabbitMq',
     }

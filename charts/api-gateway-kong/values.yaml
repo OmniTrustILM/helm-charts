@@ -25,6 +25,8 @@ global:
     clientSecret: ""
   utils:
     enabled: false
+  mcp:
+    enabled: false
   messaging:
     remoteAccess: false
   # additional init containers that will be added to each pod
@@ -249,6 +251,10 @@ backend:
       name: "core-service"
       port: 8080
       apiUrl: "/api"
+  mcp:
+    service:
+      name: "mcp-server-service"
+      port: 8080
   fe:
     service:
       name: "fe-administrator-service"

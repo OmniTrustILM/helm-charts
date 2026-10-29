@@ -4,4 +4,4 @@ metadata:
   name: global-configmap
 data:
   kong.yml: |-
-    {{- include "api-gateway-kong.config.yml" (dict "global" .Values.global "apiGateway" .Values.apiGateway) | indent 4 }}
+    {{- include "api-gateway-kong.config.yml" (dict "global" .Values.global "apiGateway" .Values.apiGateway "clientCertHeader" .Values.auth.header.certificate) | indent 4 }}

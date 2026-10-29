@@ -101,9 +101,14 @@ class CredentialSecretReferences(unittest.TestCase):
 
     @unittest.skipUnless(BASELINE, 'explicit release compatibility baseline')
     def test_legacy_render_matches_baseline(self):
-        values = synthetic_values('ilm')
-        self.assertEqual(legacy_contract(render('ilm', values)),
-                         legacy_contract(render('ilm', values, baseline=True)))
+        # The MCP server dependency is present but off, also when its settings are given.
+        mcp_off = synthetic_values('ilm')
+        mcp_off['global'].update(hostName='ilm.example.invalid',
+                                 mcp={'enabled': False, 'clientSecret': 'SYNTHETIC_MCP_SECRET'})
+        for name, values in [('default', synthetic_values('ilm')), ('mcp settings, disabled', mcp_off)]:
+            with self.subTest(values=name):
+                self.assertEqual(legacy_contract(render('ilm', values)),
+                                 legacy_contract(render('ilm', values, baseline=True)))
 
     @unittest.skipUnless(BASELINE == '5b736cb7cfcc823c3255ec83b80e28748143131e', 'original legacy characterization')
     def test_baseline_has_no_core_external_secret_capability(self):

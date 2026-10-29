@@ -81,6 +81,7 @@ Global values are used to define common parameters for the chart and all its sub
 | global.hostName                           | `""`          | Global hostname of the running instance                            |
 | global.keycloak.enabled                   | `false`       | Enables internal Keycloak for authentication                       |
 | global.utils.enabled                      | `false`       | Enables external access to Utils Service                           |
+| global.mcp.enabled                        | `false`       | Enables external access to the MCP server                          |
 | global.messaging.remoteAccess             | `false`       | Enable remote access to messaging service                          |
 | global.initContainers                     | `[]`          | Global init containers                                             |
 | global.sidecarContainers                  | `[]`          | Global sidecar containers                                          |
@@ -130,6 +131,8 @@ The following values may be configured:
 | backend.core.service.name                    | `"core-service"`             | Name of the Core service                                                                                               |
 | backend.core.service.port                    | `8080`                       | Port number of the Core service                                                                                        |
 | backend.core.service.apiUrl                  | `"/api"`                     | Base URL of the API requests                                                                                           |
+| backend.mcp.service.name                     | `"mcp-server-service"`       | Name of the MCP server service                                                                                         |
+| backend.mcp.service.port                     | `8080`                       | Port number of the MCP server service                                                                                  |
 | backend.fe.service.name                      | `"fe-administrator-service"` | Name of the front end service                                                                                          |
 | backend.fe.service.port                      | `80`                         | Port number of the front end service                                                                                   |
 | backend.fe.service.baseUrl                   | `"/administrator"`           | URL of the frontend application                                                                                        |

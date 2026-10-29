@@ -123,6 +123,11 @@ Global values are used to define common parameters for the chart and all its sub
 | global.trusted.certificates               | `""`                   | List of additional CA certificates that should be trusted          |
 | global.hostName                           | `""`                   | Global hostname of the running instance                            |
 | global.keycloak.clientSecret              | `""`                   | Keycloak OIDC client secret to be used for ILM              |
+| global.mcp.enabled                        | `false`                | Adds the MCP server's objects to the realm in `managed` mode, see [MCP server objects](#mcp-server-objects) |
+| global.mcp.identity.mode                  | `managed`              | `managed` adds MCP's objects to the realm; `external` adds nothing |
+| global.mcp.clientSecret                   | `""`                   | Client secret of `ilm-mcp`; empty lets Keycloak generate one       |
+| global.mcp.cimd.enabled                   | `true`                 | Adds the `mcp-cimd` client policy, which accepts MCP clients identified by a Client ID Metadata Document |
+| global.mcp.delegation.group               | `""`                   | Lets MCP act only for the members of this group, which the import creates; empty allows every user |
 | global.admin.username                     | `""`                   | Initial administrator username                                     |
 | global.admin.password                     | `""`                   | Initial administrator password                                     |
 | global.admin.name                         | `""`                   | Initial administrator first name                                   |
@@ -288,3 +293,11 @@ The bundle retains both master-administrator and database key schemas.
 External realm input is independent of the credential bundle. It removes only the realm data from the generated ConfigMap; `create_schema.sh` and `createDbSchema` behavior remain. The JSON is used as supplied, without Helm template expansion. Preserve realm/user identities when adopting an existing realm. The file uses a read-only subPath mount and requires a workload restart to receive Secret changes.
 
 When `global.keycloak.clientSecretRef` selects the client credential for Core's automatic provider registration, also set `realmImport.existingSecret` so the realm client uses the matching unchanged secret. This realm requirement applies even when provider registration is disabled. A client Secret reference with a generated inline realm is rejected.
+
+## MCP server objects
+
+With `global.mcp.enabled` and `global.mcp.identity.mode` `managed`, the generated realm also carries the MCP server's objects: the confidential client `ilm-mcp`, which exchanges a user's MCP token for an ILM token by delegation; the client scopes `mcp:access`, `ilm-mcp-upstream` and `delegation:client`; the client policies `mcp-pkce` and `mcp-cimd`; and the fine-grained admin permissions that let `ilm-mcp` act for every user, or only for the members of `global.mcp.delegation.group`. `mcp:access`, a default optional scope of the realm, gives tokens the audiences `https://<hostName>/mcp` and `ilm-mcp`. Keycloak needs the features `token-exchange-delegation`, `parameterized-scopes` and, while `global.mcp.cimd.enabled` is `true`, `cimd` for these objects. Features are build options, so the image must be built with them: `start --optimized` does not enable a feature the image lacks.
+
+Keycloak imports the realm only when it does not exist yet, so an existing ILM realm receives neither these objects nor later changes of these values. [`scripts/mcp_realm.py`](scripts/mcp_realm.py) adds or corrects them in an existing realm with `enable`, whose options `--group NAME` and `--no-cimd` stand for `global.mcp.delegation.group` and `global.mcp.cimd.enabled: false`, and removes them with `cleanup`. With `realmImport.existingSecret`, the supplied realm must carry them itself.
+
+A realm that holds the `mcp-cimd` client profile or policy fails every sign-in with HTTP 500 while Keycloak lacks the `cimd` feature. Before moving to an image without `cimd`, run `mcp_realm.py cleanup`, or set `global.mcp.cimd.enabled: false` and run `mcp_realm.py enable --no-cimd`. [MCP on an existing installation](../ilm/docs/upgrading.md#mcp-on-an-existing-installation) describes these operations for the ILM chart.

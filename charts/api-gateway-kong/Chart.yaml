@@ -30,4 +30,4 @@ sources:
   - https://docs.otilm.com
   - https://github.com/revomatico/docker-kong-oidc
   - https://github.com/revomatico/kong-oidc
-version: 3.9.1-2
+version: 3.9.1-3-develop

@@ -164,3 +164,43 @@ Render customized command and arguments, if any
 {{- define "keycloak-internal.theme.image.args" -}}
 {{- include "ilm-lib.tplvalues.render" (dict "value" .Values.theme.image.args "context" $) }}
 {{- end -}}
+
+{{/*
+The ILM realm to import, as JSON text. With MCP enabled in managed mode, the lists of MCP's objects in
+realms/mcp-objects.json are appended to the realm's, and ilm-mcp-upstream receives copies of the ilm client's Username
+and Groups mappers, so that a token exchanged for MCP carries the claims of ILM's own tokens.
+*/}}
+{{- define "keycloak-internal.realm" -}}
+{{- $text := tpl (.Files.Get "realms/ilm-2.18.0_realm.json") . -}}
+{{- if not (and .Values.global.mcp.enabled (eq .Values.global.mcp.identity.mode "managed")) -}}
+{{- $text -}}
+{{- else -}}
+{{- $realm := fromJson $text -}}
+{{- $objects := fromJson (tpl (.Files.Get "realms/mcp-objects.json") .) -}}
+{{- $mappers := list -}}
+{{- range $realm.clients -}}
+{{- if eq .clientId "ilm" -}}
+{{- range .protocolMappers -}}
+{{- if has .name (list "Username" "Groups") -}}
+{{- $mappers = append $mappers (omit . "id") -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- range $objects.clientScopes -}}
+{{- if eq .name "ilm-mcp-upstream" -}}
+{{- $_ := set . "protocolMappers" (concat .protocolMappers $mappers) -}}
+{{- end -}}
+{{- end -}}
+{{- $_ := set $realm "adminPermissionsEnabled" $objects.adminPermissionsEnabled -}}
+{{- range $key := list "defaultOptionalClientScopes" "clientScopes" "clients" "groups" -}}
+{{- with get $objects $key -}}
+{{- $_ := set $realm $key (concat (get $realm $key) .) -}}
+{{- end -}}
+{{- end -}}
+{{- $_ := set $realm.clientProfiles "profiles" (concat $realm.clientProfiles.profiles $objects.clientProfiles.profiles) -}}
+{{- $_ := set $realm.clientPolicies "policies" (concat $realm.clientPolicies.policies $objects.clientPolicies.policies) -}}
+{{- /* Starts with a line break, as the realm file does: the ConfigMap trims the one before this text. */ -}}
+{{- printf "\n%s" (toPrettyJson $realm) -}}
+{{- end -}}
+{{- end -}}

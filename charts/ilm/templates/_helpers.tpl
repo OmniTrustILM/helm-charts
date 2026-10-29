@@ -420,3 +420,65 @@ fail the init container immediately.
 messaging-secret
 {{- end -}}
 {{- end -}}
+
+{{/* Whether the MCP server is installed (global.mcp.enabled). Returns "true" or "". */}}
+{{- define "ilm.mcp.enabled" -}}
+{{- if .Values.global.mcp.enabled -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+Whether MCP's users sign in through the bundled Keycloak (global.mcp.identity.mode managed), which the realm import and
+the provider registration then prepare for MCP. Returns "true" or "".
+*/}}
+{{- define "ilm.mcp.managed" -}}
+{{- if and (include "ilm.mcp.enabled" .) (eq .Values.global.mcp.identity.mode "managed") -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+The members of the bundled provider's registration that make ilm-mcp its allowed delegate, while MCP is managed; empty
+otherwise. Core registers the provider only when it starts, so its pod carries their hash and restarts when they change.
+*/}}
+{{- define "ilm.mcp.delegateFields" -}}
+{{- if eq (include "ilm.mcp.managed" .) "true" -}}
+"allowedDelegates": ["ilm-mcp"],
+"delegateClaim": "client_id",
+{{- end -}}
+{{- end -}}
+
+{{/*
+Check the MCP values that this chart reads and the MCP chart cannot see. Managed mode takes its client secret from exactly
+one of global.mcp.clientSecret and global.mcp.clientSecretRef. External mode takes its provider from mcpServer.security,
+so it refuses the managed-only values global.mcp.clientSecretRef and global.mcp.delegation.group instead of ignoring them,
+and a client Secret named like the managed one, which Helm deletes once this chart stops rendering it. The MCP chart checks
+its own values, among them that external mode sets exactly one of global.mcp.clientSecret and
+mcpServer.security.clientSecretRef.name. Call once while MCP is enabled.
+*/}}
+{{- define "ilm.mcp.validate" -}}
+{{- $mcp := .Values.global.mcp -}}
+{{- $ref := $mcp.clientSecretRef | default dict -}}
+{{- if eq (include "ilm.mcp.managed" .) "true" -}}
+{{- if eq (empty $mcp.clientSecret) (empty $ref) -}}
+{{- fail "global.mcp.identity.mode managed needs exactly one of global.mcp.clientSecret and global.mcp.clientSecretRef" -}}
+{{- end -}}
+{{- if $ref -}}
+{{- if not (and $ref.name $ref.key) -}}
+{{- fail "global.mcp.clientSecretRef requires name and key" -}}
+{{- end -}}
+{{- if eq $ref.name "mcp-server-secret" -}}
+{{- fail "global.mcp.clientSecretRef.name must differ from the chart-managed mcp-server-secret; create the existing Secret under a new name before upgrading" -}}
+{{- end -}}
+{{- if not (.Values.keycloakInternal.realmImport | default dict).existingSecret -}}
+{{- fail "keycloakInternal.realmImport.existingSecret is required with global.mcp.clientSecretRef" -}}
+{{- end -}}
+{{- end -}}
+{{- else if eq $mcp.identity.mode "external" -}}
+{{- range $name, $value := dict "global.mcp.clientSecretRef" $ref "global.mcp.delegation.group" ($mcp.delegation | default dict).group -}}
+{{- if $value -}}
+{{- fail (printf "%s cannot be set with global.mcp.identity.mode external" $name) -}}
+{{- end -}}
+{{- end -}}
+{{- if eq .Values.mcpServer.security.clientSecretRef.name "mcp-server-secret" -}}
+{{- fail "mcpServer.security.clientSecretRef.name must differ from the chart-managed mcp-server-secret; use a Secret with another name" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

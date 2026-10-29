@@ -46,6 +46,26 @@ SELECTED_USERS = 'ilm-mcp-selected-users-delegation'
 DELEGATING_CLIENT = 'ilm-mcp-delegating-client'
 FOREIGN_PROFILE = {'name': 'kc-foreign', 'executors': [{'executor': 'pkce-enforcer', 'configuration': {}}]}
 FOREIGN_POLICY = {'name': 'kc-foreign', 'enabled': False, 'conditions': [], 'profiles': ['kc-foreign']}
+# Mappers of the ilm client as the chart's realm has them; ilm-mcp-upstream copies Username and Groups.
+ILM_MAPPERS = [
+    {'name': 'Groups', 'protocol': 'openid-connect', 'protocolMapper': 'oidc-usermodel-attribute-mapper',
+     'consentRequired': False,
+     'config': {'aggregate.attrs': 'false', 'userinfo.token.claim': 'true', 'multivalued': 'true',
+                'user.attribute': 'groups', 'id.token.claim': 'true', 'access.token.claim': 'true',
+                'claim.name': 'roles'}},
+    {'name': 'Username', 'protocol': 'openid-connect', 'protocolMapper': 'oidc-usermodel-property-mapper',
+     'consentRequired': False,
+     'config': {'introspection.token.claim': 'true', 'userinfo.token.claim': 'true', 'user.attribute': 'username',
+                'id.token.claim': 'true', 'lightweight.claim': 'false', 'access.token.claim': 'true',
+                'claim.name': 'username', 'jsonType.label': 'String'}},
+    {'name': 'Audience', 'protocol': 'openid-connect', 'protocolMapper': 'oidc-audience-mapper',
+     'consentRequired': False, 'config': {'included.client.audience': 'ilm', 'access.token.claim': 'true'}},
+]
+# Roles from group membership instead of the groups attribute, as a realm whose groups come from LDAP may map them.
+GROUP_MEMBERSHIP_ROLES = {'name': 'Groups', 'protocol': 'openid-connect',
+                          'protocolMapper': 'oidc-group-membership-mapper', 'consentRequired': False,
+                          'config': {'full.path': 'false', 'id.token.claim': 'true', 'access.token.claim': 'true',
+                                     'userinfo.token.claim': 'true', 'claim.name': 'roles'}}
 
 
 def new_id():
@@ -110,7 +130,7 @@ class FakeKeycloak:
     """Keycloak 26.8's Admin REST API for realm ILM, in memory on 127.0.0.1. It records every request, stores what the
     API stores and refuses what Keycloak refuses on the calls the script makes."""
 
-    def __init__(self, test, features=FEATURES):
+    def __init__(self, test, features=FEATURES, ilm_mappers=ILM_MAPPERS):
         self.requests = []
         self.features = set(features)
         self.fail = None
@@ -161,7 +181,8 @@ class FakeKeycloak:
         self.create_scope(keycloak_delegation_client())
         self.realm_scopes = {kind: [self.scope_named(name)['id'] for name in names] for kind, names in
                              (('default-default', REALM_DEFAULT_SCOPES), ('default-optional', REALM_OPTIONAL_SCOPES))}
-        self.create_client({'clientId': 'ilm', 'publicClient': False, 'secret': 'SYNTHETIC_ILM_SECRET'})
+        self.create_client({'clientId': 'ilm', 'publicClient': False, 'secret': 'SYNTHETIC_ILM_SECRET',
+                            'protocolMappers': ilm_mappers})
 
     def stop(self):
         self.server.shutdown()
@@ -325,6 +346,8 @@ class FakeKeycloak:
         client = {key: copy.deepcopy(value) for key, value in body.items()
                   if key not in ('defaultClientScopes', 'optionalClientScopes')}
         client['id'] = body.get('id') or new_id()
+        for mapper in client.get('protocolMappers', []):
+            mapper['id'] = new_id()
         self.clients[client['id']] = client
         # A client created with its own scope lists gets the scopes that exist; otherwise the realm's defaults.
         if 'defaultClientScopes' in body or 'optionalClientScopes' in body:
@@ -469,8 +492,18 @@ def desired(cimd=True, group=None, secret=SECRET):
     return mcp_realm.desired_objects(HOST, secret, cimd, group)
 
 
-def expected_view(objects):
-    """What FakeKeycloak.mcp_view() shows once enable has applied objects to the fake's realm."""
+def with_copies(objects, copies):
+    """objects with copies of the ilm client's mappers in ilm-mcp-upstream, which enable adds when it plans."""
+    return {**objects, 'clientScopes': [
+        {**scope, 'protocolMappers': scope['protocolMappers'] + copies} if scope['name'] == 'ilm-mcp-upstream'
+        else scope for scope in objects['clientScopes']]}
+
+
+def expected_view(objects, ilm_mappers=ILM_MAPPERS):
+    """What FakeKeycloak.mcp_view() shows once enable has applied objects to the fake's realm, whose ilm client has
+    ilm_mappers."""
+    objects = with_copies(objects, [without_id(mapper) for mapper in ilm_mappers
+                                    if mapper['name'] in ('Username', 'Groups')])
     group, permission = objects['group'], objects['permission']
     client = {**objects['client'], 'defaultClientScopes': sorted(objects['client']['defaultClientScopes']),
               'optionalClientScopes': sorted(objects['client']['optionalClientScopes'])}
@@ -700,6 +733,32 @@ class McpRealmScript(unittest.TestCase):
                 self.assertFalse(PREVIOUS_SECRET in output, 'the previous secret was printed')
                 self.assertEqual(fake.writes(), [])
 
+    def test_upstream_scope_copies_the_ilm_client_mappers(self):
+        mappers = [GROUP_MEMBERSHIP_ROLES if mapper['name'] == 'Groups' else mapper for mapper in ILM_MAPPERS]
+        fake = self.keycloak(ilm_mappers=mappers)
+        self.succeed(fake, 'enable')
+        upstream = {mapper['name']: without_id(mapper)
+                    for mapper in fake.scope_named('ilm-mcp-upstream')['protocolMappers']}
+        self.assertEqual(upstream['Groups'], GROUP_MEMBERSHIP_ROLES)
+        self.assertNotIn('Audience', upstream)
+        self.assertEqual(fake.mcp_view(), expected_view(desired(), mappers))
+        self.succeed(fake, 'enable')
+        self.assertEqual(fake.writes(), [])
+
+    def test_enable_stops_without_an_ilm_client_mapper(self):
+        for missing, message in [('Username', 'Client ilm has no protocol mapper Username'),
+                                 ('Groups', 'Client ilm has no protocol mapper Groups'),
+                                 ('ilm', 'Client ilm not found')]:
+            for options in [(), ('--dry-run',)]:
+                with self.subTest(missing=missing, options=options):
+                    fake = self.keycloak(ilm_mappers=[mapper for mapper in ILM_MAPPERS if mapper['name'] != missing])
+                    if missing == 'ilm':
+                        fake.delete_client(fake.client_named('ilm')['id'])
+                    code, output = self.run_script(fake, 'enable', *options)
+                    self.assertEqual(code, 1, output)
+                    self.assertIn(message, output)
+                    self.assertEqual(fake.writes(), [])
+
     def test_enable_stops_on_a_scope_of_the_wrong_type(self):
         def ilm_mcp_upstream_as_default(fake):
             links, scope = fake.links[fake.client_named('ilm-mcp')['id']], fake.scope_named('ilm-mcp-upstream')['id']
@@ -817,6 +876,8 @@ class McpRealmScript(unittest.TestCase):
 
     def test_desired_objects_match_the_realm_import(self):
         plain = realm_with(mcp_values(), enabled=False)
+        # enable copies the mappers of the realm's own ilm client, as the import copies those of the chart's realm.
+        copies = mcp_realm.ilm_claim_mappers(next(client for client in plain['clients'] if client['clientId'] == 'ilm'))
 
         def added(imported, key, field='name'):
             existing = {entry[field] for entry in plain[key]}
@@ -851,7 +912,7 @@ class McpRealmScript(unittest.TestCase):
                         'group': imported['groups'][0]['name'] if imported['groups'] else None,
                         'clientPolicy': policy,
                         'permission': permission,
-                    }), view(desired(cimd, group)))
+                    }), view(with_copies(desired(cimd, group), copies)))
 
 
 if __name__ == '__main__':

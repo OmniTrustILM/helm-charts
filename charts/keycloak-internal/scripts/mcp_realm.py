@@ -6,7 +6,8 @@
 # changes nothing.
 #
 # enable creates the objects that are missing and corrects only the fields it sets:
-#   1. The client scopes mcp:access, ilm-mcp-upstream and delegation:client.
+#   1. The client scopes mcp:access, ilm-mcp-upstream and delegation:client. ilm-mcp-upstream gets copies of the ilm
+#      client's Username and Groups mappers, so that MCP's tokens carry the claims of ILM's own.
 #   2. The confidential client ilm-mcp, with the client secret that the MCP server is configured with.
 #   3. The client profiles and policies mcp-pkce and, unless --no-cimd, mcp-cimd.
 #   4. Fine-grained admin permissions (v2) for the realm, then mcp:access and delegation:client as default optional
@@ -18,8 +19,9 @@
 # without the cimd feature fails every sign-in in a realm that stores mcp-cimd, so cleanup removes mcp-cimd first,
 # and enable --no-cimd removes it before any other write. Run one of them before switching that feature off.
 #
-# enable writes nothing and asks the operator to resolve the cause first when ilm-mcp has secret rotation state that
-# an update would clear, or when a scope it assigns is assigned with another type, which only a DELETE could change.
+# enable writes nothing and asks the operator to resolve the cause first when the ilm client lacks a mapper that
+# ilm-mcp-upstream copies, when ilm-mcp has secret rotation state that an update would clear, or when a scope it
+# assigns is assigned with another type, which only a DELETE could change.
 #
 # enable needs the Keycloak features token-exchange-delegation, parameterized-scopes and, unless --no-cimd, cimd.
 # --dry-run prints the planned changes and writes nothing.
@@ -58,20 +60,9 @@ ROTATION_ATTRIBUTES = ('client.secret.rotation.enabled', 'client.secret.expirati
                        'client.secret.remaining.expiration.time', 'client.secret.rotated',
                        'client.secret.rotated.creation.time', 'client.secret.rotated.expiration.time')
 
-# Copies of the ilm client's Username and Groups mappers, so that a token exchanged for MCP carries the claims of ILM's
-# own tokens.
-ILM_CLAIM_MAPPERS = [
-    {'name': 'Username', 'protocol': 'openid-connect', 'protocolMapper': 'oidc-usermodel-property-mapper',
-     'consentRequired': False,
-     'config': {'introspection.token.claim': 'true', 'userinfo.token.claim': 'true', 'user.attribute': 'username',
-                'id.token.claim': 'true', 'lightweight.claim': 'false', 'access.token.claim': 'true',
-                'claim.name': 'username', 'jsonType.label': 'String'}},
-    {'name': 'Groups', 'protocol': 'openid-connect', 'protocolMapper': 'oidc-usermodel-attribute-mapper',
-     'consentRequired': False,
-     'config': {'aggregate.attrs': 'false', 'userinfo.token.claim': 'true', 'multivalued': 'true',
-                'user.attribute': 'groups', 'id.token.claim': 'true', 'access.token.claim': 'true',
-                'claim.name': 'roles'}},
-]
+# ilm-mcp-upstream carries copies of these mappers of the realm's own ilm client, as the realm import does, so that a
+# token exchanged for MCP carries the claims of ILM's own tokens however the realm maps them.
+ILM_CLAIM_MAPPERS = ('Username', 'Groups')
 
 # Keycloak's own delegation:client, which a realm lacks when the delegation features were switched on after Keycloak
 # migrated it. A realm import stores userinfo.token.claim on the may_act mappers; Keycloak's migration leaves it out,
@@ -239,8 +230,22 @@ def audience_mapper(name, kind, audience):
                        'introspection.token.claim': 'true', 'userinfo.token.claim': 'false'}}
 
 
+def ilm_claim_mappers(ilm_client):
+    """Copies of the ilm client's Username and Groups mappers without their IDs, as the realm import makes them."""
+    if ilm_client is None:
+        raise PlanError(f"Client ilm not found. ilm-mcp-upstream copies its {' and '.join(ILM_CLAIM_MAPPERS)} "
+                        'mappers.')
+    mappers = by_name(ilm_client.get('protocolMappers', []))
+    for name in ILM_CLAIM_MAPPERS:
+        if name not in mappers:
+            raise PlanError(f"Client ilm has no protocol mapper {name}, which ilm-mcp-upstream copies so that MCP's "
+                            "tokens carry the claims of ILM's own. Add it, then run enable again.")
+    return [{key: value for key, value in mappers[name].items() if key != 'id'} for name in ILM_CLAIM_MAPPERS]
+
+
 def desired_objects(host: str, secret: str, cimd: bool, group: str | None) -> dict:
-    """MCP's objects as the chart's realm import (realms/mcp-objects.json) creates them."""
+    """MCP's objects as the chart's realm import (realms/mcp-objects.json) creates them. plan_enable adds the copies
+    of the ilm client's mappers to ilm-mcp-upstream."""
     resource = f'https://{host}/mcp'
     profiles = [{'name': PKCE, 'executors': [{'executor': 'pkce-enforcer', 'configuration': {'auto-configure': True}}]}]
     policies = [{'name': PKCE, 'enabled': True, 'profiles': [PKCE], 'conditions': [
@@ -260,8 +265,7 @@ def desired_objects(host: str, secret: str, cimd: bool, group: str | None) -> di
     return copy.deepcopy({
         'clientScopes': [
             {'name': 'ilm-mcp-upstream', 'protocol': 'openid-connect', 'attributes': SCOPE_ATTRIBUTES,
-             'protocolMappers': [audience_mapper('ilm-api-audience', 'included.client.audience', 'ilm'),
-                                 *ILM_CLAIM_MAPPERS]},
+             'protocolMappers': [audience_mapper('ilm-api-audience', 'included.client.audience', 'ilm')]},
             {'name': 'mcp:access', 'protocol': 'openid-connect', 'attributes': SCOPE_ATTRIBUTES,
              'protocolMappers': [audience_mapper('mcp-exchange-requester', 'included.client.audience', CLIENT_ID),
                                  audience_mapper('mcp-public-resource', 'included.custom.audience', resource)]},
@@ -472,7 +476,10 @@ def plan_enable(session, desired: dict) -> list[Change]:
                                                 read(session, POLICIES_PATH)['policies'], removed)
     scopes = by_name(read(session, f'{REALM_PATH}/client-scopes'))
     scope_ids = {name: scope['id'] for name, scope in scopes.items()}
+    copies = ilm_claim_mappers(find_client(session, 'ilm'))
     for scope in desired['clientScopes']:
+        if scope['name'] == 'ilm-mcp-upstream':
+            scope = {**scope, 'protocolMappers': scope['protocolMappers'] + copies}
         changes += plan_scope(scopes.get(scope['name']), scope)
         scope_ids.setdefault(scope['name'], reference('client-scope', scope['name']))
     client = find_client(session, CLIENT_ID)

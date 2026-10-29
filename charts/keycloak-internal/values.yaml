@@ -39,6 +39,20 @@ global:
   hostName: ""
   keycloak:
     clientSecret: ""
+  # MCP server, usually set through the ILM chart
+  mcp:
+    enabled: false
+    identity:
+      # managed: the realm import carries MCP's objects; external: it adds nothing to Keycloak
+      mode: managed
+    # client secret of ilm-mcp; empty lets Keycloak generate one
+    clientSecret: ""
+    cimd:
+      # MCP clients may identify themselves with a Client ID Metadata Document
+      enabled: true
+    delegation:
+      # empty lets MCP act for every user; a group name limits it to that group's members
+      group: ""
   admin:
     username: ""
     password: ""

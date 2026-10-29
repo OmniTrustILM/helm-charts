@@ -24,6 +24,27 @@ Before selecting an `existingSecret` option, create the complete credential bund
 
 Then update the corresponding references and upgrade using the selected fixed chart version. Selecting an external reference removes the generated credential Secret from the chart. Helm can delete that previously managed resource during upgrade, so pointing the reference back to its old name would leave the workload without credentials. Charts reject these name collisions; an existing Secret is not a request to retain the previous chart-managed resource.
 
+## MCP on an existing installation
+
+Keycloak imports the realm, and MCP's objects with it, only when it creates the realm. On an existing installation, add the objects with [`mcp_realm.py`](https://github.com/OmniTrustILM/helm-charts/tree/main/charts/keycloak-internal/scripts/mcp_realm.py) `enable` before switching MCP on in `managed` mode, and run `enable` again with the new settings when `global.mcp.delegation.group`, `global.mcp.cimd.enabled` or MCP's client secret changes later. After turning MCP off or switching it to `external` mode, remove the objects with `mcp_realm.py cleanup`. With `keycloakInternal.realmImport.existingSecret` the realm you supply must contain the objects itself.
+
+The script needs Python 3.10 or later with `requests`. It asks for the Keycloak URL, an administrator of the `master` realm and, for `enable`, ILM's public host and MCP's client secret. Its options:
+
+- `--group NAME` (`enable`): let `ilm-mcp` act only for the members of this group, as `global.mcp.delegation.group` does; the group is created when missing.
+- `--no-cimd` (`enable`): leave out the client policy `mcp-cimd`, and remove it, as `global.mcp.cimd.enabled: false` does.
+- `--dry-run`: print the planned changes and write nothing.
+- `--insecure`: disable TLS certificate validation.
+
+`enable` changes nothing and stops with an error when it finds a secret rotation in progress on `ilm-mcp`, which updating the client would clear, or an MCP client scope assigned with the wrong type. Finish or remove the rotation, or change the scope's assigned type in the admin console, then run `enable` again.
+
+Core restarts by itself when managed MCP is switched on or off, and registers the bundled provider again, with or without `ilm-mcp` as its allowed delegate. That registration replaces the whole configuration of the `internal` provider at every Core start, so delegates or other settings added to it by hand are lost. An installation that manages the provider itself sets `registerInternalKeycloak: false`, and Core then never registers it: add `ilm-mcp` to the provider's `allowedDelegates` yourself, with `delegateClaim` set to `client_id`, and remove it again, keeping any other delegates, when MCP is turned off or switched to `external` mode.
+
+:::warning[Keycloak without the cimd feature]
+A realm that holds the `mcp-cimd` client profile or policy fails every sign-in with HTTP 500 while Keycloak lacks the `cimd` feature, ILM's own sign-in included. Before moving the bundled Keycloak to an image without `cimd`, run `mcp_realm.py cleanup`, or set `global.mcp.cimd.enabled: false` and run `mcp_realm.py enable --no-cimd`.
+:::
+
+Kong's MCP route removes the client certificate header named in `auth.header.certificate`. Kong applies a changed name only at its next restart, because its pod does not see this value: restart `api-gateway-deployment` after changing it.
+
 ## To 2.20.0-1
 
 When internal Keycloak is enabled (`global.keycloak.enabled: true`), this chart upgrades it from 26.4.2 to 26.8.1 using `keycloak-optimized:26.8.1-0`.

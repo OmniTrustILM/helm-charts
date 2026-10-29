@@ -42,6 +42,21 @@ global:
     clientSecret: ""
     # Namespace-local Secret reference takes precedence over clientSecret.
     clientSecretRef: {}
+  mcp:
+    enabled: false
+    identity:
+      # managed: the bundled Keycloak; external: a provider set in mcpServer.security.
+      mode: managed
+    # Managed mode needs exactly one of clientSecret and clientSecretRef; the reference needs
+    # keycloakInternal.realmImport.existingSecret. External mode needs exactly one of clientSecret and
+    # mcpServer.security.clientSecretRef.name, and refuses clientSecretRef.
+    clientSecret: ""
+    clientSecretRef: {}
+    cimd:
+      enabled: true
+    delegation:
+      # Managed mode: empty lets MCP act for every user; a group name limits it to that group's members.
+      group: ""
   messaging:
     existingSecret: ""
     external:
@@ -754,3 +769,18 @@ keycloakInternal:
 utilsService:
   nameOverride: utils-service
   # the enabled flag is defined as global.utils.enabled
+
+mcpServer:
+  nameOverride: mcp-server
+  # the enabled flag is defined as global.mcp.enabled
+  service:
+    name: mcp-server-service
+  networkPolicy:
+    enabled: false
+    ingress:
+      - podSelector: {matchLabels: {app.kubernetes.io/name: api-gateway}}
+    egress:
+      - to:
+          - podSelector: {matchLabels: {app.kubernetes.io/name: platform-core}}
+          - podSelector: {matchLabels: {app.kubernetes.io/name: keycloak-internal}}
+        ports: [{protocol: TCP, port: 8080}]

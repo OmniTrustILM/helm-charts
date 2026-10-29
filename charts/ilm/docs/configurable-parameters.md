@@ -37,6 +37,11 @@ Global values are used to define common parameters for the chart and all its sub
 | global.hostName                             | `""`                   | Global hostname of the running instance                               |
 | global.keycloak.enabled                     | `false`                | Enables internal Keycloak for authentication                          |
 | global.keycloak.clientSecret                | `""`                   | Keycloak OIDC client secret to be used internally                     |
+| global.mcp.enabled                          | `false`                | Installs the MCP server, see [MCP server parameters](#mcp-server-parameters) |
+| global.mcp.identity.mode                    | `managed`              | `managed`: MCP's users sign in through the bundled Keycloak; `external`: through the provider set in `mcpServer.security` |
+| global.mcp.clientSecret                     | `""`                   | MCP's client secret in either identity mode, rendered into the Secret `mcp-server-secret`; or reference an existing Secret instead, with `global.mcp.clientSecretRef` in `managed` mode (see [Existing credential bundles](#existing-credential-bundles)) or `mcpServer.security.clientSecretRef` in `external` mode |
+| global.mcp.cimd.enabled                     | `true`                 | Managed MCP: lets clients such as Claude Code and the hosted Claude apps sign in with their Client ID Metadata Document, without a registered client |
+| global.mcp.delegation.group                 | `""`                   | Managed MCP: lets MCP act only for the members of this group; empty lets it act for every user |
 | global.messaging.external.enabled           | `false`                | Enable external messaging                                             |
 | global.messaging.external.host              | `""`                   | Host where is the external messaging located                          |
 | global.messaging.external.amqp.port         | `""`                   | Port on which is the external messaging listening                     |
@@ -320,6 +325,28 @@ For mode details about probes, see the [Kubernetes documentation](https://kubern
 | timeQualityMonitor.image.probes.startup.successThreshold      | `1`      | Success threshold for startup probe                                                  |
 | timeQualityMonitor.image.probes.startup.failureThreshold      | `3`      | Failure threshold for startup probe                                                  |
 
+## MCP server parameters
+
+The chart installs the [MCP server chart](https://github.com/OmniTrustILM/mcp-server/blob/main/deploy/charts/mcp-server/README.md) as its dependency `mcpServer`, whose README describes all of its values. MCP needs ILM 2.21.0 or later and `global.hostName`: the MCP chart does not see this chart's top-level `hostName`. In `managed` mode the bundled Keycloak must run an image built with the features `token-exchange-delegation`, `parameterized-scopes` and, unless `global.mcp.cimd.enabled` is `false`, `cimd`; `start --optimized` does not add a feature the image lacks.
+
+The README's section [Umbrella mode](https://github.com/OmniTrustILM/mcp-server/blob/main/deploy/charts/mcp-server/README.md#umbrella-mode) describes both identity modes, [docs/keycloak](https://github.com/OmniTrustILM/mcp-server/tree/main/docs/keycloak) the Keycloak objects and clients, and [Shared HTTP authentication](https://github.com/OmniTrustILM/mcp-server/blob/main/docs/shared-http-authentication.md) what an external provider must offer. [MCP on an existing installation](./upgrading.md#mcp-on-an-existing-installation) describes the operations on an installation that runs already.
+
+| Parameter                               | Default value   | Description                                                                                                     |
+|-----------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------------------|
+| mcpServer.access                        | `read-only`     | The tools MCP offers: `read-only`, `read-write` or `full`                                                       |
+| mcpServer.networkPolicy.enabled         | `false`         | Renders MCP's NetworkPolicy, which admits the API gateway and lets MCP reach DNS, Core and the bundled Keycloak |
+| mcpServer.security.issuer               | `""`            | External mode, required: the issuer of the provider's tokens                                                    |
+| mcpServer.security.jwkSetUri            | `""`            | External mode, required: the provider's key set                                                                 |
+| mcpServer.security.tokenUri             | `""`            | External mode, required: the provider's token endpoint                                                          |
+| mcpServer.security.clientId             | `""`            | External mode, required: MCP's client at the provider                                                           |
+| mcpServer.security.clientSecretRef.name | `""`            | External mode: an existing Secret that holds that client's secret; required unless `global.mcp.clientSecret` is set |
+| mcpServer.security.clientSecretRef.key  | `client-secret` | External mode: the key of the client secret in that Secret                                                      |
+| mcpServer.security.exchangeMode         | `""`            | External mode, required: `standard` or `delegation`                                                             |
+| mcpServer.security.exchangeScope        | `""`            | External mode: the scopes MCP requests in the exchange; empty uses the provider's defaults                      |
+| mcpServer.security.authorizationScopes  | `[]`            | External mode: further scopes MCP advertises to clients for sign-in                                             |
+| mcpServer.security.requiredScope        | `mcp:access`    | The scope a user's token must carry                                                                             |
+| mcpServer.security.apiAudience          | `ilm`           | The audience of the exchanged token, which ILM accepts                                                          |
+
 ## Additional parameters
 
 Additional parameters may be found in the respective `values.yaml` and dependencies.
@@ -336,6 +363,7 @@ See dependent charts for the description of available parameters.
 | `keycloakInternal.realmImport.existingSecret` | `""` | Complete realm JSON, used without Helm template expansion |
 | `keycloakInternal.realmImport.key` | `ilm_realm.json` | Key mapped to fixed import file `ilm_realm.json` |
 | `global.keycloak.clientSecretRef` | `{}` | Client Secret reference for automatic internal-provider registration, with required `name` and `key` |
+| `global.mcp.clientSecretRef` | `{}` | Managed MCP: Secret reference for the client secret of `ilm-mcp`, with required `name` and `key`, instead of `global.mcp.clientSecret`; requires `keycloakInternal.realmImport.existingSecret` and a name other than `mcp-server-secret` |
 | `schedulerService.existingSecret` | `""` | `dbUsername`, `dbPassword` |
 | `emailNotificationProvider.existingSecret` | `""` | `dbUsername`, `dbPassword`, `smtpUsername`, `smtpPassword` |
 | `webhookNotificationProvider.existingSecret` | `""` | `dbUsername`, `dbPassword` |

@@ -73,6 +73,12 @@ spec:
         {{- if not (pluck "existingSecret" .Values.global.messaging .Values.messaging | compact | first) }}
         checksum/mq-secret: {{ include (print $.Template.BasePath "/messaging-secret.yaml") . | sha256sum }}
         {{- end }}
+        {{- if $registerKeycloak }}
+        {{- with include "ilm.mcp.delegateFields" . }}
+        # when the provider registration gains or loses the MCP delegate, restart, so that postStart registers it again
+        checksum/mcp-delegate: {{ . | sha256sum }}
+        {{- end }}
+        {{- end }}
 {{/*        checksum/mq-secret: {{ include "messaging-rabbitmq.definitions.json" (dict "global" .Values.global "messagingService" .Values.messagingService) | sha256sum }}*/}}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}

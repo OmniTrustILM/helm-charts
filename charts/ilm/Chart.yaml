@@ -146,6 +146,14 @@ dependencies:
       - utils-service
     version: 1.0.2-2
     alias: utilsService
+  - condition: global.mcp.enabled
+    name: mcp-server
+    # released from OmniTrustILM/mcp-server, so it comes from the registry and not from this repository
+    repository: oci://hub.omnitrustregistry.com/ilm-helm
+    tags:
+      - mcp
+    version: 0.1.0-develop
+    alias: mcpServer
   # the following are mandatory dependencies
   - name: ilm-lib
     # repository: oci://hub.omnitrustregistry.com/ilm-helm
@@ -156,7 +164,7 @@ dependencies:
     repository: file://../api-gateway-kong
     tags:
       - api-gateway
-    version: 3.9.1-2
+    version: 3.9.1-3-develop
     alias: apiGateway
   - name: fe-administrator
     # repository: oci://hub.omnitrustregistry.com/ilm-helm

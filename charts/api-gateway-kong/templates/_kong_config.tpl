@@ -1,5 +1,7 @@
 {{/*
 Return the kong api gateway configuration for the given environment.
+The optional "clientCertHeader" names the client certificate header that the MCP route removes
+(ssl-client-cert by default).
 
 Example:
 {{ include "api-gateway-kong.yaml" ( dict "global" .Values.global "apiGateway" .Values ) }}
@@ -81,6 +83,28 @@ services:
         preserve_host: true
         paths:
           - /utils
+  {{- end }}
+  {{- if .global.mcp.enabled }}
+  # MCP server and its OAuth discovery path. Streamable HTTP responses are not buffered, and a client
+  # certificate header is removed because MCP authenticates through OAuth and never consumes it.
+  - name: mcp-server-service
+    host: {{ .apiGateway.backend.mcp.service.name }}
+    port: {{ .apiGateway.backend.mcp.service.port }}
+    protocol: http
+    routes:
+      - name: mcp
+        strip_path: false
+        preserve_host: true
+        response_buffering: false
+        paths:
+          - /mcp
+          - /.well-known/oauth-protected-resource
+    plugins:
+      - name: request-transformer
+        config:
+          remove:
+            headers:
+              - {{ .clientCertHeader | default "ssl-client-cert" }}
   {{- end }}
 {{- if or .apiGateway.cors.enabled .apiGateway.logging.request}}
 plugins:

@@ -81,6 +81,7 @@ helm dependency update charts/timestamp-formatting-connector --skip-refresh
 echo "Updating dependencies for provisioning-rabbitmq..."
 helm dependency update charts/provisioning-rabbitmq --skip-refresh
 
-# finally, update ilm umbrella chart
+# finally, update ilm umbrella chart; this also pulls mcp-server, which is released from another
+# repository, from the registry
 echo "Updating dependencies for ilm..."
 helm dependency update charts/ilm --skip-refresh

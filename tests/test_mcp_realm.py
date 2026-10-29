@@ -745,6 +745,26 @@ class McpRealmScript(unittest.TestCase):
         self.succeed(fake, 'enable')
         self.assertEqual(fake.writes(), [])
 
+    def test_copies_follow_the_ilm_client_mappers(self):
+        fake = self.keycloak()
+        self.succeed(fake, 'enable')
+        groups = next(mapper for mapper in fake.client_named('ilm')['protocolMappers'] if mapper['name'] == 'Groups')
+        upstream = fake.scope_named('ilm-mcp-upstream')
+        copied = next(mapper['id'] for mapper in upstream['protocolMappers'] if mapper['name'] == 'Groups')
+        # A config key left over in the copy, such as aggregate.attrs, could still change the claims.
+        for change, edit in [('removed key', lambda config: config.pop('aggregate.attrs')),
+                             ('changed value', lambda config: config.update({'claim.name': 'groups'}))]:
+            with self.subTest(change):
+                edit(groups['config'])
+                self.succeed(fake, 'enable')
+                self.assertEqual(fake.writes(),
+                                 [('PUT', f"{R}/client-scopes/{upstream['id']}/protocol-mappers/models/{copied}")])
+                copy_now = next(mapper for mapper in fake.scope_named('ilm-mcp-upstream')['protocolMappers']
+                                if mapper['name'] == 'Groups')
+                self.assertEqual(without_id(copy_now), without_id(groups))
+                self.succeed(fake, 'enable')
+                self.assertEqual(fake.writes(), [])
+
     def test_enable_stops_without_an_ilm_client_mapper(self):
         for missing, message in [('Username', 'Client ilm has no protocol mapper Username'),
                                  ('Groups', 'Client ilm has no protocol mapper Groups'),

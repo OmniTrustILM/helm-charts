@@ -299,7 +299,10 @@ def desired_objects(host: str, secret: str, cimd: bool, group: str | None) -> di
     })
 
 
-def plan_scope(current, desired):
+def plan_scope(current, desired, copied=()):
+    """The changes that create the client scope or correct the fields it owns. The mappers named in copied are copies
+    of the ilm client's and are kept equal to them as a whole: a config key left over from an earlier definition could
+    still change the claims."""
     name = desired['name']
     if current is None:
         return [Change('POST', f'{REALM_PATH}/client-scopes', desired, f'Create client scope {name}')]
@@ -316,6 +319,12 @@ def plan_scope(current, desired):
         if found is None:
             changes.append(Change('POST', f'{path}/protocol-mappers/models', mapper,
                                   f"Add mapper '{mapper['name']}' to client scope {name}"))
+        elif mapper['name'] in copied:
+            if {key: value for key, value in found.items() if key != 'id'} != mapper:
+                changes.append(Change('PUT', f"{path}/protocol-mappers/models/{found['id']}",
+                                      {**mapper, 'id': found['id']},
+                                      f"Replace mapper '{mapper['name']}' of client scope {name} "
+                                      "with the ilm client's"))
         elif not covers(found, mapper):
             changes.append(Change('PUT', f"{path}/protocol-mappers/models/{found['id']}", merged(found, mapper),
                                   f"Correct mapper '{mapper['name']}' of client scope {name}"))
@@ -478,9 +487,10 @@ def plan_enable(session, desired: dict) -> list[Change]:
     scope_ids = {name: scope['id'] for name, scope in scopes.items()}
     copies = ilm_claim_mappers(find_client(session, 'ilm'))
     for scope in desired['clientScopes']:
-        if scope['name'] == 'ilm-mcp-upstream':
+        copied = ILM_CLAIM_MAPPERS if scope['name'] == 'ilm-mcp-upstream' else ()
+        if copied:
             scope = {**scope, 'protocolMappers': scope['protocolMappers'] + copies}
-        changes += plan_scope(scopes.get(scope['name']), scope)
+        changes += plan_scope(scopes.get(scope['name']), scope, copied)
         scope_ids.setdefault(scope['name'], reference('client-scope', scope['name']))
     client = find_client(session, CLIENT_ID)
     changes += plan_client(session, client, desired['client'], scope_ids)

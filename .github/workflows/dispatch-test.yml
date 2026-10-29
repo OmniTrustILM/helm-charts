@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download PR context artifact from upstream run
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: pr-context
           path: pr_context

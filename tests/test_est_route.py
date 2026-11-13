@@ -67,6 +67,25 @@ class ESTRouteTest(unittest.TestCase):
         mcp = next(service for service in config['services'] if service['name'] == 'mcp-server-service')
         self.assertEqual(mcp['plugins'][0]['config']['remove']['headers'], ['x-client-cert'])
 
+    def test_request_log_omits_the_client_certificate_header(self):
+        for header, expected in [(None, 'ssl-client-cert'), ('X-Client-Cert', 'x-client-cert')]:
+            with self.subTest(header=header):
+                values = everything_on_values()
+                if header:
+                    values['auth']['header']['certificate'] = header
+                else:
+                    del values['auth']
+                config = kong_config(render('ilm', values))
+                file_log = next(plugin for plugin in config['plugins'] if plugin['name'] == 'file-log')
+                self.assertEqual(file_log['config']['custom_fields_by_lua'],
+                                 {'request.headers.' + expected: 'return nil'})
+
+    def test_standalone_request_log_omits_the_default_header(self):
+        values = {'logging': {'request': True}}
+        config = kong_config(render('api-gateway-kong', values), 'api-gateway-configmap')
+        self.assertEqual(config['plugins'][0]['config']['custom_fields_by_lua'],
+                         {'request.headers.ssl-client-cert': 'return nil'})
+
     def test_custom_configuration_is_rendered_verbatim(self):
         custom = "_format_version: '2.1'\nservices: []\n"
         values = synthetic_values('ilm')

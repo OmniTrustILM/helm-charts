@@ -1,12 +1,13 @@
 {{/*
 Return the kong api gateway configuration for the given environment.
-The optional "clientCertHeader" names the client certificate header that the MCP route removes
-(ssl-client-cert by default).
+The optional "clientCertHeader" names the client certificate header that the MCP route removes and the
+request log omits (ssl-client-cert by default).
 
 Example:
 {{ include "api-gateway-kong.yaml" ( dict "global" .Values.global "apiGateway" .Values ) }}
 */}}
 {{- define "api-gateway-kong.config.yml" -}}
+{{- $clientCertHeader := .clientCertHeader | default "ssl-client-cert" | lower -}}
 {{- if .apiGateway.config.custom }}
 {{ .apiGateway.config.custom }}
 {{- else }}
@@ -121,7 +122,7 @@ services:
         config:
           remove:
             headers:
-              - {{ .clientCertHeader | default "ssl-client-cert" }}
+              - {{ $clientCertHeader }}
   {{- end }}
 {{- if or .apiGateway.cors.enabled .apiGateway.logging.request}}
 plugins:
@@ -138,6 +139,8 @@ plugins:
   - name: file-log
     config:
       path: /dev/stdout
+      custom_fields_by_lua:
+        request.headers.{{ $clientCertHeader }}: return nil
   {{- end }}
 {{- end }}
 {{- end }}

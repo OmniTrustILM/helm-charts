@@ -149,7 +149,7 @@ plugins:
     config:
       path: /dev/stdout
       custom_fields_by_lua:
-        request.headers.{{ $clientCertHeader }}: return nil
+        request.headers: {{ printf "local headers = kong.log.serialize().request.headers; headers[%s] = nil; return headers" ($clientCertHeader | quote) | toJson }}
   {{- end }}
 {{- end }}
 {{- end }}

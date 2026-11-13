@@ -43,12 +43,19 @@ def without_est(config):
     return [service for service in config['services'] if service['name'] != 'core-est']
 
 
+def header_redaction(header):
+    """The file-log setting that drops the header by its literal name, dots included."""
+    code = ('local headers = kong.log.serialize().request.headers; '
+            'headers["%s"] = nil; return headers' % header)
+    return {'request.headers': code}
+
+
 def with_header_redaction(plugins, header='x-client-cert'):
     """The baseline plugins with the one intended change: the request log omits the client certificate header."""
     expected = copy.deepcopy(plugins)
     for plugin in expected or []:
         if plugin['name'] == 'file-log':
-            plugin['config']['custom_fields_by_lua'] = {'request.headers.' + header: 'return nil'}
+            plugin['config']['custom_fields_by_lua'] = header_redaction(header)
     return expected
 
 
@@ -78,7 +85,7 @@ class ESTRouteTest(unittest.TestCase):
         self.assertEqual(mcp['plugins'][0]['config']['remove']['headers'], ['x-client-cert'])
 
     def test_request_log_omits_the_client_certificate_header(self):
-        for header, expected in [(None, 'ssl-client-cert'), ('X-Client-Cert', 'x-client-cert')]:
+        for header, expected in [(None, 'ssl-client-cert'), ('X-Client-Cert', 'x-client-cert'), ('X.Client.Cert', 'x.client.cert')]:
             with self.subTest(header=header):
                 values = everything_on_values()
                 if header:
@@ -87,8 +94,7 @@ class ESTRouteTest(unittest.TestCase):
                     del values['auth']
                 config = kong_config(render('ilm', values))
                 file_log = next(plugin for plugin in config['plugins'] if plugin['name'] == 'file-log')
-                self.assertEqual(file_log['config']['custom_fields_by_lua'],
-                                 {'request.headers.' + expected: 'return nil'})
+                self.assertEqual(file_log['config']['custom_fields_by_lua'], header_redaction(expected))
 
     def test_gateway_restarts_when_the_client_certificate_header_changes(self):
         def rendered(header):
@@ -100,8 +106,8 @@ class ESTRouteTest(unittest.TestCase):
                     kong_config(objects)['plugins'][1]['config']['custom_fields_by_lua'])
 
         first, second = rendered('x-first-cert'), rendered('x-second-cert')
-        self.assertEqual(first[1], {'request.headers.x-first-cert': 'return nil'})
-        self.assertEqual(second[1], {'request.headers.x-second-cert': 'return nil'})
+        self.assertEqual(first[1], header_redaction('x-first-cert'))
+        self.assertEqual(second[1], header_redaction('x-second-cert'))
         self.assertNotEqual(first[0], second[0])
 
     def test_core_and_gateway_agree_on_the_global_header(self):
@@ -117,7 +123,7 @@ class ESTRouteTest(unittest.TestCase):
         values = {'logging': {'request': True}}
         config = kong_config(render('api-gateway-kong', values), 'api-gateway-configmap')
         self.assertEqual(config['plugins'][0]['config']['custom_fields_by_lua'],
-                         {'request.headers.ssl-client-cert': 'return nil'})
+                         header_redaction('ssl-client-cert'))
 
     def test_custom_configuration_is_rendered_verbatim(self):
         custom = "_format_version: '2.1'\nservices: []\n"

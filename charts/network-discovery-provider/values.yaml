@@ -92,12 +92,15 @@ autoscaling:
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
-# Number of replicas. Empty follows global.replicaCount; a value set here wins over it. Set it to 1 when the discovery
-# v2 interface is used and global.replicaCount is above 1: a v2 run lives in the memory of the pod that started it,
-# so another replica behind the service would answer Core's calls for runs it does not hold. v1 has no such limit.
-# With autoscaling.enabled the chart leaves the replica count to your autoscaler, so keep it off for v2, or hold the
-# autoscaler to one replica.
+# Number of replicas. Empty follows global.replicaCount; a value set here wins over it. Discovery v2 runs on any
+# number of replicas: Core holds each run's position and sends it with every call, so any replica serves any call and a
+# run survives losing a pod. v1 keeps its runs in the database and was never limited to one replica. With
+# autoscaling.enabled the chart renders no replicas field and leaves the replica count to your autoscaler.
 replicaCount: ""
+
+# Seconds a pod being replaced gets to finish the Discovery v2 slice it is serving before it exits. A slice answers
+# within 20 s and the connector waits up to 25 s for it on shutdown, so keep this at 30 or above.
+terminationGracePeriodSeconds: 30
 
 service:
   type: "ClusterIP"
@@ -151,9 +154,9 @@ image:
       periodSeconds: 10
       successThreshold: 1
       failureThreshold: 45
-  # The connector buffers the undrained results of its discovery v2 runs in heap, up to 512 MiB in total by default
-  # (DISCOVERY_BUFFER_MAX_TOTAL_BYTES). Size the memory limit and the JVM heap (javaOpts) to hold it on top of the
-  # connector's own footprint, or lower the bound through additionalEnv.
+  # Discovery v2 slices hold their pages in heap: about 240 MB across the default 32 concurrent slices when runs use
+  # parallelism 100, and up to about 590 MB at parallelism 1000. Size the memory limit and the JVM heap (javaOpts) to
+  # hold it on top of the connector's own footprint, or lower DISCOVERY_SLICE_MAX_CONCURRENT through additionalEnv.
   resources: {}
     # We follow recommendations and general guidelines to manage resources from:
     # https://master.sdk.operatorframework.io/docs/best-practices/managing-resources/

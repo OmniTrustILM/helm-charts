@@ -1,4 +1,13 @@
 {{/*
+Return the client certificate header: the "clientCertHeader" of the context, else global.auth.header.certificate,
+else ssl-client-cert. The gateway rollout checksum renders the configuration through the same helper, so a
+change of the header restarts Kong only when it is stated in one of those two places.
+*/}}
+{{- define "api-gateway-kong.clientCertHeader" -}}
+{{- .clientCertHeader | default (dig "auth" "header" "certificate" "" (.global | default dict)) | default "ssl-client-cert" | lower -}}
+{{- end -}}
+
+{{/*
 Return the kong api gateway configuration for the given environment.
 The optional "clientCertHeader" names the client certificate header that the MCP route removes and the
 request log omits (ssl-client-cert by default).
@@ -7,7 +16,7 @@ Example:
 {{ include "api-gateway-kong.yaml" ( dict "global" .Values.global "apiGateway" .Values ) }}
 */}}
 {{- define "api-gateway-kong.config.yml" -}}
-{{- $clientCertHeader := .clientCertHeader | default "ssl-client-cert" | lower -}}
+{{- $clientCertHeader := include "api-gateway-kong.clientCertHeader" . -}}
 {{- if .apiGateway.config.custom }}
 {{ .apiGateway.config.custom }}
 {{- else }}

@@ -1,4 +1,5 @@
 """Render the Kong configuration and check the fixed EST (RFC 7030) well-known route; no cluster access is required."""
+import copy
 import unittest
 
 import yaml
@@ -42,6 +43,15 @@ def without_est(config):
     return [service for service in config['services'] if service['name'] != 'core-est']
 
 
+def with_header_redaction(plugins, header='x-client-cert'):
+    """The baseline plugins with the one intended change: the request log omits the client certificate header."""
+    expected = copy.deepcopy(plugins)
+    for plugin in expected or []:
+        if plugin['name'] == 'file-log':
+            plugin['config']['custom_fields_by_lua'] = {'request.headers.' + header: 'return nil'}
+    return expected
+
+
 class ESTRouteTest(unittest.TestCase):
     def assert_est_route(self, config):
         services = [service['name'] for service in config['services']]
@@ -80,6 +90,29 @@ class ESTRouteTest(unittest.TestCase):
                 self.assertEqual(file_log['config']['custom_fields_by_lua'],
                                  {'request.headers.' + expected: 'return nil'})
 
+    def test_gateway_restarts_when_the_client_certificate_header_changes(self):
+        def rendered(header):
+            values = everything_on_values()
+            values['global']['auth'] = {'header': {'certificate': header}}
+            objects = render('ilm', values)
+            deployment = object_by_name(objects, 'Deployment', 'api-gateway-deployment')
+            return (deployment['spec']['template']['metadata']['annotations']['checksum/config'],
+                    kong_config(objects)['plugins'][1]['config']['custom_fields_by_lua'])
+
+        first, second = rendered('x-first-cert'), rendered('x-second-cert')
+        self.assertEqual(first[1], {'request.headers.x-first-cert': 'return nil'})
+        self.assertEqual(second[1], {'request.headers.x-second-cert': 'return nil'})
+        self.assertNotEqual(first[0], second[0])
+
+    def test_core_and_gateway_agree_on_the_global_header(self):
+        values = everything_on_values()
+        values['global']['auth'] = {'header': {'certificate': 'x-global-cert'}}
+        objects = render('ilm', values)
+        core = object_by_name(objects, 'Deployment', 'core-deployment')
+        env = {item['name']: item.get('value') for container in core['spec']['template']['spec']['containers']
+               for item in container.get('env', [])}
+        self.assertEqual(env['HEADER_NAME'], 'x-global-cert')
+
     def test_standalone_request_log_omits_the_default_header(self):
         values = {'logging': {'request': True}}
         config = kong_config(render('api-gateway-kong', values), 'api-gateway-configmap')
@@ -101,7 +134,7 @@ class ESTRouteTest(unittest.TestCase):
                 current, baseline = render('ilm', values), render('ilm', values, baseline=True)
                 config, baseline_config = kong_config(current), kong_config(baseline)
                 self.assertEqual(without_est(config), baseline_config['services'])
-                self.assertEqual(config.get('plugins'), baseline_config.get('plugins'))
+                self.assertEqual(config.get('plugins'), with_header_redaction(baseline_config.get('plugins')))
                 self.assertEqual([obj for obj in current if obj['kind'] in edge_kinds],
                                  [obj for obj in baseline if obj['kind'] in edge_kinds])
 

@@ -37,6 +37,23 @@ services:
         paths:
           - {{ .apiGateway.backend.fe.service.loginUrl}}
           - {{ .apiGateway.backend.fe.service.logoutUrl}}
+  # EST (RFC 7030) well-known path, rewritten to Core's EST endpoints without buffering
+  - name: core-est
+    host: {{ .apiGateway.backend.core.service.name }}
+    port: {{ .apiGateway.backend.core.service.port }}
+    protocol: http
+    path: /api/v1/protocols/.well-known/est
+    routes:
+      - name: core-est_route
+        methods:
+          - GET
+          - POST
+        strip_path: true
+        preserve_host: true
+        request_buffering: false
+        response_buffering: false
+        paths:
+          - /.well-known/est
   # Frontend service for the administrator interface
   - name: fe-administrator
     host: {{ .apiGateway.backend.fe.service.name}}

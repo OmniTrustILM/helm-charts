@@ -43,7 +43,7 @@ Core restarts by itself when managed MCP is switched on or off, and registers th
 A realm that holds the `mcp-cimd` client profile or policy fails every sign-in with HTTP 500 while Keycloak lacks the `cimd` feature, ILM's own sign-in included. Before moving the bundled Keycloak to an image without `cimd`, run `mcp_realm.py cleanup`, or set `global.mcp.cimd.enabled: false` and run `mcp_realm.py enable --no-cimd`.
 :::
 
-Kong's MCP route removes the client certificate header named in `auth.header.certificate`. Kong applies a changed name only at its next restart, because its pod does not see this value: restart `api-gateway-deployment` after changing it.
+Kong's MCP route removes the client certificate header named in `auth.header.certificate`. Kong applies a changed name only at its next restart. Set the name as `global.auth.header.certificate`, which the gateway sees, and Kong restarts by itself. A name set only as `auth.header.certificate` is not visible to its pod: restart `api-gateway-deployment` after changing it.
 
 ## To 2.20.0-1
 

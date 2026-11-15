@@ -552,6 +552,8 @@ platformInstanceId: ""
 
 javaOpts: ""
 
+# Name of the client certificate header. Set global.auth.header.certificate instead to have the gateway
+# restart when the name changes; it takes precedence over this value.
 auth:
   header:
     certificate: "ssl-client-cert"

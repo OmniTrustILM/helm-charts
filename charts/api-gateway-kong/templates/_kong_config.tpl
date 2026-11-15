@@ -1,12 +1,22 @@
 {{/*
+Return the client certificate header: the "clientCertHeader" of the context, else global.auth.header.certificate,
+else ssl-client-cert. The gateway rollout checksum renders the configuration through the same helper, so a
+change of the header restarts Kong only when it is stated in one of those two places.
+*/}}
+{{- define "api-gateway-kong.clientCertHeader" -}}
+{{- .clientCertHeader | default (dig "auth" "header" "certificate" "" (.global | default dict)) | default "ssl-client-cert" | lower -}}
+{{- end -}}
+
+{{/*
 Return the kong api gateway configuration for the given environment.
-The optional "clientCertHeader" names the client certificate header that the MCP route removes
-(ssl-client-cert by default).
+The optional "clientCertHeader" names the client certificate header that the MCP route removes and the
+request log omits (ssl-client-cert by default).
 
 Example:
 {{ include "api-gateway-kong.yaml" ( dict "global" .Values.global "apiGateway" .Values ) }}
 */}}
 {{- define "api-gateway-kong.config.yml" -}}
+{{- $clientCertHeader := include "api-gateway-kong.clientCertHeader" . -}}
 {{- if .apiGateway.config.custom }}
 {{ .apiGateway.config.custom }}
 {{- else }}
@@ -37,6 +47,23 @@ services:
         paths:
           - {{ .apiGateway.backend.fe.service.loginUrl}}
           - {{ .apiGateway.backend.fe.service.logoutUrl}}
+  # EST (RFC 7030) well-known path, rewritten to Core's EST endpoints without buffering
+  - name: core-est
+    host: {{ .apiGateway.backend.core.service.name }}
+    port: {{ .apiGateway.backend.core.service.port }}
+    protocol: http
+    path: /api/v1/protocols/.well-known/est
+    routes:
+      - name: core-est_route
+        methods:
+          - GET
+          - POST
+        strip_path: true
+        preserve_host: true
+        request_buffering: false
+        response_buffering: false
+        paths:
+          - /.well-known/est
   # Frontend service for the administrator interface
   - name: fe-administrator
     host: {{ .apiGateway.backend.fe.service.name}}
@@ -104,7 +131,7 @@ services:
         config:
           remove:
             headers:
-              - {{ .clientCertHeader | default "ssl-client-cert" }}
+              - {{ $clientCertHeader }}
   {{- end }}
 {{- if or .apiGateway.cors.enabled .apiGateway.logging.request}}
 plugins:
@@ -121,6 +148,8 @@ plugins:
   - name: file-log
     config:
       path: /dev/stdout
+      custom_fields_by_lua:
+        request.headers: {{ printf "local headers = kong.log.serialize().request.headers; headers[%s] = nil; return headers" ($clientCertHeader | quote) | toJson }}
   {{- end }}
 {{- end }}
 {{- end }}

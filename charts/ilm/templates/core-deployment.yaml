@@ -204,7 +204,7 @@ spec:
             - name: HEADER_ENABLED
               value: "true"
             - name: HEADER_NAME
-              value: {{ .Values.auth.header.certificate | quote }}
+              value: {{ include "ilm.clientCertHeader" . | quote }}
             {{- if .Values.global.httpProxy }}
             - name: HTTP_PROXY
               value: {{ .Values.global.httpProxy }}

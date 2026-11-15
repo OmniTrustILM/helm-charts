@@ -482,3 +482,11 @@ mcpServer.security.clientSecretRef.name. Call once while MCP is enabled.
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+The client certificate header. global.auth.header.certificate takes precedence because the gateway subchart sees
+only global values, and its rollout checksum restarts Kong when the header changes only through that key.
+*/}}
+{{- define "ilm.clientCertHeader" -}}
+{{- dig "auth" "header" "certificate" "" .Values.global | default .Values.auth.header.certificate -}}
+{{- end -}}

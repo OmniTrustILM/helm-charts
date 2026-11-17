@@ -75,6 +75,18 @@ services:
         strip_path: true
         paths:
           - {{ .apiGateway.backend.fe.service.baseUrl}}
+  # OAuth protected resource metadata of the API (RFC 9728), served by Core under /api
+  - name: core-protected-resource-metadata
+    host: {{ .apiGateway.backend.core.service.name }}
+    port: {{ .apiGateway.backend.core.service.port }}
+    protocol: http
+    path: /api
+    routes:
+      - name: core-protected-resource-metadata_route
+        strip_path: false
+        preserve_host: true
+        paths:
+          - /.well-known/oauth-protected-resource/api
   {{- if or .global.keycloak.enabled }}
   # Management of Keycloak users and roles
   - name: keycloak-internal-service
@@ -112,7 +124,8 @@ services:
           - /utils
   {{- end }}
   {{- if .global.mcp.enabled }}
-  # MCP server and its OAuth discovery path. Streamable HTTP responses are not buffered, and a client
+  # MCP server and its OAuth discovery paths. The bare discovery path is matched exactly so the metadata of
+  # other resources stays with their own services. Streamable HTTP responses are not buffered, and a client
   # certificate header is removed because MCP authenticates through OAuth and never consumes it.
   - name: mcp-server-service
     host: {{ .apiGateway.backend.mcp.service.name }}
@@ -125,7 +138,8 @@ services:
         response_buffering: false
         paths:
           - /mcp
-          - /.well-known/oauth-protected-resource
+          - /.well-known/oauth-protected-resource/mcp
+          - /\.well-known/oauth-protected-resource$
     plugins:
       - name: request-transformer
         config:

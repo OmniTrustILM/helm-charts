@@ -454,9 +454,20 @@ class McpUmbrella(unittest.TestCase):
                                  ('mcp-server-service', 8080, 'http'))
                 self.assertEqual(service['routes'], [{
                     'name': 'mcp', 'strip_path': False, 'preserve_host': True, 'response_buffering': False,
-                    'paths': ['/mcp', '/.well-known/oauth-protected-resource']}])
+                    'paths': ['/mcp', '/.well-known/oauth-protected-resource/mcp',
+                              '/\\.well-known/oauth-protected-resource$']}])
                 self.assertEqual(service['plugins'], [{
                     'name': 'request-transformer', 'config': {'remove': {'headers': ['ssl-client-cert']}}}])
+
+    def test_kong_routes_the_api_resource_metadata_to_core(self):
+        for name, values in [('MCP off', synthetic_values('ilm')), ('MCP on', mcp_values())]:
+            with self.subTest(mode=name):
+                service = kong_services(render('ilm', values))['core-protected-resource-metadata']
+                self.assertEqual((service['host'], service['port'], service['protocol'], service['path']),
+                                 ('core-service', 8080, 'http', '/api'))
+                self.assertEqual(service['routes'], [{
+                    'name': 'core-protected-resource-metadata_route', 'strip_path': False, 'preserve_host': True,
+                    'paths': ['/.well-known/oauth-protected-resource/api']}])
 
     def test_kong_removes_a_custom_client_certificate_header(self):
         values = mcp_values()

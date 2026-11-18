@@ -43,6 +43,24 @@ def without_est(config):
     return [service for service in config['services'] if service['name'] != 'core-est']
 
 
+NEW_SINCE_BASELINE = {'core-est', 'core-protected-resource-metadata'}
+MCP_ROUTE_PATHS = ['/mcp', '/.well-known/oauth-protected-resource/mcp', r'/\.well-known/oauth-protected-resource$']
+
+
+def without_new_services(config):
+    return [service for service in config['services'] if service['name'] not in NEW_SINCE_BASELINE]
+
+
+def with_narrowed_mcp_route(services):
+    """The baseline services with the MCP route matching only its own paths, as it does since the API's metadata moved to Core."""
+    narrowed = copy.deepcopy(services)
+    for service in narrowed:
+        for route in service.get('routes', []):
+            if route['name'] == 'mcp':
+                route['paths'] = MCP_ROUTE_PATHS
+    return narrowed
+
+
 def header_redaction(header):
     """The file-log setting that drops the header by its literal name, dots included."""
     code = ('local headers = kong.log.serialize().request.headers; '
@@ -133,13 +151,13 @@ class ESTRouteTest(unittest.TestCase):
         self.assertEqual(config.strip(), custom.strip())
 
     @unittest.skipUnless(BASELINE, 'explicit release compatibility baseline')
-    def test_only_the_est_route_differs_from_the_baseline(self):
+    def test_only_the_new_routes_differ_from_the_baseline(self):
         edge_kinds = {'Ingress', 'Certificate', 'HTTPRoute', 'Gateway'}
         for name, values in [('defaults', synthetic_values('ilm')), ('everything on', everything_on_values())]:
             with self.subTest(values=name):
                 current, baseline = render('ilm', values), render('ilm', values, baseline=True)
                 config, baseline_config = kong_config(current), kong_config(baseline)
-                self.assertEqual(without_est(config), baseline_config['services'])
+                self.assertEqual(without_new_services(config), with_narrowed_mcp_route(without_new_services(baseline_config)))
                 self.assertEqual(config.get('plugins'), with_header_redaction(baseline_config.get('plugins')))
                 self.assertEqual([obj for obj in current if obj['kind'] in edge_kinds],
                                  [obj for obj in baseline if obj['kind'] in edge_kinds])

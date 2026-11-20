@@ -28,7 +28,7 @@ dependencies:
   version: 1.0.3
 - name: network-discovery-provider
   repository: file://../network-discovery-provider
-  version: 1.7.0
+  version: 1.7.0-1-develop
 - name: keystore-entity-provider
   repository: file://../keystore-entity-provider
   version: 1.4.2-4
@@ -80,5 +80,5 @@ dependencies:
 - name: pg-bouncer
   repository: file://../pg-bouncer
   version: 1.24.1-p1-3
-digest: sha256:4fcc62b16d5cf972aebe5eeae7c52ab6a8995ef27e6aba484e9b76029ece9d10
-generated: "2026-10-29T19:45:08.893313+01:00"
+digest: sha256:a510e9a2fd319ab383a30bbb1324b94cfd95093a9ee5c94cdcd526bec8abe7dc
+generated: "2026-11-13T14:27:16.6206352+01:00"

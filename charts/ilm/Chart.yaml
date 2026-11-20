@@ -87,7 +87,7 @@ dependencies:
     repository: file://../network-discovery-provider
     tags:
       - discovery-provider
-    version: 1.7.0
+    version: 1.7.0-1-develop
     alias: networkDiscoveryProvider
   - condition: keystoreEntityProvider.enabled
     name: keystore-entity-provider
